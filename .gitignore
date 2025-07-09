@@ -3,3 +3,34 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+.DS_Store
+*.class
+*.log
+.bloop
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+# Mill build tool
+out/
+.bsp/
+.idea/
+.idea_modules/
+.mill-version
+
+bucket/
+work/
+
+.metals
+.vscode
+
+.env
+.env.test
+.env.production
+.env.*
+references/
+codeloops.config.json
+.voltagent
+.scala-build
+.privatenode_modules/
+node_modules/
+.private
