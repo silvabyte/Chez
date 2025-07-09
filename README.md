@@ -1,4 +1,4 @@
-# Chez: TypeBox for Scala 3
+# Chez: JSON Schema generation using upickle
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/silvabyte/chez)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
