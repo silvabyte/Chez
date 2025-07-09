@@ -22,5 +22,8 @@ object Chez extends Shared {
 
 object CaskChez extends Shared {
   override def moduleDeps: Seq[Shared] = Seq(Chez)
-  override def ivyDeps = super.ivyDeps() ++ Agg(ivy"com.lihaoyi::cask:0.9.7")
+  override def ivyDeps = super.ivyDeps() ++ Agg(
+    ivy"com.lihaoyi::cask:0.9.7",
+    ivy"com.lihaoyi::scalatags:0.13.1"
+  )
 }
