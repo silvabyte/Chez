@@ -16,6 +16,11 @@ trait Shared extends ScalaModule {
   }
 }
 
-object Schemaz extends Shared {
+object Chez extends Shared {
   override def ivyDeps = super.ivyDeps() ++ Agg()
+}
+
+object CaskChez extends Shared {
+  override def moduleDeps: Seq[Shared] = Seq(Chez)
+  override def ivyDeps = super.ivyDeps() ++ Agg(ivy"com.lihaoyi::cask:0.9.7")
 }

@@ -138,8 +138,10 @@ object Chez {
       maximum: Option[Int] = None,
       exclusiveMinimum: Option[Int] = None,
       exclusiveMaximum: Option[Int] = None,
-      multipleOf: Option[Int] = None
-  ): IntegerChez = IntegerChez(minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf)
+      multipleOf: Option[Int] = None,
+      const: Option[Int] = None,
+      enumValues: Option[List[Int]] = None
+  ): IntegerChez = IntegerChez(minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, const, enumValues)
 
   def Boolean(const: Option[Boolean] = None): BooleanChez = BooleanChez(const)
 
