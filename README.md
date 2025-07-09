@@ -236,7 +236,3 @@ MIT License. See [LICENSE](LICENSE) for details.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
-
----
-
-**Chez** - Bringing TypeBox's ergonomics to Scala 3 with full JSON Schema 2020-12 compliance! 🎉
