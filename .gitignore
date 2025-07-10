@@ -27,7 +27,6 @@ work/
 .env.test
 .env.production
 .env.*
-references/
 codeloops.config.json
 .voltagent
 .scala-build
