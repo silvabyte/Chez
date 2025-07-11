@@ -33,67 +33,6 @@ type ChezType[C <: Chez] = C match {
 }
 
 /**
- * Extension methods for type-safe operations
- */
-/**
- * Runtime operations for Chez schemas
- *
- * For now, we'll implement basic operations without the complex type-level programming to get a working foundation. We'll enhance
- * this later with proper type safety.
- */
-// TODO: do we use this?
-object ChezRuntime {
-
-  /**
-   * Serialize a value to JSON using basic upickle serialization
-   */
-  def toJson[T: ReadWriter](value: T): ujson.Value = {
-    writeJs(value)
-  }
-
-  /**
-   * Serialize a value to JSON string
-   */
-  def toJsonString[T: ReadWriter](value: T): String = {
-    write(value)
-  }
-
-  /**
-   * Deserialize from JSON with basic validation
-   */
-  def fromJson[T: ReadWriter](json: ujson.Value): Either[List[ValidationError], T] = {
-    Try(read[T](json)) match {
-      case Success(value) => Right(value)
-      case Failure(e)     => Left(List(ValidationError.ParseError(e.getMessage, "/")))
-    }
-  }
-
-  /**
-   * Deserialize from JSON string with basic validation
-   */
-  def fromJsonString[T: ReadWriter](jsonStr: String): Either[List[ValidationError], T] = {
-    Try(read[T](jsonStr)) match {
-      case Success(value) => Right(value)
-      case Failure(e)     => Left(List(ValidationError.ParseError(e.getMessage, "/")))
-    }
-  }
-
-  /**
-   * Unsafe deserialization (throws on error)
-   */
-  def fromJsonUnsafe[T: ReadWriter](json: ujson.Value): T = {
-    read[T](json)
-  }
-
-  /**
-   * Unsafe deserialization from string (throws on error)
-   */
-  def fromJsonStringUnsafe[T: ReadWriter](jsonStr: String): T = {
-    read[T](jsonStr)
-  }
-}
-
-/**
  * Validation error types
  */
 enum ValidationError {
@@ -114,14 +53,4 @@ enum ValidationError {
   case MultipleOfViolation(multipleOf: Double, value: Double, path: String)
   case CompositionError(message: String, path: String)
   case ReferenceError(ref: String, path: String)
-}
-
-/**
- * Exception thrown by unsafe operations
- */
-// TODO: do we use this?
-class ValidationException(val errors: List[ValidationError]) extends Exception {
-  override def getMessage: String = {
-    errors.map(_.toString).mkString(", ")
-  }
 }
