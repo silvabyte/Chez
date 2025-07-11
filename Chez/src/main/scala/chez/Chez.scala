@@ -5,6 +5,7 @@ import chez.primitives.*
 import chez.complex.*
 import chez.composition.*
 import chez.references.*
+import chez.modifiers.*
 
 /**
  * Core Chez trait - represents a JSON Schema with compile-time type information
@@ -39,26 +40,12 @@ trait Chez {
   def optional: Chez = OptionalChez(this)
   def nullable: Chez = NullableChez(this)
   def withDefault(value: ujson.Value): Chez = DefaultChez(this, value)
-  def withTitle(title: String): this.type = {
-    // This is a simplified implementation - in practice we'd use a proper builder pattern
-    this
-  }
-  def withDescription(desc: String): this.type = {
-    // This is a simplified implementation - in practice we'd use a proper builder pattern
-    this
-  }
-  def withSchema(schema: String): this.type = {
-    // This is a simplified implementation - in practice we'd use a proper builder pattern
-    this
-  }
-  def withId(id: String): this.type = {
-    // This is a simplified implementation - in practice we'd use a proper builder pattern
-    this
-  }
-  def withDefs(defs: (String, Chez)*): this.type = {
-    // This is a simplified implementation - in practice we'd use a proper builder pattern
-    this
-  }
+  def withTitle(title: String): Chez = TitleChez(this, title)
+  def withDescription(desc: String): Chez = DescriptionChez(this, desc)
+  def withSchema(schema: String): Chez = SchemaChez(this, schema)
+  def withId(id: String): Chez = IdChez(this, id)
+  def withDefs(defs: (String, Chez)*): Chez = chez.modifiers.DefsChez(this, defs.toMap)
+  def withExamples(examples: ujson.Value*): Chez = ExamplesChez(this, examples.toList)
 }
 
 /**
