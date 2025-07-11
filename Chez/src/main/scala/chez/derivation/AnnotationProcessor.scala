@@ -34,7 +34,7 @@ object AnnotationProcessor {
       exclusiveMaximum: Option[Double] = None,
       enumValues: Option[List[String]] = None,
       const: Option[String] = None,
-      default: Option[String] = None,
+      default: Option[String | Int | Boolean | Double] = None,
       examples: Option[List[String]] = None,
       readOnly: Option[Boolean] = None,
       writeOnly: Option[Boolean] = None,
@@ -133,6 +133,7 @@ object AnnotationProcessor {
             var minItemsOpt: Option[Int] = None
             var maxItemsOpt: Option[Int] = None
             var uniqueItemsOpt: Option[Boolean] = None
+            var defaultOpt: Option[String | Int | Boolean | Double] = None
             
             // Extract annotations from the field
             for (annotation <- fieldSymbol.annotations) {
@@ -199,6 +200,18 @@ object AnnotationProcessor {
                       uniqueItemsOpt = Some(true)
                     case _ =>
                   }
+                case "default" =>
+                  annotation match {
+                    case Apply(_, List(Literal(StringConstant(value)))) =>
+                      defaultOpt = Some(value)
+                    case Apply(_, List(Literal(IntConstant(value)))) =>
+                      defaultOpt = Some(value)
+                    case Apply(_, List(Literal(BooleanConstant(value)))) =>
+                      defaultOpt = Some(value)
+                    case Apply(_, List(Literal(DoubleConstant(value)))) =>
+                      defaultOpt = Some(value)
+                    case _ =>
+                  }
                 case _ =>
               }
             }
@@ -244,6 +257,13 @@ object AnnotationProcessor {
               case Some(value) => '{ Some(${ Expr(value) }) }
               case None => '{ None }
             }
+            val defaultExpr = defaultOpt match {
+              case Some(value: String) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+              case Some(value: Int) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+              case Some(value: Boolean) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+              case Some(value: Double) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+              case None => '{ None }
+            }
             
             '{ 
               AnnotationMetadata(
@@ -256,7 +276,8 @@ object AnnotationProcessor {
                 pattern = $patternExpr,
                 minItems = $minItemsExpr,
                 maxItems = $maxItemsExpr,
-                uniqueItems = $uniqueItemsExpr
+                uniqueItems = $uniqueItemsExpr,
+                default = $defaultExpr
               )
             }
           case None =>
@@ -309,6 +330,7 @@ object AnnotationProcessor {
     var minItemsOpt: Option[Int] = None
     var maxItemsOpt: Option[Int] = None
     var uniqueItemsOpt: Option[Boolean] = None
+    var defaultOpt: Option[String | Int | Boolean | Double] = None
     
     // Extract annotations from the field
     for (annotation <- fieldSymbol.annotations) {
@@ -375,6 +397,18 @@ object AnnotationProcessor {
               uniqueItemsOpt = Some(true)
             case _ =>
           }
+        case "default" =>
+          annotation match {
+            case Apply(_, List(Literal(StringConstant(value)))) =>
+              defaultOpt = Some(value)
+            case Apply(_, List(Literal(IntConstant(value)))) =>
+              defaultOpt = Some(value)
+            case Apply(_, List(Literal(BooleanConstant(value)))) =>
+              defaultOpt = Some(value)
+            case Apply(_, List(Literal(DoubleConstant(value)))) =>
+              defaultOpt = Some(value)
+            case _ =>
+          }
         case _ =>
       }
     }
@@ -420,6 +454,13 @@ object AnnotationProcessor {
       case Some(value) => '{ Some(${ Expr(value) }) }
       case None => '{ None }
     }
+    val defaultExpr = defaultOpt match {
+      case Some(value: String) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+      case Some(value: Int) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+      case Some(value: Boolean) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+      case Some(value: Double) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+      case None => '{ None }
+    }
     
     '{ 
       AnnotationMetadata(
@@ -432,7 +473,8 @@ object AnnotationProcessor {
         pattern = $patternExpr,
         minItems = $minItemsExpr,
         maxItems = $maxItemsExpr,
-        uniqueItems = $uniqueItemsExpr
+        uniqueItems = $uniqueItemsExpr,
+        default = $defaultExpr
       )
     }
   }
@@ -485,6 +527,17 @@ object AnnotationProcessor {
     // Apply general metadata AFTER type-specific metadata
     metadata.title.foreach(title => result = result.withTitle(title))
     metadata.description.foreach(desc => result = result.withDescription(desc))
+
+    // Apply default values
+    metadata.default.foreach { defaultValue =>
+      val ujsonDefault = defaultValue match {
+        case s: String => ujson.Str(s)
+        case i: Int => ujson.Num(i)
+        case b: Boolean => ujson.Bool(b)
+        case d: Double => ujson.Num(d)
+      }
+      result = result.withDefault(ujsonDefault)
+    }
 
     // Apply examples if present
     metadata.examples.foreach { examples =>
