@@ -118,7 +118,7 @@ object PathsGenerator {
         in = "path",
         required = Some(true),
         description = Some(s"Path parameter: $name"),
-        schema = paramsSchema.map(SchemaConverter.convertChezToOpenAPISchema)
+        schema = paramsSchema.map(_.toJsonSchema)
       )
     )
   }
@@ -134,7 +134,7 @@ object PathsGenerator {
         name = "query",
         in = "query", 
         description = Some("Query parameters"),
-        schema = Some(SchemaConverter.convertChezToOpenAPISchema(querySchema))
+        schema = Some(querySchema.toJsonSchema)
       )
     )
   }
@@ -149,7 +149,7 @@ object PathsGenerator {
         name = "headers",
         in = "header",
         description = Some("Custom headers"),
-        schema = Some(SchemaConverter.convertChezToOpenAPISchema(headersSchema))
+        schema = Some(headersSchema.toJsonSchema)
       )
     )
   }
@@ -162,7 +162,7 @@ object PathsGenerator {
       description = Some("Request body"),
       content = Map(
         "application/json" -> MediaTypeObject(
-          schema = Some(SchemaConverter.convertChezToOpenAPISchema(bodySchema))
+          schema = Some(bodySchema.toJsonSchema)
         )
       ),
       required = Some(true)
@@ -178,7 +178,7 @@ object PathsGenerator {
         description = apiResponse.description,
         content = Some(Map(
           "application/json" -> MediaTypeObject(
-            schema = Some(SchemaConverter.convertChezToOpenAPISchema(apiResponse.schema))
+            schema = Some(apiResponse.schema.toJsonSchema)
           )
         )),
         headers = apiResponse.headers.map(convertHeadersSchema)
@@ -199,7 +199,7 @@ object PathsGenerator {
     Map(
       "X-Custom-Header" -> HeaderObject(
         description = Some("Custom response header"),
-        schema = Some(SchemaConverter.convertChezToOpenAPISchema(headersSchema))
+        schema = Some(headersSchema.toJsonSchema)
       )
     )
   }

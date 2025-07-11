@@ -53,7 +53,7 @@ case class ParameterObject(
     style: Option[String] = None,
     explode: Option[Boolean] = None,
     allowReserved: Option[Boolean] = None,
-    schema: Option[SchemaObject] = None,
+    schema: Option[ujson.Value] = None,
     example: Option[ujson.Value] = None,
     examples: Option[Map[String, ExampleObject]] = None,
     // Content-based parameters

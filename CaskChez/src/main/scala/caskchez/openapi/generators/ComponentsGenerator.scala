@@ -33,14 +33,14 @@ object ComponentsGenerator {
   /**
    * Extract and deduplicate schemas from all routes
    */
-  private def extractSchemas(allRoutes: Map[String, RouteSchema]): Option[Map[String, SchemaObject]] = {
+  private def extractSchemas(allRoutes: Map[String, RouteSchema]): Option[Map[String, ujson.Value]] = {
     val allSchemas = collectAllChezSchemas(allRoutes)
     val deduplicatedSchemas = deduplicateSchemas(allSchemas)
     val namedSchemas = generateSchemaNames(deduplicatedSchemas)
 
     if (namedSchemas.nonEmpty) {
       Some(namedSchemas.map { case (name, chez) =>
-        name -> SchemaConverter.convertChezToOpenAPISchema(chez)
+        name -> chez.toJsonSchema  // Direct JSON Schema, no wrapper
       })
     } else None
   }
@@ -116,7 +116,7 @@ object ComponentsGenerator {
           content = Some(
             Map(
               "application/json" -> MediaTypeObject(
-                schema = Some(SchemaConverter.convertChezToOpenAPISchema(response.schema))
+                schema = Some(response.schema.toJsonSchema)
               )
             )
           )

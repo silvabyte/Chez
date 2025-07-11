@@ -47,10 +47,10 @@ type ChezType[C <: Chez] = C match {
 }
 
 /**
- * Type-level computation for object types This is a simplified version - in practice we'd use more sophisticated type-level
- * programming
+ * Type-level computation for object types
+ * Maps ObjectChez to Map[String, Any] for integration with ObjectReadWriter
  */
-type ChezObjectType[C <: ObjectChez] = Any // For now, we'll use Any and improve later
+type ChezObjectType[C <: ObjectChez] = Map[String, Any]
 
 /**
  * Type-level computation for anyOf types This uses Scala 3's union types
