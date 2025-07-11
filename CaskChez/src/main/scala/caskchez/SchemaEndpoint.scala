@@ -37,11 +37,12 @@ object chez {
   class post(val path: String, routeSchema: RouteSchema)
     extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
     
+    // Register this route immediately when the class is instantiated
+    RouteSchemaRegistry.register(path, "POST", routeSchema)
+    
     val methods = Seq("post")
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
-      // Automatically register this route in the schema registry
-      RouteSchemaRegistry.register(path, "POST", routeSchema)
       
       try {
         // Validate the complete request against the route schema
@@ -99,11 +100,12 @@ object chez {
   class get(val path: String, routeSchema: RouteSchema)
     extends cask.HttpEndpoint[String, Seq[String]] {
     
+    // Register this route immediately when the class is instantiated
+    RouteSchemaRegistry.register(path, "GET", routeSchema)
+    
     val methods = Seq("get")
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
-      // Automatically register this route in the schema registry
-      RouteSchemaRegistry.register(path, "GET", routeSchema)
       
       try {
         // Validate the complete request against the route schema (query params, headers, path params)
@@ -150,11 +152,12 @@ object chez {
   class put(val path: String, routeSchema: RouteSchema)
     extends cask.HttpEndpoint[String, Seq[String]] {
     
+    // Register this route immediately when the class is instantiated
+    RouteSchemaRegistry.register(path, "PUT", routeSchema)
+    
     val methods = Seq("put")
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
-      // Automatically register this route in the schema registry
-      RouteSchemaRegistry.register(path, "PUT", routeSchema)
       
       try {
         // Validate the complete request against the route schema
@@ -201,11 +204,12 @@ object chez {
   class patch(val path: String, routeSchema: RouteSchema)
     extends cask.HttpEndpoint[String, Seq[String]] {
     
+    // Register this route immediately when the class is instantiated
+    RouteSchemaRegistry.register(path, "PATCH", routeSchema)
+    
     val methods = Seq("patch")
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
-      // Automatically register this route in the schema registry
-      RouteSchemaRegistry.register(path, "PATCH", routeSchema)
       
       try {
         // Validate the complete request against the route schema
@@ -252,11 +256,12 @@ object chez {
   class delete(val path: String, routeSchema: RouteSchema)
     extends cask.HttpEndpoint[String, Seq[String]] {
     
+    // Register this route immediately when the class is instantiated
+    RouteSchemaRegistry.register(path, "DELETE", routeSchema)
+    
     val methods = Seq("delete")
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
-      // Automatically register this route in the schema registry
-      RouteSchemaRegistry.register(path, "DELETE", routeSchema)
       
       try {
         // Validate the complete request against the route schema (usually query params, headers, path params)

@@ -45,7 +45,7 @@ object FinalExample extends cask.MainRoutes {
   val createUserRouteSchema = RouteSchema(
     summary = Some("Create a new user"),
     description = Some("Creates a new user with validation for name, email, and age"),
-    tags = List("users", "creation"),
+    tags = List("users"),
     body = Some(createUserBodySchema),
     responses = Map(
       201 -> ApiResponse("User created successfully", userResponseSchema),
@@ -54,26 +54,45 @@ object FinalExample extends cask.MainRoutes {
     )
   )
 
-  // Regular endpoints
-  @cask.get("/")
+  @chez.get(
+    "/",
+    RouteSchema(
+      responses = Map(
+        200 -> ApiResponse("Hello", Chez.String())
+      )
+    )
+  )
   def hello(): String = "Hello from Final CaskChez Example!"
 
-  @cask.get("/health")
-  def health(): ujson.Value = {
-    ujson.Obj(
-      "status" -> "healthy",
-      "timestamp" -> System.currentTimeMillis(),
-      "service" -> "Final CaskChez Example",
-      "approach" -> "Custom endpoints with automatic validation"
+  @chez.get(
+    "/health",
+    RouteSchema(
+      responses = Map(
+        200 -> ApiResponse(
+          "Healthy",
+          Chez.Object(
+            "status" -> Chez.String(),
+            "timestamp" -> Chez.Integer(),
+            "service" -> Chez.String(),
+            "approach" -> Chez.String()
+          )
+        )
+      )
+    )
+  )
+  def health(): String = {
+    write(
+      ujson.Obj(
+        "status" -> "healthy",
+        "timestamp" -> System.currentTimeMillis(),
+        "service" -> "Final CaskChez Example",
+        "approach" -> "Custom endpoints with automatic validation"
+      )
     )
   }
 
-  // Ultimate unified API: Complete Fastify-like route schema with direct typed data injection
   @chez.post("/users", createUserRouteSchema)
   def createUser(validatedRequest: ValidatedRequest): cask.Response[String] = {
-    // Clean API with automatic validation and typed data access
-    // Validates: headers, body, query params, path params
-    // Provides: full schema documentation, automatic OpenAPI generation
     validatedRequest.getBody[CreateUserRequest] match {
       case Right(userData) =>
         val response = UserResponse(
@@ -102,25 +121,33 @@ object FinalExample extends cask.MainRoutes {
     }
   }
 
-  // Schema introspection
+  // Schema introspection - dynamically shows all registered schemas
   @cask.get("/schemas")
   def getSchemas(): ujson.Value = {
-    ujson.Obj(
-      "createUserRoute" -> ujson.Obj(
-        "summary" -> createUserRouteSchema.summary.getOrElse(""),
-        "description" -> createUserRouteSchema.description.getOrElse(""),
-        "tags" -> ujson.Arr(createUserRouteSchema.tags.map(ujson.Str.apply)*),
-        "bodySchema" -> createUserBodySchema.toJsonSchema,
+    val routes = RouteSchemaRegistry.getAll
+    val schemasList = routes.map { case (key, schema) =>
+      key -> ujson.Obj(
+        "summary" -> schema.summary.getOrElse(""),
+        "description" -> schema.description.getOrElse(""),
+        "tags" -> ujson.Arr(schema.tags.map(ujson.Str.apply)*),
+        "bodySchema" -> schema.body.map(_.toJsonSchema).getOrElse(ujson.Null),
+        "querySchema" -> schema.query.map(_.toJsonSchema).getOrElse(ujson.Null),
+        "headersSchema" -> schema.headers.map(_.toJsonSchema).getOrElse(ujson.Null),
+        "paramsSchema" -> schema.params.map(_.toJsonSchema).getOrElse(ujson.Null),
         "responses" -> ujson.Obj.from(
-          createUserRouteSchema.responses.map { case (code, response) =>
+          schema.responses.map { case (code, response) =>
             code.toString -> ujson.Obj(
               "description" -> response.description,
               "schema" -> response.schema.toJsonSchema
             )
           }
         )
-      ),
-      "description" -> "Complete route schema used for user creation validation"
+      )
+    }
+    ujson.Obj(
+      "schemas" -> ujson.Obj.from(schemasList),
+      "totalSchemas" -> routes.size,
+      "description" -> "Complete schemas for all registered routes with validation details"
     )
   }
 
