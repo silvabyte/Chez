@@ -4,8 +4,8 @@ import upickle.default.*
 import ujson.*
 import chez.*
 import chez.complex.ObjectChez
+import chez.complex.ArrayChez
 import chez.primitives.*
-import scala.util.{Try, Success, Failure}
 
 /**
  * ReadWriter generation for ObjectChez schemas
@@ -98,7 +98,7 @@ object ObjectReadWriter {
   /**
    * Write a value using a specific Chez schema (recursive)
    */
-  private def writeValueWithSchema(value: Any, schema: Chez): ujson.Value = {
+  def writeValueWithSchema(value: Any, schema: Chez): ujson.Value = {
     schema match {
       case _: StringChez => 
         value match {
@@ -137,6 +137,13 @@ object ObjectReadWriter {
           case _ => throw new RuntimeException(s"Expected Map[String, Any] for object, got ${value.getClass.getSimpleName}")
         }
         
+      case arraySchema: ArrayChez[?] =>
+        value match {
+          case list: List[Any] @unchecked =>
+            ujson.Arr(list.map(item => writeValueWithSchema(item, arraySchema.items))*)
+          case _ => throw new RuntimeException(s"Expected List[Any] for array, got ${value.getClass.getSimpleName}")
+        }
+        
       case _ =>
         // For unsupported schema types, convert value to ujson.Value based on its runtime type
         value match {
@@ -166,7 +173,7 @@ object ObjectReadWriter {
   /**
    * Read a value using a specific Chez schema (recursive)
    */
-  private def readValueWithSchema(json: ujson.Value, schema: Chez): Any = {
+  def readValueWithSchema(json: ujson.Value, schema: Chez): Any = {
     schema match {
       case _: StringChez =>
         json.str
@@ -186,6 +193,14 @@ object ObjectReadWriter {
       case objSchema: ObjectChez =>
         val objInfo = ObjectAnalysis.analyzeObjectSchema(objSchema)
         readObjectFromJson(json, objInfo)
+        
+      case arraySchema: ArrayChez[?] =>
+        json match {
+          case arr: ujson.Arr =>
+            arr.arr.map(itemJson => readValueWithSchema(itemJson, arraySchema.items)).toList
+          case _ =>
+            throw new RuntimeException(s"Expected JSON array, got ${json.getClass.getSimpleName}")
+        }
       
       // Handle optional wrappers by unwrapping to underlying schema
       case OptionalChez(underlying) =>
@@ -209,7 +224,6 @@ object ObjectReadWriter {
           case ujson.Null => null
           case arr: ujson.Arr => arr.arr.toList
           case obj: ujson.Obj => obj.value.toMap
-          case _ => json // fallback to raw JSON
         }
     }
   }

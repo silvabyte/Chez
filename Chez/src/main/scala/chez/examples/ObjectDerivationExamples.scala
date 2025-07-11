@@ -5,7 +5,6 @@ import chez.*
 import chez.complex.ObjectChez
 import chez.primitives.*
 import chez.derivation.*
-import scala.util.{Try, Success, Failure}
 
 /**
  * Examples demonstrating automatic ReadWriter derivation for ObjectChez schemas

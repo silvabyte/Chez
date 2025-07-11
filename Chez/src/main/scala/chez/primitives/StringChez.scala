@@ -83,7 +83,9 @@ case class StringChez(
         case "date"      => value.matches("""^\d{4}-\d{2}-\d{2}$""")
         case "time"      => value.matches("""^\d{2}:\d{2}:\d{2}$""")
         case "date-time" => value.matches("""^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}""")
-        case _           => true // Unknown formats are not validated
+        // TODO: add support for more formats, enable custom format registration as well
+        // TODO: maybe change format to enum to provide type safety and expected behavior
+        case _ => true // Unknown formats are not validated
       }
 
       if (!isValid) {
