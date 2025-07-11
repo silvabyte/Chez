@@ -3,18 +3,16 @@ package chez.derivation
 import upickle.default.*
 import chez.*
 import chez.primitives.*
-import chez.complex.ObjectChez
-import chez.complex.ArrayChez
 
 /**
  * Core ReadWriter derivation functionality for Chez schemas
  * 
  * This module provides automatic derivation of upickle ReadWriter instances
- * from Chez schema definitions, eliminating the need for manual ReadWriter creation.
+ * from Chez schema definitions, working in conjunction with the Mirror-based
+ * Schema derivation for complete type safety.
  * 
- * Phase 1: Primitive types (String, Number, Integer, Boolean)
- * Phase 2: Complex types (Object)
- * Phase 3: Array and modifier types
+ * With Mirror-based derivation, this is primarily used for primitive types
+ * as case classes get their ReadWriter via `derives ReadWriter`.
  */
 object ReadWriterDerivation {
   
@@ -22,8 +20,7 @@ object ReadWriterDerivation {
    * Derive ReadWriter for StringChez schemas
    */
   def deriveStringReadWriter(schema: StringChez): ReadWriter[String] = {
-    // For now, use basic string ReadWriter
-    // Future enhancement: Add validation during deserialization
+    // Basic string ReadWriter with potential for future validation
     readwriter[ujson.Value].bimap[String](
       // Writer: String -> ujson.Value
       str => ujson.Str(str),
@@ -79,33 +76,17 @@ object ReadWriterDerivation {
       _ => null
     )
   }
-  
-  /**
-   * Derive ReadWriter for ObjectChez schemas
-   * Returns ReadWriter[Map[String, Any]] for type-safe object handling
-   */
-  def deriveObjectReadWriter(schema: ObjectChez): ReadWriter[Map[String, Any]] = {
-    ObjectReadWriter.deriveObjectReadWriter(schema)
-  }
-  
-  /**
-   * Derive ReadWriter for ArrayChez schemas
-   * Returns ReadWriter[List[Any]] for type-safe array handling
-   */
-  def deriveArrayReadWriter(schema: ArrayChez[?]): ReadWriter[List[Any]] = {
-    ArrayReadWriter.deriveArrayReadWriterRecursive(schema)
-  }
 }
 
 /**
- * Extension methods to add deriveReadWriter to all Chez types
+ * Extension methods to add deriveReadWriter to primitive Chez types
  */
 extension (chez: Chez) {
   /**
-   * Derive a ReadWriter instance for this schema
+   * Derive a ReadWriter instance for primitive schemas
    * 
-   * Currently supports primitive types, objects, and arrays.
-   * Additional complex type support will be added in subsequent batches.
+   * For complex types (objects, arrays), use Mirror-based Schema derivation
+   * with `case class T derives Schema, ReadWriter` instead.
    */
   def deriveReadWriter[T]: ReadWriter[T] = chez match {
     case s: StringChez => ReadWriterDerivation.deriveStringReadWriter(s).asInstanceOf[ReadWriter[T]]
@@ -113,8 +94,9 @@ extension (chez: Chez) {
     case i: IntegerChez => ReadWriterDerivation.deriveIntegerReadWriter(i).asInstanceOf[ReadWriter[T]]
     case b: BooleanChez => ReadWriterDerivation.deriveBooleanReadWriter(b).asInstanceOf[ReadWriter[T]]
     case n: NullChez => ReadWriterDerivation.deriveNullReadWriter(n).asInstanceOf[ReadWriter[T]]
-    case o: ObjectChez => ReadWriterDerivation.deriveObjectReadWriter(o).asInstanceOf[ReadWriter[T]]
-    case a: ArrayChez[?] => ReadWriterDerivation.deriveArrayReadWriter(a).asInstanceOf[ReadWriter[T]]
-    case _ => throw new UnsupportedOperationException(s"ReadWriter derivation not yet supported for ${chez.getClass.getSimpleName}")
+    case _ => throw new UnsupportedOperationException(
+      s"ReadWriter derivation for ${chez.getClass.getSimpleName} not supported. " +
+      s"Use Mirror-based derivation: case class T derives Schema, ReadWriter"
+    )
   }
 }

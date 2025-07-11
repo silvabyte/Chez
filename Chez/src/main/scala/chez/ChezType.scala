@@ -11,61 +11,26 @@ import scala.util.{Try, Success, Failure}
 /**
  * Type-level computation for mapping Chez schemas to Scala types
  *
- * This uses Scala 3's match types to provide compile-time type safety while maintaining the ability to generate JSON schemas at
- * runtime.
+ * This uses Scala 3's match types to provide compile-time type safety.
+ * For complex types, use Mirror-based Schema derivation with case classes.
  */
 type ChezType[C <: Chez] = C match {
-  // Primitive types
+  // Primitive types - fully supported
   case StringChez  => String
   case NumberChez  => Double
   case IntegerChez => Int
   case BooleanChez => Boolean
   case NullChez    => Null
 
-  // Complex types
+  // Complex types - use case classes with Mirror derivation instead
   case ArrayChez[t] => List[ChezType[t]]
-  case ObjectChez   => ChezObjectType[C]
-
-  // Composition types
-  case AnyOfChez => ChezAnyOfType[C]
-  case OneOfChez => ChezOneOfType[C]
-  case AllOfChez => ChezAllOfType[C]
-  case NotChez   => Any // Not schemas are complex to type
-
-  // Conditional types
-  case IfThenElseChez => Any // Conditional schemas are complex to type
-
-  // Reference types
-  case RefChez        => Any // References need resolution
-  case DynamicRefChez => Any // Dynamic references need resolution
-
-  // Modifiers
+  
+  // Modifiers - fully supported
   case OptionalChez[t]         => Option[ChezType[t]]
   case NullableChez[t]         => Option[ChezType[t]]
   case OptionalNullableChez[t] => Option[ChezType[t]]
   case DefaultChez[t]          => ChezType[t]
 }
-
-/**
- * Type-level computation for object types
- * Maps ObjectChez to Map[String, Any] for integration with ObjectReadWriter
- */
-type ChezObjectType[C <: ObjectChez] = Map[String, Any]
-
-/**
- * Type-level computation for anyOf types This uses Scala 3's union types
- */
-type ChezAnyOfType[C <: AnyOfChez] = Any // We'll implement proper union type handling later
-
-/**
- * Type-level computation for oneOf types This uses Scala 3's union types
- */
-type ChezOneOfType[C <: OneOfChez] = Any // We'll implement proper union type handling later
-
-/**
- * Type-level computation for allOf types This requires intersection types
- */
-type ChezAllOfType[C <: AllOfChez] = Any // We'll implement proper intersection type handling later
 
 /**
  * Extension methods for type-safe operations
