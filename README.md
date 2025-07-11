@@ -15,7 +15,6 @@
 - 🎯 **Full JSON Schema 2020-12 Compliance**: Supports all vocabularies including core, validation, meta-data, format, content, and composition
 - 🚀 **Scala 3 Powered**: Leverages match types, union types, and modern Scala 3 features
 - 🔧 **TypeBox-like API**: Familiar syntax for developers coming from TypeScript
-- 📦 **Lihaoyi Ecosystem Integration**: Seamless integration with upickle, os-lib, and other lihaoyi tools
 - 💎 **Compile-time Type Safety**: Schema definitions provide compile-time type information
 - 🌟 **Pragmatic Null Handling**: Distinguishes between optional fields and nullable values
 - 🎨 **Composition Support**: Full support for anyOf, oneOf, allOf, not, and conditional schemas
@@ -217,22 +216,7 @@ object UserAPI extends cask.MainRoutes {
 
 ### Zero Boilerplate Validation
 
-```scala
-// Before (manual validation)
-@cask.post("/users")
-def createUser(request: cask.Request) = {
-  try {
-    val json = ujson.read(request.text())
-    // Manual validation logic...
-    val name = json("name").str
-    if (name.length < 1) throw new Exception("Name too short")
-    // More validation...
-  } catch {
-    case e => cask.Response("Validation failed", 400)
-  }
-}
-
-// After (with CaskChez)
+```
 @chez.post("/users", createUserRouteSchema)
 def createUser(validatedRequest: ValidatedRequest) = {
   // Request is already validated against schema!
@@ -241,32 +225,6 @@ def createUser(validatedRequest: ValidatedRequest) = {
     case Left(error) => handleValidationError(error)
   }
 }
-```
-
-## Lihaoyi Ecosystem Integration
-
-Chez integrates seamlessly with the lihaoyi ecosystem:
-
-```scala
-// With upickle for JSON serialization
-import upickle.default.*
-
-val userJson = """{"id":"123","name":"John","email":"john@example.com"}"""
-val user = read[User](userJson)  // Type-safe deserialization
-
-// With os-lib for configuration
-val configSchema = Chez.Object(
-  "database" -> Chez.Object(
-    "host" -> Chez.String(),
-    "port" -> Chez.Integer(minimum = Some(1024), maximum = Some(65535))
-  ),
-  "server" -> Chez.Object(
-    "host" -> Chez.String(),
-    "port" -> Chez.Integer(minimum = Some(1024), maximum = Some(65535))
-  )
-)
-
-val config = configSchema.fromJsonStringUnsafe(os.read(os.pwd / "config.json"))
 ```
 
 ## Advanced Features
