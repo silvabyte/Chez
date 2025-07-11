@@ -139,7 +139,27 @@ object BasicUsage {
 
     println(s"Compliant Schema: ${compliantSchema.toJsonSchema}")
 
+    // Automatic ReadWriter Derivation
+    println("\n9. Automatic ReadWriter Derivation:")
+    demonstrateReadWriterDerivation()
+
     println("\n🎯 All examples completed successfully!")
     println("Chez provides full JSON Schema 2020-12 compliance with TypeBox-like ergonomics!")
+  }
+  
+  def demonstrateReadWriterDerivation(): Unit = {
+    import chez.derivation.*
+    import upickle.default.*
+    
+    // Derive ReadWriter automatically from schema
+    val personSchema = Chez.String()
+    given ReadWriter[String] = personSchema.deriveReadWriter[String]
+    
+    val name = "Alice"
+    val json = writeJs(name)
+    val parsed = read[String](json)
+    
+    println(s"Schema-derived ReadWriter: $name -> $json -> $parsed")
+    println(s"Automatic derivation successful: ${name == parsed}")
   }
 }

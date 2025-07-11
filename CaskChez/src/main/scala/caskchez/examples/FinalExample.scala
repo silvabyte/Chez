@@ -5,6 +5,7 @@ import _root_.chez._
 import caskchez._
 import caskchez.chez
 import caskchez.chez.ValidatedRequestReader
+import caskchez.openapi.config.OpenAPIConfig
 import upickle.default._
 
 /**
@@ -120,6 +121,10 @@ object FinalExample extends cask.MainRoutes {
         )
     }
   }
+
+  // OpenAPI 3.1.1 specification endpoint - Import issue to be resolved
+  // @chez.swagger("/openapi", OpenAPIConfig(...))
+  // def openapi(): String = ""
 
   // Schema introspection - dynamically shows all registered schemas
   @cask.get("/schemas")

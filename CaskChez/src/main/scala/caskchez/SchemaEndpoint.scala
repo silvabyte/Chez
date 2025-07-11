@@ -5,6 +5,8 @@ import cask.{Request, Response}
 import cask.router.Result
 import upickle.default.*
 import scala.reflect.ClassTag
+import caskchez.openapi.config.OpenAPIConfig
+import caskchez.openapi.endpoints.{swagger => swaggerEndpoint}
 
 /**
  * Thread-local storage for ValidatedRequest to pass data from endpoint to parameter readers
@@ -300,6 +302,13 @@ object chez {
     def wrapPathSegment(s: String): Seq[String] = Seq(s)
     type InputParser[T] = cask.endpoints.QueryParamReader[T]
   }
+  
+  /**
+   * OpenAPI 3.1.1 Swagger endpoint for automatic API documentation
+   * Usage: @chez.swagger("/openapi")
+   */
+  def swagger(path: String, config: OpenAPIConfig = OpenAPIConfig()): swaggerEndpoint = 
+    new swaggerEndpoint(path, config)
 }
 
 
