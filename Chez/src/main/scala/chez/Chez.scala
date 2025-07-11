@@ -6,6 +6,7 @@ import chez.complex.*
 import chez.composition.*
 import chez.references.*
 import chez.modifiers.*
+import chez.derivation.*
 
 /**
  * Core Chez trait - represents a JSON Schema with compile-time type information

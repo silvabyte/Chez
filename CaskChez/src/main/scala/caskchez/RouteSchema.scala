@@ -5,8 +5,8 @@ import _root_.chez.Chez
 /**
  * Core schema definition classes for CaskChez module
  *
- * This file contains the fundamental data structures for defining API route schemas
- * for use with custom Cask endpoints that provide automatic validation.
+ * This file contains the fundamental data structures for defining API route schemas for use with custom Cask endpoints that
+ * provide automatic validation.
  */
 
 /**
@@ -27,6 +27,7 @@ object SecurityRequirement {
   case class ApiKey(name: String = "apiKey", in: String = "header") extends SecurityRequirement
   case class Bearer(format: String = "JWT") extends SecurityRequirement
   case class Basic() extends SecurityRequirement
+  // TODO: add support for OAuth 2.1 dynamic client registration
   case class OAuth2(flows: Map[String, String] = Map.empty) extends SecurityRequirement
 
   def apiKey(name: String = "apiKey", in: String = "header"): ApiKey = ApiKey(name, in)
