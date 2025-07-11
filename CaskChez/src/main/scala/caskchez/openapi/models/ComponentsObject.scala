@@ -7,7 +7,7 @@ import caskchez.openapi.config.*
  * Components Object - holds reusable objects for different aspects of the OAS
  */
 case class ComponentsObject(
-    schemas: Option[Map[String, SchemaObject]] = None,
+    schemas: Option[Map[String, ujson.Value]] = None,
     responses: Option[Map[String, ResponseObject]] = None,
     parameters: Option[Map[String, ParameterObject]] = None,
     examples: Option[Map[String, ExampleObject]] = None,
@@ -38,7 +38,7 @@ case class SchemaObject(
  * Media Type Object - provides schema and examples for the media type
  */
 case class MediaTypeObject(
-    schema: Option[SchemaObject] = None,
+    schema: Option[ujson.Value] = None,
     example: Option[ujson.Value] = None,
     examples: Option[Map[String, ExampleObject]] = None, // 3.1.1 enhancement
     encoding: Option[Map[String, EncodingObject]] = None
@@ -66,7 +66,7 @@ case class HeaderObject(
     style: Option[String] = None,
     explode: Option[Boolean] = None,
     allowReserved: Option[Boolean] = None,
-    schema: Option[SchemaObject] = None,
+    schema: Option[ujson.Value] = None,
     example: Option[ujson.Value] = None,
     examples: Option[Map[String, ExampleObject]] = None,
     // Content-based headers

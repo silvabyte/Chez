@@ -1,0 +1,14 @@
+{
+  "name": "ts-sdk",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "openapi-ts": "openapi-ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@hey-api/openapi-ts": "^0.78.3"
+  }
+}

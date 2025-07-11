@@ -3,6 +3,7 @@ package chez.derivation
 import upickle.default.*
 import chez.*
 import chez.primitives.*
+import chez.complex.ObjectChez
 
 /**
  * Core ReadWriter derivation functionality for Chez schemas
@@ -11,6 +12,7 @@ import chez.primitives.*
  * from Chez schema definitions, eliminating the need for manual ReadWriter creation.
  * 
  * Phase 1: Primitive types (String, Number, Integer, Boolean)
+ * Phase 2: Complex types (Object)
  */
 object ReadWriterDerivation {
   
@@ -75,6 +77,14 @@ object ReadWriterDerivation {
       _ => null
     )
   }
+  
+  /**
+   * Derive ReadWriter for ObjectChez schemas
+   * Returns ReadWriter[Map[String, Any]] for type-safe object handling
+   */
+  def deriveObjectReadWriter(schema: ObjectChez): ReadWriter[Map[String, Any]] = {
+    ObjectReadWriter.deriveObjectReadWriter(schema)
+  }
 }
 
 /**
@@ -84,8 +94,8 @@ extension (chez: Chez) {
   /**
    * Derive a ReadWriter instance for this schema
    * 
-   * Currently supports primitive types. Object and complex type support
-   * will be added in subsequent batches.
+   * Currently supports primitive types and objects.
+   * Additional complex type support will be added in subsequent batches.
    */
   def deriveReadWriter[T]: ReadWriter[T] = chez match {
     case s: StringChez => ReadWriterDerivation.deriveStringReadWriter(s).asInstanceOf[ReadWriter[T]]
@@ -93,6 +103,7 @@ extension (chez: Chez) {
     case i: IntegerChez => ReadWriterDerivation.deriveIntegerReadWriter(i).asInstanceOf[ReadWriter[T]]
     case b: BooleanChez => ReadWriterDerivation.deriveBooleanReadWriter(b).asInstanceOf[ReadWriter[T]]
     case n: NullChez => ReadWriterDerivation.deriveNullReadWriter(n).asInstanceOf[ReadWriter[T]]
+    case o: ObjectChez => ReadWriterDerivation.deriveObjectReadWriter(o).asInstanceOf[ReadWriter[T]]
     case _ => throw new UnsupportedOperationException(s"ReadWriter derivation not yet supported for ${chez.getClass.getSimpleName}")
   }
 }

@@ -122,9 +122,17 @@ object FinalExample extends cask.MainRoutes {
     }
   }
 
-  // OpenAPI 3.1.1 specification endpoint - Import issue to be resolved
-  // @chez.swagger("/openapi", OpenAPIConfig(...))
-  // def openapi(): String = ""
+  // OpenAPI 3.1.1 specification endpoint
+  @chez.swagger(
+    "/openapi",
+    OpenAPIConfig(
+      title = "CaskChez Example API",
+      summary = Some("Demonstration of CaskChez with automatic OpenAPI generation"),
+      description = "Complete example showcasing CaskChez features with JSON Schema 2020-12 validation",
+      version = "1.0.0"
+    )
+  )
+  def openapi(): String = "" // Auto-generated OpenAPI 3.1.1 specification
 
   // Schema introspection - dynamically shows all registered schemas
   @cask.get("/schemas")

@@ -7,9 +7,9 @@ import caskchez.openapi.config.*
  * OpenAPI 3.1.1 Root Document Structure
  */
 case class OpenAPIDocument(
-    openapi: String = "3.1.1",
+    openapi: String,
     info: InfoObject,
-    jsonSchemaDialect: String = "https://json-schema.org/draft/2020-12/schema",
+    jsonSchemaDialect: String,
     servers: Option[List[ServerObject]] = None,
     paths: Option[PathsObject] = None,
     webhooks: Option[Map[String, PathItemObject]] = None,
@@ -36,7 +36,7 @@ case class InfoObject(
  * Paths Object - container for all path items
  */
 case class PathsObject(
-    paths: Map[String, PathItemObject] = Map.empty
+    paths: Map[String, PathItemObject]
 ) derives ReadWriter
 
 /**
