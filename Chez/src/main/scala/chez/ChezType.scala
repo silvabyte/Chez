@@ -11,8 +11,8 @@ import scala.util.{Try, Success, Failure}
 /**
  * Type-level computation for mapping Chez schemas to Scala types
  *
- * This uses Scala 3's match types to provide compile-time type safety.
- * For complex types, use Mirror-based Schema derivation with case classes.
+ * This uses Scala 3's match types to provide compile-time type safety. For complex types, use Mirror-based Schema derivation with
+ * case classes, see ./derivation/SchemaDerivation.scala
  */
 type ChezType[C <: Chez] = C match {
   // Primitive types - fully supported
@@ -24,7 +24,7 @@ type ChezType[C <: Chez] = C match {
 
   // Complex types - use case classes with Mirror derivation instead
   case ArrayChez[t] => List[ChezType[t]]
-  
+
   // Modifiers - fully supported
   case OptionalChez[t]         => Option[ChezType[t]]
   case NullableChez[t]         => Option[ChezType[t]]
@@ -41,6 +41,7 @@ type ChezType[C <: Chez] = C match {
  * For now, we'll implement basic operations without the complex type-level programming to get a working foundation. We'll enhance
  * this later with proper type safety.
  */
+// TODO: do we use this?
 object ChezRuntime {
 
   /**
@@ -118,6 +119,7 @@ enum ValidationError {
 /**
  * Exception thrown by unsafe operations
  */
+// TODO: do we use this?
 class ValidationException(val errors: List[ValidationError]) extends Exception {
   override def getMessage: String = {
     errors.map(_.toString).mkString(", ")
