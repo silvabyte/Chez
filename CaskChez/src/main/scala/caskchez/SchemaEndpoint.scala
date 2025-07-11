@@ -13,7 +13,7 @@ import caskchez.openapi.generators.OpenAPIGenerator
  */
 object ValidatedRequestStore {
   private val store = new ThreadLocal[ValidatedRequest]()
-  
+
   def set(request: ValidatedRequest): Unit = store.set(request)
   def get(): Option[ValidatedRequest] = Option(store.get())
   def clear(): Unit = store.remove()
@@ -21,38 +21,38 @@ object ValidatedRequestStore {
 
 /**
  * Unified custom endpoint that provides Fastify-like schema validation with complete route schema support
- * 
+ *
  * This endpoint supports:
- * - Headers validation
- * - Body validation with direct typed data injection  
- * - Query parameters validation
- * - Path parameters validation
- * - Response validation (in development mode)
- * - Automatic route registration for OpenAPI generation
+ *   - Headers validation
+ *   - Body validation with direct typed data injection
+ *   - Query parameters validation
+ *   - Path parameters validation
+ *   - Response validation (in development mode)
+ *   - Automatic route registration for OpenAPI generation
  */
-object chez {
-  
+object CaskChez {
+
   /**
-   * POST endpoint with complete route schema validation
-   * Usage: @chez.post("/path", completeRouteSchema)
+   * POST endpoint with complete route schema validation Usage: @CaskChez.post("/path", completeRouteSchema)
    */
-  class post(val path: String, routeSchema: RouteSchema)
-    extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
-    
+  class post(val path: String, routeSchema: RouteSchema) extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
+
     // Register this route immediately when the class is instantiated
     RouteSchemaRegistry.register(path, "POST", routeSchema)
-    
+
     val methods = Seq("post")
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
-      
+
+      // TODO: use Try, Success, Failure
       try {
         // Validate the complete request against the route schema
         SchemaValidator.validateRequest(ctx, routeSchema) match {
           case Right(validatedRequest) =>
             // Store validated request in thread-local storage
             ValidatedRequestStore.set(validatedRequest)
-            
+
+            // TODO: use Try, Success, Failure
             try {
               // Call the route method with all validated data available
               delegate(ctx, Map.empty).map { result =>
@@ -68,10 +68,12 @@ object chez {
         }
       } catch {
         case e: Exception =>
-          Result.Success(SchemaValidator.createErrorResponse(
-            List(caskchez.ValidationError.SchemaError(s"Validation failed: ${e.getMessage}", "/")),
-            500
-          ))
+          Result.Success(
+            SchemaValidator.createErrorResponse(
+              List(caskchez.ValidationError.SchemaError(s"Validation failed: ${e.getMessage}", "/")),
+              500
+            )
+          )
       }
     }
 
@@ -79,51 +81,52 @@ object chez {
 
     type InputParser[T] = cask.endpoints.QueryParamReader[T]
   }
-  
+
   // Parameter readers for accessing validated data in route methods
-  
+
   /**
    * Custom parameter reader for ValidatedRequest - provides access to all validated data
    */
   implicit object ValidatedRequestReader extends cask.endpoints.QueryParamReader[ValidatedRequest] {
     def arity = 0
     def read(ctx: Request, label: String, v: Seq[String]): ValidatedRequest = {
-      ValidatedRequestStore.get().getOrElse(
-        throw new RuntimeException("No ValidatedRequest available - this parameter can only be used in @chez endpoints")
-      )
+      ValidatedRequestStore
+        .get()
+        .getOrElse(
+          throw new RuntimeException("No ValidatedRequest available - this parameter can only be used in @chez endpoints")
+        )
     }
   }
-  
-  
+
   /**
-   * GET endpoint with complete route schema validation
-   * Usage: @chez.get("/path", completeRouteSchema)
+   * GET endpoint with complete route schema validation Usage: @CaskChez.get("/path", completeRouteSchema)
    */
-  class get(val path: String, routeSchema: RouteSchema)
-    extends cask.HttpEndpoint[String, Seq[String]] {
-    
+  class get(val path: String, routeSchema: RouteSchema) extends cask.HttpEndpoint[String, Seq[String]] {
+
     // Register this route immediately when the class is instantiated
     RouteSchemaRegistry.register(path, "GET", routeSchema)
-    
+
     val methods = Seq("get")
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
-      
+
+      // TODO: use Try, Success, Failure
       try {
         // Validate the complete request against the route schema (query params, headers, path params)
         SchemaValidator.validateRequest(ctx, routeSchema) match {
           case Right(validatedRequest) =>
             // Store validated request in thread-local storage
             ValidatedRequestStore.set(validatedRequest)
-            
+
+            // TODO: use Try, Success, Failure
             try {
               // Call the route method with all validated data available
               delegate(ctx, Map.empty).map { result =>
                 // Use the first successful response schema for status code, or default to 200
                 val statusCode = routeSchema.responses.keys.headOption match {
-                  case Some(code: Int) => code
+                  case Some(code: Int)    => code
                   case Some(code: String) => code.toIntOption.getOrElse(200)
-                  case None => 200
+                  case None               => 200
                 }
                 Response(result, statusCode = statusCode, headers = Seq("Content-Type" -> "application/json"))
               }
@@ -136,10 +139,12 @@ object chez {
         }
       } catch {
         case e: Exception =>
-          Result.Success(SchemaValidator.createErrorResponse(
-            List(caskchez.ValidationError.SchemaError(s"Validation failed: ${e.getMessage}", "/")),
-            500
-          ))
+          Result.Success(
+            SchemaValidator.createErrorResponse(
+              List(caskchez.ValidationError.SchemaError(s"Validation failed: ${e.getMessage}", "/")),
+              500
+            )
+          )
       }
     }
 
@@ -148,34 +153,34 @@ object chez {
   }
 
   /**
-   * PUT endpoint with complete route schema validation
-   * Usage: @chez.put("/path", completeRouteSchema)
+   * PUT endpoint with complete route schema validation Usage: @CaskChez.put("/path", completeRouteSchema)
    */
-  class put(val path: String, routeSchema: RouteSchema)
-    extends cask.HttpEndpoint[String, Seq[String]] {
-    
+  class put(val path: String, routeSchema: RouteSchema) extends cask.HttpEndpoint[String, Seq[String]] {
+
     // Register this route immediately when the class is instantiated
     RouteSchemaRegistry.register(path, "PUT", routeSchema)
-    
+
     val methods = Seq("put")
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
-      
+
+      // TODO: use Try, Success, Failure
       try {
         // Validate the complete request against the route schema
         SchemaValidator.validateRequest(ctx, routeSchema) match {
           case Right(validatedRequest) =>
             // Store validated request in thread-local storage
             ValidatedRequestStore.set(validatedRequest)
-            
+
+            // TODO: use Try, Success, Failure
             try {
               // Call the route method with all validated data available
               delegate(ctx, Map.empty).map { result =>
                 // Use the first successful response schema for status code, or default to 200
                 val statusCode = routeSchema.responses.keys.headOption match {
-                  case Some(code: Int) => code
+                  case Some(code: Int)    => code
                   case Some(code: String) => code.toIntOption.getOrElse(200)
-                  case None => 200
+                  case None               => 200
                 }
                 Response(result, statusCode = statusCode, headers = Seq("Content-Type" -> "application/json"))
               }
@@ -188,10 +193,12 @@ object chez {
         }
       } catch {
         case e: Exception =>
-          Result.Success(SchemaValidator.createErrorResponse(
-            List(caskchez.ValidationError.SchemaError(s"Validation failed: ${e.getMessage}", "/")),
-            500
-          ))
+          Result.Success(
+            SchemaValidator.createErrorResponse(
+              List(caskchez.ValidationError.SchemaError(s"Validation failed: ${e.getMessage}", "/")),
+              500
+            )
+          )
       }
     }
 
@@ -200,34 +207,34 @@ object chez {
   }
 
   /**
-   * PATCH endpoint with complete route schema validation
-   * Usage: @chez.patch("/path", completeRouteSchema)
+   * PATCH endpoint with complete route schema validation Usage: @CaskChez.patch("/path", completeRouteSchema)
    */
-  class patch(val path: String, routeSchema: RouteSchema)
-    extends cask.HttpEndpoint[String, Seq[String]] {
-    
+  class patch(val path: String, routeSchema: RouteSchema) extends cask.HttpEndpoint[String, Seq[String]] {
+
     // Register this route immediately when the class is instantiated
     RouteSchemaRegistry.register(path, "PATCH", routeSchema)
-    
+
     val methods = Seq("patch")
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
-      
+
+      // TODO: use Try, Success, Failure
       try {
         // Validate the complete request against the route schema
         SchemaValidator.validateRequest(ctx, routeSchema) match {
           case Right(validatedRequest) =>
             // Store validated request in thread-local storage
             ValidatedRequestStore.set(validatedRequest)
-            
+
+            // TODO: use Try, Success, Failure
             try {
               // Call the route method with all validated data available
               delegate(ctx, Map.empty).map { result =>
                 // Use the first successful response schema for status code, or default to 200
                 val statusCode = routeSchema.responses.keys.headOption match {
-                  case Some(code: Int) => code
+                  case Some(code: Int)    => code
                   case Some(code: String) => code.toIntOption.getOrElse(200)
-                  case None => 200
+                  case None               => 200
                 }
                 Response(result, statusCode = statusCode, headers = Seq("Content-Type" -> "application/json"))
               }
@@ -240,10 +247,12 @@ object chez {
         }
       } catch {
         case e: Exception =>
-          Result.Success(SchemaValidator.createErrorResponse(
-            List(caskchez.ValidationError.SchemaError(s"Validation failed: ${e.getMessage}", "/")),
-            500
-          ))
+          Result.Success(
+            SchemaValidator.createErrorResponse(
+              List(caskchez.ValidationError.SchemaError(s"Validation failed: ${e.getMessage}", "/")),
+              500
+            )
+          )
       }
     }
 
@@ -252,34 +261,34 @@ object chez {
   }
 
   /**
-   * DELETE endpoint with complete route schema validation
-   * Usage: @chez.delete("/path", completeRouteSchema)
+   * DELETE endpoint with complete route schema validation Usage: @CaskChez.delete("/path", completeRouteSchema)
    */
-  class delete(val path: String, routeSchema: RouteSchema)
-    extends cask.HttpEndpoint[String, Seq[String]] {
-    
+  class delete(val path: String, routeSchema: RouteSchema) extends cask.HttpEndpoint[String, Seq[String]] {
+
     // Register this route immediately when the class is instantiated
     RouteSchemaRegistry.register(path, "DELETE", routeSchema)
-    
+
     val methods = Seq("delete")
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
-      
+
+      // TODO: use Try, Success, Failure
       try {
         // Validate the complete request against the route schema (usually query params, headers, path params)
         SchemaValidator.validateRequest(ctx, routeSchema) match {
           case Right(validatedRequest) =>
             // Store validated request in thread-local storage
             ValidatedRequestStore.set(validatedRequest)
-            
+
+            // TODO: use Try, Success, Failure
             try {
               // Call the route method with all validated data available
               delegate(ctx, Map.empty).map { result =>
                 // Use the first successful response schema for status code, or default to 204 for DELETE
                 val statusCode = routeSchema.responses.keys.headOption match {
-                  case Some(code: Int) => code
+                  case Some(code: Int)    => code
                   case Some(code: String) => code.toIntOption.getOrElse(204)
-                  case None => 204 // No Content is typical for DELETE
+                  case None               => 204 // No Content is typical for DELETE
                 }
                 Response(result, statusCode = statusCode, headers = Seq("Content-Type" -> "application/json"))
               }
@@ -292,52 +301,60 @@ object chez {
         }
       } catch {
         case e: Exception =>
-          Result.Success(SchemaValidator.createErrorResponse(
-            List(caskchez.ValidationError.SchemaError(s"Validation failed: ${e.getMessage}", "/")),
-            500
-          ))
+          Result.Success(
+            SchemaValidator.createErrorResponse(
+              List(caskchez.ValidationError.SchemaError(s"Validation failed: ${e.getMessage}", "/")),
+              500
+            )
+          )
       }
     }
 
     def wrapPathSegment(s: String): Seq[String] = Seq(s)
     type InputParser[T] = cask.endpoints.QueryParamReader[T]
   }
-  
+
   /**
-   * OpenAPI 3.1.1 Swagger endpoint for automatic API documentation
-   * Usage: @chez.swagger("/openapi")
+   * OpenAPI 3.1.1 Swagger endpoint for automatic API documentation Usage: @CaskChez.swagger("/openapi")
    */
-  class swagger(val path: String, config: OpenAPIConfig = OpenAPIConfig())
-    extends cask.HttpEndpoint[String, Seq[String]] {
-    
+  class swagger(val path: String, config: OpenAPIConfig = OpenAPIConfig()) extends cask.HttpEndpoint[String, Seq[String]] {
+
     val methods = Seq("get")
-    
+
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
+
+      // TODO: use Try, Success, Failure
       try {
         // Generate OpenAPI document with intelligent caching
         val openAPIDoc = OpenAPIGenerator.generateDocument(config)
-        
-        Result.Success(Response(
-          data = write(openAPIDoc),
-          statusCode = 200,
-          headers = Seq(
-            "Content-Type" -> "application/json",
-            "Access-Control-Allow-Origin" -> "*",  // Enable CORS for Swagger UI
-            "Access-Control-Allow-Methods" -> "GET, OPTIONS",
-            "Access-Control-Allow-Headers" -> "Content-Type"
+
+        Result.Success(
+          Response(
+            data = write(openAPIDoc),
+            statusCode = 200,
+            headers = Seq(
+              "Content-Type" -> "application/json",
+              "Access-Control-Allow-Origin" -> "*", // Enable CORS for Swagger UI
+              "Access-Control-Allow-Methods" -> "GET, OPTIONS",
+              "Access-Control-Allow-Headers" -> "Content-Type"
+            )
           )
-        ))
+        )
       } catch {
         case e: Exception =>
-          Result.Success(Response(
-            data = write(ujson.Obj(
-              "error" -> "Failed to generate OpenAPI specification",
-              "message" -> e.getMessage,
-              "type" -> "OpenAPIGenerationError"
-            )),
-            statusCode = 500,
-            headers = Seq("Content-Type" -> "application/json")
-          ))
+          Result.Success(
+            Response(
+              data = write(
+                ujson.Obj(
+                  "error" -> "Failed to generate OpenAPI specification",
+                  "message" -> e.getMessage,
+                  "type" -> "OpenAPIGenerationError"
+                )
+              ),
+              statusCode = 500,
+              headers = Seq("Content-Type" -> "application/json")
+            )
+          )
       }
     }
 
@@ -345,5 +362,3 @@ object chez {
     type InputParser[T] = cask.endpoints.QueryParamReader[T]
   }
 }
-
-

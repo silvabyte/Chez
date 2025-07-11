@@ -3,8 +3,8 @@ package caskchez.examples
 import cask._
 import _root_.chez._
 import caskchez._
-import caskchez.chez
-import caskchez.chez.ValidatedRequestReader
+import caskchez.CaskChez
+import caskchez.CaskChez.ValidatedRequestReader
 import caskchez.openapi.config.OpenAPIConfig
 import upickle.default._
 
@@ -55,7 +55,7 @@ object FinalExample extends cask.MainRoutes {
     )
   )
 
-  @chez.get(
+  @CaskChez.get(
     "/",
     RouteSchema(
       responses = Map(
@@ -65,7 +65,7 @@ object FinalExample extends cask.MainRoutes {
   )
   def hello(): String = "Hello from Final CaskChez Example!"
 
-  @chez.get(
+  @CaskChez.get(
     "/health",
     RouteSchema(
       responses = Map(
@@ -92,7 +92,7 @@ object FinalExample extends cask.MainRoutes {
     )
   }
 
-  @chez.post("/users", createUserRouteSchema)
+  @CaskChez.post("/users", createUserRouteSchema)
   def createUser(validatedRequest: ValidatedRequest): cask.Response[String] = {
     validatedRequest.getBody[CreateUserRequest] match {
       case Right(userData) =>
@@ -123,7 +123,7 @@ object FinalExample extends cask.MainRoutes {
   }
 
   // OpenAPI 3.1.1 specification endpoint
-  @chez.swagger(
+  @CaskChez.swagger(
     "/openapi",
     OpenAPIConfig(
       title = "CaskChez Example API",

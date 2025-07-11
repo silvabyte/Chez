@@ -6,16 +6,16 @@ import chez.primitives.*
 
 /**
  * Core ReadWriter derivation functionality for Chez schemas
- * 
- * This module provides automatic derivation of upickle ReadWriter instances
- * from Chez schema definitions, working in conjunction with the Mirror-based
- * Schema derivation for complete type safety.
- * 
- * With Mirror-based derivation, this is primarily used for primitive types
- * as case classes get their ReadWriter via `derives ReadWriter`.
+ *
+ * This module provides automatic derivation of upickle ReadWriter instances from Chez schema definitions, working in conjunction
+ * with the Mirror-based Schema derivation for complete type safety.
+ *
+ * With Mirror-based derivation, this is primarily used for primitive types as case classes get their ReadWriter via `derives
+ * ReadWriter`.
  */
+//TODO: do we use or need this?
 object ReadWriterDerivation {
-  
+
   /**
    * Derive ReadWriter for StringChez schemas
    */
@@ -24,11 +24,11 @@ object ReadWriterDerivation {
     readwriter[ujson.Value].bimap[String](
       // Writer: String -> ujson.Value
       str => ujson.Str(str),
-      // Reader: ujson.Value -> String  
+      // Reader: ujson.Value -> String
       json => json.str
     )
   }
-  
+
   /**
    * Derive ReadWriter for NumberChez schemas
    */
@@ -40,7 +40,7 @@ object ReadWriterDerivation {
       json => json.num
     )
   }
-  
+
   /**
    * Derive ReadWriter for IntegerChez schemas
    */
@@ -52,7 +52,7 @@ object ReadWriterDerivation {
       json => json.num.toInt
     )
   }
-  
+
   /**
    * Derive ReadWriter for BooleanChez schemas
    */
@@ -64,7 +64,7 @@ object ReadWriterDerivation {
       json => json.bool
     )
   }
-  
+
   /**
    * Derive ReadWriter for NullChez schemas
    */
@@ -82,21 +82,23 @@ object ReadWriterDerivation {
  * Extension methods to add deriveReadWriter to primitive Chez types
  */
 extension (chez: Chez) {
+
   /**
    * Derive a ReadWriter instance for primitive schemas
-   * 
-   * For complex types (objects, arrays), use Mirror-based Schema derivation
-   * with `case class T derives Schema, ReadWriter` instead.
+   *
+   * For complex types (objects, arrays), use Mirror-based Schema derivation with `case class T derives Schema, ReadWriter`
+   * instead.
    */
   def deriveReadWriter[T]: ReadWriter[T] = chez match {
-    case s: StringChez => ReadWriterDerivation.deriveStringReadWriter(s).asInstanceOf[ReadWriter[T]]
-    case n: NumberChez => ReadWriterDerivation.deriveNumberReadWriter(n).asInstanceOf[ReadWriter[T]]
+    case s: StringChez  => ReadWriterDerivation.deriveStringReadWriter(s).asInstanceOf[ReadWriter[T]]
+    case n: NumberChez  => ReadWriterDerivation.deriveNumberReadWriter(n).asInstanceOf[ReadWriter[T]]
     case i: IntegerChez => ReadWriterDerivation.deriveIntegerReadWriter(i).asInstanceOf[ReadWriter[T]]
     case b: BooleanChez => ReadWriterDerivation.deriveBooleanReadWriter(b).asInstanceOf[ReadWriter[T]]
-    case n: NullChez => ReadWriterDerivation.deriveNullReadWriter(n).asInstanceOf[ReadWriter[T]]
-    case _ => throw new UnsupportedOperationException(
-      s"ReadWriter derivation for ${chez.getClass.getSimpleName} not supported. " +
-      s"Use Mirror-based derivation: case class T derives Schema, ReadWriter"
-    )
+    case n: NullChez    => ReadWriterDerivation.deriveNullReadWriter(n).asInstanceOf[ReadWriter[T]]
+    case _ =>
+      throw new UnsupportedOperationException(
+        s"ReadWriter derivation for ${chez.getClass.getSimpleName} not supported. " +
+          s"Use Mirror-based derivation: case class T derives Schema, ReadWriter"
+      )
   }
 }
