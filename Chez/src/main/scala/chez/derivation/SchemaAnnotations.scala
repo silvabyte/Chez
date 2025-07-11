@@ -89,9 +89,9 @@ object SchemaAnnotations {
   class const(val value: String) extends scala.annotation.StaticAnnotation
 
   /**
-   * Annotation for default value (as JSON string)
+   * Annotation for default values - supports all types via union type
    */
-  class default(val value: String) extends scala.annotation.StaticAnnotation
+  class default(val value: String | Int | Boolean | Double) extends scala.annotation.StaticAnnotation
 
   /**
    * Annotation for example values (as JSON strings)
