@@ -182,6 +182,89 @@ object Schema {
       case _: EmptyTuple => Set.empty
 
   /**
+   * Determine required fields considering both Option types, @Schema.default annotations and Scala defaults
+   * Fields are required if they are:
+   * 1. Not Option[_] types AND
+   * 2. Do not have @Schema.default annotations AND
+   * 3. Do not have Scala case class default parameters
+   */
+  inline def getRequiredFieldsWithDefaults[T, Elems <: Tuple](
+      labels: List[String], 
+      fieldAnnotations: Map[String, AnnotationProcessor.AnnotationMetadata]
+  ): Set[String] =
+    getRequiredFieldsWithDefaultsHelper[T, Elems](labels, fieldAnnotations, Set.empty, 0)
+
+  /**
+   * Helper function to determine required fields recursively
+   */
+  inline def getRequiredFieldsWithDefaultsHelper[T, Elems <: Tuple](
+      labels: List[String], 
+      fieldAnnotations: Map[String, AnnotationProcessor.AnnotationMetadata],
+      acc: Set[String],
+      fieldIndex: Int
+  ): Set[String] =
+    inline erasedValue[Elems] match
+      case _: (head *: tail) =>
+        val fieldName = labels.head
+        val newAcc = inline erasedValue[head] match
+          case _: Option[_] => 
+            // Optional fields are never required
+            acc
+          case _ => 
+            // Check if field has @Schema.default annotation
+            val hasAnnotationDefault = fieldAnnotations.get(fieldName).exists(_.default.isDefined)
+            
+            // Check if field has Scala case class default parameter
+            val hasScalaDefault = hasScalaDefaultValue[T](fieldIndex)
+            
+            if (hasAnnotationDefault || hasScalaDefault) {
+              acc
+            } else {
+              acc + fieldName
+            }
+        
+        getRequiredFieldsWithDefaultsHelper[T, tail](labels.tail, fieldAnnotations, newAcc, fieldIndex + 1)
+      case _: EmptyTuple => acc
+
+  /**
+   * Check if a field at the given index has a default value in the case class definition
+   * Uses compile-time reflection to detect Scala default parameters
+   */
+  inline def hasScalaDefaultValue[T](fieldIndex: Int): Boolean = 
+    ${ hasScalaDefaultValueImpl[T]('fieldIndex) }
+
+  /**
+   * Macro implementation to detect default values at compile time using field index
+   */
+  def hasScalaDefaultValueImpl[T: Type](fieldIndexExpr: Expr[Int])(using Quotes): Expr[Boolean] = {
+    import quotes.reflect.*
+    
+    val fieldIndex = fieldIndexExpr.valueOrAbort
+    val tpe = TypeRepr.of[T]
+    
+    try {
+      // Get the companion object
+      val companionSym = tpe.typeSymbol.companionModule
+      if (companionSym == Symbol.noSymbol) {
+        Expr(false)
+      } else {
+        // Default methods are named $lessinit$greater$default$N (1-indexed)
+        val defaultMethodName = s"$$lessinit$$greater$$default$$${fieldIndex + 1}"
+        
+        // Check if the companion object has the default method
+        val companionType = companionSym.termRef
+        val hasDefaultMethod = companionType.typeSymbol.declaredMethod(defaultMethodName).nonEmpty
+        
+        Expr(hasDefaultMethod)
+      }
+    } catch {
+      case _ => 
+        // If any reflection fails, assume no default
+        Expr(false)
+    }
+  }
+
+  /**
    * Basic Schema instances for primitive types
    */
   given Schema[String] = instance(chez.Chez.String())
