@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "created": "2025-07-12T00:00:00.000Z",
+    "updated": "2025-07-12T00:00:00.000Z",
+    "version": "1.0.0",
+    "featureName": "missing-types-implementation"
+  },
+  "problemStatement": "ScalaSchemaz (Chez) has excellent core JSON Schema derivation capabilities but is missing support for critical Scala collection types (Map, Set, Vector), enum support, sealed traits, union types, and has broken default value handling, preventing production adoption and limiting real-world usage scenarios.",
+  "why": "Current test success rate is only 95.5% (150/157 tests) with critical gaps preventing production deployment. Library users cannot use common Scala patterns like collections, enums, and ADTs, severely limiting utility. Broken default value handling and compilation failures on enums make the library unreliable for enterprise usage. This blocks adoption by teams needing robust JSON Schema generation for APIs, documentation, and validation.",
+  "successCriteria": [
+    "100% test pass rate (all 157 tests passing)",
+    "Support for Map[K,V], Set[T], Vector[T] collection types with proper JSON Schema generation",
+    "Working Scala 3 enum derivation without compilation failures",
+    "Sealed trait support with discriminated union patterns",
+    "Fixed default value handling - fields with defaults not marked as required",
+    "Either[A,B] union type support",
+    "Compile-time performance under 5 seconds for complex type derivations",
+    "Backward compatibility maintained with existing Schema[T] derivations",
+    "Production-ready documentation and examples for all supported types"
+  ],
+  "constraints": {
+    "technical": "Must maintain compile-time-only derivation (no runtime reflection), Scala 3 Mirror API limitations for advanced enum patterns, JSON Schema 2020-12 compliance required, existing annotation API must remain unchanged",
+    "business": "Zero breaking changes to existing public API, must be backward compatible with all current usage patterns, performance cannot degrade",
+    "scope": "Focus on type system completeness for production readiness - includes Map/Set/Vector collections, Scala 3 enums, sealed traits, Either types, and default value fixes. Does not include new validation features or schema composition patterns",
+    "nonGoals": "No new validation annotations, no runtime performance optimization, no changes to serialization format, no new HTTP framework integrations beyond existing CaskChez, no advanced generic type constraints beyond current capabilities"
+  },
+  "users": [
+    {
+      "persona": "Backend API Developer",
+      "goals": [
+        "Generate JSON Schema from Scala case classes for API documentation",
+        "Automatic request/response validation in HTTP endpoints",
+        "Use common Scala collections (Map, Set, Vector) in data models",
+        "Model API responses with enum values and sealed trait hierarchies"
+      ],
+      "painPoints": [
+        "Cannot use Map types in schemas causing workarounds with nested objects",
+        "Enum compilation failures block usage of type-safe status codes",
+        "Default values incorrectly marked as required in generated schemas",
+        "Missing Set support forces Array usage losing uniqueness constraints",
+        "Unable to model discriminated unions with sealed traits"
+      ],
+      "stories": [
+        "As a backend developer, I want to use Map[String, User] in my API models so that I can represent key-value relationships in JSON Schema",
+        "As a backend developer, I want enum derivation to work without compilation errors so that I can use type-safe status codes in my APIs",
+        "As a backend developer, I want default values to not be marked as required so that my API clients can omit optional fields with defaults"
+      ]
+    },
+    {
+      "persona": "Library Maintainer/DevOps Engineer",
+      "goals": [
+        "Deploy ScalaSchemaz in production environments with confidence",
+        "Maintain 100% test coverage and reliability",
+        "Ensure API stability and backward compatibility",
+        "Monitor library performance and compilation times"
+      ],
+      "painPoints": [
+        "5% test failure rate prevents production deployment",
+        "Missing critical Scala types limits library adoption",
+        "No clear roadmap for production readiness",
+        "Potential breaking changes concern existing users"
+      ],
+      "stories": [
+        "As a library maintainer, I want all tests to pass so that I can confidently deploy to production",
+        "As a library maintainer, I want backward compatibility so that existing users aren't broken by updates",
+        "As a DevOps engineer, I want fast compilation times so that CI/CD pipelines remain efficient"
+      ]
+    },
+    {
+      "persona": "Enterprise Scala Developer",
+      "goals": [
+        "Integrate JSON Schema generation into large-scale Scala applications",
+        "Use advanced Scala type system features (sealed traits, enums, collections)",
+        "Generate OpenAPI specifications from Scala types",
+        "Maintain type safety across HTTP boundaries"
+      ],
+      "painPoints": [
+        "Complex domain models cannot be represented due to missing type support",
+        "Workarounds for missing types create technical debt",
+        "Cannot use library for existing codebases with Map/Set/Vector usage",
+        "Limited confidence in library stability for enterprise use"
+      ],
+      "stories": [
+        "As an enterprise developer, I want sealed trait support so that I can model complex domain hierarchies with type safety",
+        "As an enterprise developer, I want Either[A,B] support so that I can represent error/success patterns in my API schemas",
+        "As an enterprise developer, I want Vector support so that I can use immutable collections without losing schema generation"
+      ]
+    }
+  ]
+}

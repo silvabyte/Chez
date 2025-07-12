@@ -33,3 +33,5 @@ codeloops.config.json
 .privatenode_modules/
 node_modules/
 .private
+
+planning_docs/old

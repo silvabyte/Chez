@@ -104,7 +104,7 @@ object Schema {
     }
 
     val properties = elemLabels.zip(elemSchemasWithAnnotations).toMap
-    val required = getRequiredFields[p.MirroredElemTypes](elemLabels)
+    val required = getRequiredFieldsWithDefaults[T, p.MirroredElemTypes](elemLabels, fieldAnnotations)
 
     // Create base object schema
     val baseObjectSchema = chez.Chez.Object(
