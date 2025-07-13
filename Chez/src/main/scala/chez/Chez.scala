@@ -7,6 +7,7 @@ import chez.composition.*
 import chez.references.*
 import chez.modifiers.*
 import chez.derivation.*
+import chez.validation.*
 
 /**
  * Core Chez trait - represents a JSON Schema with compile-time type information
@@ -36,6 +37,15 @@ trait Chez {
 
   // Generate JSON Schema representation
   def toJsonSchema: ujson.Value
+  
+  // Validation framework interface
+  /**
+   * Validate a ujson.Value against this schema using ValidationContext
+   * This provides the unified validation framework interface
+   */
+  def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    ValidationEngine.validate(this, value, context)
+  }
 
   // Modifier methods for chaining
   def optional: Chez = OptionalChez(this)

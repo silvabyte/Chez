@@ -88,6 +88,12 @@ test-complex:
 	@echo "🧪 Running complex type tests..."
 	./mill Chez.test chez.complex
 
+# Run validation framework tests
+.PHONY: test-validation
+test-validation:
+	@echo "🧪 Running validation framework tests..."
+	./mill Chez.test chez.validation
+
 # Run tests with coverage (if available)
 .PHONY: test-coverage
 test-coverage:
