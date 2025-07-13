@@ -12,8 +12,7 @@ case class StringChez(
     maxLength: Option[Int] = None,
     pattern: Option[String] = None,
     format: Option[String] = None,
-    const: Option[String] = None,
-    enumValues: Option[List[String]] = None
+    const: Option[String] = None
 ) extends Chez {
 
   override def toJsonSchema: ujson.Value = {
@@ -24,7 +23,6 @@ case class StringChez(
     pattern.foreach(p => schema("pattern") = ujson.Str(p))
     format.foreach(f => schema("format") = ujson.Str(f))
     const.foreach(c => schema("const") = ujson.Str(c))
-    enumValues.foreach(e => schema("enum") = ujson.Arr(e.map(ujson.Str(_))*))
 
     title.foreach(t => schema("title") = ujson.Str(t))
     description.foreach(d => schema("description") = ujson.Str(d))
@@ -67,12 +65,6 @@ case class StringChez(
       }
     }
 
-    // Enum validation
-    enumValues.foreach { e =>
-      if (!e.contains(value)) {
-        errors = chez.ValidationError.TypeMismatch(e.mkString(","), value, "/") :: errors
-      }
-    }
 
     // Format validation - this is a basic implementation...
     format.foreach { f =>

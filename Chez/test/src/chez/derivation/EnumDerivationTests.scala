@@ -397,15 +397,15 @@ object EnumDerivationTests extends TestSuite {
     }
 
     test("Mixed data type enum support (Future Enhancement)") {
-      test("Current limitation: StringChez only supports string enum values") {
-        // CURRENT BEHAVIOR: Our StringChez only supports List[String] for enumValues
-        val stringEnumSchema = Chez.String(enumValues = Some(List("red", "amber", "green")))
+      test("Current implementation: EnumChez supports string enum values") {
+        // CURRENT BEHAVIOR: EnumChez supports proper enum handling
+        val stringEnumSchema = Chez.StringEnum("red", "amber", "green")
         val json = stringEnumSchema.toJsonSchema
         
         assert(json("type").str == "string")
         assert(json.obj.contains("enum"))
         
-        // Current implementation only supports string values in String enum
+        // EnumChez properly supports string values in String enum
         val enumValues = json("enum").arr
         assert(enumValues.forall(_.isInstanceOf[ujson.Str]))
         assert(enumValues.map(_.str).toSet == Set("red", "amber", "green"))

@@ -66,7 +66,7 @@ object ComplexTypes {
         "id" -> Chez.String(),
         "username" -> Chez.String(minLength = Some(3)),
         "email" -> Chez.String(format = Some("email")),
-        "role" -> Chez.String(enumValues = Some(List("user", "admin", "moderator")))
+        "role" -> Chez.StringEnum("user", "admin", "moderator")
       ),
       // Conditional properties based on role
       Chez.If(
@@ -83,7 +83,7 @@ object ComplexTypes {
           elseSchema = Chez.Object(
             "preferences" -> Chez
               .Object(
-                "theme" -> Chez.String(enumValues = Some(List("light", "dark"))).optional,
+                "theme" -> Chez.StringEnum("light", "dark").optional,
                 "notifications" -> Chez.Boolean().optional
               )
               .optional
@@ -101,7 +101,7 @@ object ComplexTypes {
       // Fixed properties
       properties = Map(
         "version" -> Chez.String(pattern = Some("^\\d+\\.\\d+\\.\\d+$")),
-        "environment" -> Chez.String(enumValues = Some(List("dev", "staging", "prod")))
+        "environment" -> Chez.StringEnum("dev", "staging", "prod")
       ),
       // Pattern properties for dynamic configuration
       patternProperties = Map(
@@ -264,7 +264,7 @@ object ComplexTypes {
       "content" -> Chez.String(),
       "checksum" -> Chez
         .Object(
-          "algorithm" -> Chez.String(enumValues = Some(List("md5", "sha1", "sha256"))),
+          "algorithm" -> Chez.StringEnum("md5", "sha1", "sha256"),
           "value" -> Chez.String()
         )
         .optional
@@ -291,7 +291,7 @@ object ComplexTypes {
             .withTitle("Price")
             .withDescription("Price in USD"),
           "category" -> Chez
-            .String(enumValues = Some(List("electronics", "clothing", "books")))
+            .StringEnum("electronics", "clothing", "books")
             .withTitle("Category")
             .withDescription("Product category")
         )

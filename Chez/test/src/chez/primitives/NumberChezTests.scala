@@ -60,13 +60,15 @@ object NumberChezTests extends TestSuite {
       assert(schema.validate(0.0).nonEmpty)
     }
     
-    test("enum validation") {
-      val schema = NumberChez(enumValues = Some(List(1.0, 2.5, 5.0)))
-      assert(schema.validate(1.0) == Nil)
-      assert(schema.validate(2.5) == Nil)
-      assert(schema.validate(5.0) == Nil)
-      assert(schema.validate(3.0).nonEmpty)
-      assert(schema.validate(0.0).nonEmpty)
+    test("enum validation - moved to EnumChez") {
+      // Note: enum validation is now handled by EnumChez, not NumberChez
+      // This test exists for backward compatibility documentation
+      val enumSchema = chez.primitives.EnumChez.fromNumbers(1.0, 2.5, 5.0)
+      assert(enumSchema.validateNumber(1.0) == Nil)
+      assert(enumSchema.validateNumber(2.5) == Nil)
+      assert(enumSchema.validateNumber(5.0) == Nil)
+      assert(enumSchema.validateNumber(3.0).nonEmpty)
+      assert(enumSchema.validateNumber(0.0).nonEmpty)
     }
     
     test("precision edge cases") {

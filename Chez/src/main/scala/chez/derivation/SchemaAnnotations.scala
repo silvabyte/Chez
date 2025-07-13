@@ -79,14 +79,14 @@ object SchemaAnnotations {
   class exclusiveMaximum(val value: Double) extends scala.annotation.StaticAnnotation
 
   /**
-   * Annotation for enumeration values
+   * Annotation for enumeration values - supports strings, numbers, and booleans
    */
-  class enumValues(val values: String*) extends scala.annotation.StaticAnnotation
+  class enumValues(val values: (String | Int | Boolean | Double | Null)*) extends scala.annotation.StaticAnnotation
 
   /**
-   * Annotation for constant value
+   * Annotation for constant value - supports strings, numbers, and booleans
    */
-  class const(val value: String) extends scala.annotation.StaticAnnotation
+  class const(val value: String | Int | Boolean | Double | Null) extends scala.annotation.StaticAnnotation
 
   /**
    * Annotation for default values - supports all types via union type

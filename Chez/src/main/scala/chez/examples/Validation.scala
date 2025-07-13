@@ -126,13 +126,13 @@ object Validation {
     // 6. Enum validation
     println("\n6. Enum Validation:")
 
-    val statusSchema = Chez.String(enumValues = Some(List("active", "inactive", "pending")))
-    val prioritySchema = Chez.Integer(enumValues = Some(List(1, 2, 3, 4, 5)))
+    val statusSchema = Chez.StringEnum("active", "inactive", "pending")
+    val prioritySchema = EnumChez.fromInts(1, 2, 3, 4, 5)
 
-    testStringValidation(statusSchema, "active", "valid status")
-    testStringValidation(statusSchema, "unknown", "invalid status")
-    testIntegerValidation(prioritySchema, 3, "valid priority")
-    testIntegerValidation(prioritySchema, 10, "invalid priority")
+    testEnumValidation(statusSchema, "active", "valid status")
+    testEnumValidation(statusSchema, "unknown", "invalid status")  
+    testEnumValidation(prioritySchema, 3, "valid priority")
+    testEnumValidation(prioritySchema, 10, "invalid priority")
 
     // 7. Nullable and optional validation
     println("\n7. Nullable and Optional Validation:")
@@ -212,7 +212,7 @@ object Validation {
         "name" -> Chez.String(minLength = Some(1), maxLength = Some(100)),
         "description" -> Chez.String(maxLength = Some(1000)).optional,
         "price" -> Chez.Number(minimum = Some(0.01), multipleOf = Some(0.01)),
-        "category" -> Chez.String(enumValues = Some(List("electronics", "clothing", "books", "food"))),
+        "category" -> Chez.StringEnum("electronics", "clothing", "books", "food"),
         "sku" -> Chez.String(pattern = Some("^[A-Z]{3}-\\d{6}$")),
         "inStock" -> Chez.Boolean(),
         "tags" -> Chez.Array(Chez.String(), maxItems = Some(10)).optional,
@@ -326,6 +326,24 @@ object Validation {
           println(s"✗ $description: Errors: ${errors.mkString(", ")}")
         }
       case _ => println(s"? $description: Cannot validate (not an ArrayChez)")
+    }
+  }
+
+  private def testEnumValidation(schema: EnumChez, value: Any, description: String): Unit = {
+    val ujsonValue = value match {
+      case s: String => ujson.Str(s)
+      case i: Int => ujson.Num(i)
+      case d: Double => ujson.Num(d)
+      case b: Boolean => if (b) ujson.True else ujson.False
+      case null => ujson.Null
+      case _ => ujson.Str(value.toString)
+    }
+    
+    val errors = schema.validate(ujsonValue)
+    if (errors.isEmpty) {
+      println(s"✓ $description: '$value' - Valid")
+    } else {
+      println(s"✗ $description: '$value' - Errors: ${errors.mkString(", ")}")
     }
   }
 }

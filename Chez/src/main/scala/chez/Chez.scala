@@ -109,9 +109,8 @@ object Chez {
       maxLength: Option[Int] = None,
       pattern: Option[String] = None,
       format: Option[String] = None,
-      const: Option[String] = None,
-      enumValues: Option[List[String]] = None
-  ): StringChez = StringChez(minLength, maxLength, pattern, format, const, enumValues)
+      const: Option[String] = None
+  ): StringChez = StringChez(minLength, maxLength, pattern, format, const)
 
   def Number(
       minimum: Option[Double] = None,
@@ -127,9 +126,8 @@ object Chez {
       exclusiveMinimum: Option[Int] = None,
       exclusiveMaximum: Option[Int] = None,
       multipleOf: Option[Int] = None,
-      const: Option[Int] = None,
-      enumValues: Option[List[Int]] = None
-  ): IntegerChez = IntegerChez(minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, const, enumValues)
+      const: Option[Int] = None
+  ): IntegerChez = IntegerChez(minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, const)
 
   def Boolean(const: Option[Boolean] = None): BooleanChez = BooleanChez(const)
 
@@ -173,4 +171,10 @@ object Chez {
   // References
   def Ref(ref: String): RefChez = RefChez(ref)
   def DynamicRef(ref: String): DynamicRefChez = DynamicRefChez(ref)
+
+  // Enum factory methods
+  def StringEnum(values: String*): EnumChez = EnumChez.fromStrings(values*)
+  def StringEnum(values: List[String]): EnumChez = EnumChez.fromStrings(values)
+  def MixedEnum(values: ujson.Value*): EnumChez = EnumChez.fromValues(values*)
+  def MixedEnum(values: List[ujson.Value]): EnumChez = EnumChez.fromValues(values)
 }

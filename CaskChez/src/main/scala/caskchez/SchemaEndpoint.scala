@@ -90,6 +90,7 @@ object CaskChez {
   implicit object ValidatedRequestReader extends cask.endpoints.QueryParamReader[ValidatedRequest] {
     def arity = 0
     def read(ctx: Request, label: String, v: Seq[String]): ValidatedRequest = {
+      // TODO: we should instead return a monad of Success or Failure.
       ValidatedRequestStore
         .get()
         .getOrElse(

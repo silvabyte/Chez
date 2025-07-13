@@ -128,8 +128,8 @@ object Schema {
     // For Scala 3 enums, we detect them by checking if all element types are singletons
     // If so, generate a string enum schema instead of trying to derive schemas for each case
     inline if (isSimpleEnum[s.MirroredElemTypes]) {
-      // Generate string enum schema for simple Scala 3 enums
-      chez.Chez.String(enumValues = Some(elemLabels))
+      // Generate enum schema for simple Scala 3 enums using EnumChez
+      chez.Chez.StringEnum(elemLabels)
     } else {
       // For complex sum types, derive schemas and use OneOf
       val elemSchemas = getElemSchemas[T, s.MirroredElemTypes]

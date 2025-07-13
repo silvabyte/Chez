@@ -21,8 +21,16 @@
       "estimatedHours": 3,
       "userStory": "As a backend API developer, I want default values to not be marked as required so that my API clients can omit optional fields with defaults",
       "contextAnalysis": {
-        "whatExists": ["getRequiredFields function in SchemaDerivation.scala", "AnnotationProcessor for @Schema.default", "Mirror.ProductOf[T] derivation"],
-        "whatsMissing": ["Default value detection logic", "Integration between annotation defaults and Scala case class defaults", "Required field filtering based on defaults"]
+        "whatExists": [
+          "getRequiredFields function in SchemaDerivation.scala",
+          "AnnotationProcessor for @Schema.default",
+          "Mirror.ProductOf[T] derivation"
+        ],
+        "whatsMissing": [
+          "Default value detection logic",
+          "Integration between annotation defaults and Scala case class defaults",
+          "Required field filtering based on defaults"
+        ]
       },
       "fileStructureChanges": {
         "newFiles": [],
@@ -36,12 +44,21 @@
         "databaseChanges": []
       },
       "technicalSpecifications": "Enhance getRequiredFields[Elems <: Tuple] to check for @Schema.default annotations via AnnotationProcessor and detect Scala case class parameter defaults using compile-time reflection. Fields should not be marked required if they have either annotation defaults or Scala defaults.",
-      "implementationConstraints": ["Must maintain compile-time-only derivation", "Cannot use runtime reflection", "Must not break existing Schema[T] derivations", "Must preserve backward compatibility"],
+      "implementationConstraints": [
+        "Must maintain compile-time-only derivation",
+        "Cannot use runtime reflection",
+        "Must not break existing Schema[T] derivations",
+        "Must preserve backward compatibility"
+      ],
       "externalDependencies": [],
-      "integrationPoints": ["AnnotationProcessor.extractAllFieldAnnotations", "Mirror.ProductOf[T] parameter introspection", "ObjectChez required field generation"],
+      "integrationPoints": [
+        "AnnotationProcessor.extractAllFieldAnnotations",
+        "Mirror.ProductOf[T] parameter introspection",
+        "ObjectChez required field generation"
+      ],
       "acceptanceCriteria": [
         "Case class with @Schema.default annotations does not mark those fields as required",
-        "Case class with Scala default parameters (field: Type = defaultValue) does not mark those fields as required", 
+        "Case class with Scala default parameters (field: Type = defaultValue) does not mark those fields as required",
         "Mixed scenarios with optional, required, and default fields work correctly",
         "DefaultAnnotationTests pass with new test cases"
       ],
@@ -52,11 +69,11 @@
       "updatedDate": "2025-07-12T00:00:00.000Z"
     },
     {
-      "id": "T2", 
+      "id": "T2",
       "title": "Fix Examples Serialization in Array and Object Schemas",
       "description": "Fix the broken examples serialization in ArrayChez and ObjectChez toJsonSchema methods to properly handle ujson.Value arrays",
       "priority": "P0",
-      "status": "pending", 
+      "status": "pending",
       "estimatedHours": 2,
       "userStory": "As a library maintainer, I want examples to serialize correctly so that generated JSON schemas include proper example values",
       "contextAnalysis": {
@@ -75,12 +92,16 @@
         "databaseChanges": []
       },
       "technicalSpecifications": "Fix examples field serialization in toJsonSchema methods to properly convert List[ujson.Value] to ujson.Arr. Ensure withExamples() method calls work correctly across test files.",
-      "implementationConstraints": ["Must maintain JSON Schema 2020-12 compliance", "Cannot break existing API", "Must work with upickle ujson.Value types"],
+      "implementationConstraints": [
+        "Must maintain JSON Schema 2020-12 compliance",
+        "Cannot break existing API",
+        "Must work with upickle ujson.Value types"
+      ],
       "externalDependencies": ["upickle ujson"],
       "integrationPoints": ["Base Chez trait examples field", "withExamples modifier method", "JSON Schema output generation"],
       "acceptanceCriteria": [
         "ArrayChez examples serialize as valid JSON array",
-        "ObjectChez examples serialize as valid JSON array", 
+        "ObjectChez examples serialize as valid JSON array",
         "withExamples() calls in test files work without errors",
         "ArrayChezTests examples serialization tests pass"
       ],
@@ -99,7 +120,11 @@
       "estimatedHours": 4,
       "userStory": "As a backend API developer, I want to use Map[String, User] in my API models so that I can represent key-value relationships in JSON Schema",
       "contextAnalysis": {
-        "whatExists": ["Schema derivation system with given instances", "ObjectChez with additionalProperties and patternProperties support", "Existing given instances for primitives and List"],
+        "whatExists": [
+          "Schema derivation system with given instances",
+          "ObjectChez with additionalProperties and patternProperties support",
+          "Existing given instances for primitives and List"
+        ],
         "whatsMissing": ["given instance for Map[K,V]", "Logic to handle different key types", "Tests for Map derivation"]
       },
       "fileStructureChanges": {
@@ -114,7 +139,11 @@
         "databaseChanges": []
       },
       "technicalSpecifications": "Implement given instance: Map[String, V] maps to ObjectChez(additionalProperties = Some(V.schema)), Map[K, V] where K != String maps to ObjectChez(patternProperties = Map('.*' -> V.schema), description = Some('Map with K keys')). Use type-level checks to determine key type.",
-      "implementationConstraints": ["Must integrate with existing Schema derivation system", "Cannot break existing ObjectChez functionality", "Must handle generic type parameters correctly"],
+      "implementationConstraints": [
+        "Must integrate with existing Schema derivation system",
+        "Cannot break existing ObjectChez functionality",
+        "Must handle generic type parameters correctly"
+      ],
       "externalDependencies": [],
       "integrationPoints": ["Schema[T] derivation system", "ObjectChez constructor", "Type-level programming for key type detection"],
       "acceptanceCriteria": [
@@ -126,12 +155,12 @@
       "successDefinition": "Map types can be used in case classes and generate proper JSON Schema object representations",
       "outOfScope": ["Runtime Map validation", "Map key validation beyond JSON Schema capabilities", "Complex Map serialization"],
       "dependencies": ["T1", "T2"],
-      "createdDate": "2025-07-12T00:00:00.000Z", 
+      "createdDate": "2025-07-12T00:00:00.000Z",
       "updatedDate": "2025-07-12T00:00:00.000Z"
     },
     {
       "id": "T4",
-      "title": "Implement Set[T] Schema Derivation Support", 
+      "title": "Implement Set[T] Schema Derivation Support",
       "description": "Create given Schema instance for Set[T] types that generate ArrayChez with uniqueItems=true to enforce set semantics in JSON Schema",
       "priority": "P1",
       "status": "pending",
@@ -153,7 +182,11 @@
         "databaseChanges": []
       },
       "technicalSpecifications": "Implement given instance: Set[T] maps to ArrayChez(T.schema, uniqueItems = Some(true)). Follow same pattern as existing List[T] derivation but with uniqueItems constraint.",
-      "implementationConstraints": ["Must reuse existing ArrayChez", "Cannot break List[T] derivation", "Must integrate with case class derivation"],
+      "implementationConstraints": [
+        "Must reuse existing ArrayChez",
+        "Cannot break List[T] derivation",
+        "Must integrate with case class derivation"
+      ],
       "externalDependencies": [],
       "integrationPoints": ["ArrayChez constructor", "Schema[T] type parameter", "Case class field derivation"],
       "acceptanceCriteria": [
@@ -172,7 +205,7 @@
       "id": "T5",
       "title": "Implement Vector[T] Schema Derivation Support",
       "description": "Create given Schema instance for Vector[T] types that generate ArrayChez identical to List[T] for immutable collection support",
-      "priority": "P1", 
+      "priority": "P1",
       "status": "pending",
       "estimatedHours": 1,
       "userStory": "As an enterprise developer, I want Vector support so that I can use immutable collections without losing schema generation",
@@ -215,7 +248,11 @@
       "estimatedHours": 4,
       "userStory": "As a backend developer, I want enum derivation to work without compilation errors so that I can use type-safe status codes in my APIs",
       "contextAnalysis": {
-        "whatExists": ["Mirror.SumOf[T] derivation in deriveSumWithAnnotations", "StringChez with enumValues support", "Compile-time reflection capabilities"],
+        "whatExists": [
+          "Mirror.SumOf[T] derivation in deriveSumWithAnnotations",
+          "StringChez with enumValues support",
+          "Compile-time reflection capabilities"
+        ],
         "whatsMissing": ["Proper enum case name extraction", "Enum vs sealed trait differentiation", "StringChez enumValues generation"]
       },
       "fileStructureChanges": {
@@ -230,13 +267,17 @@
         "databaseChanges": []
       },
       "technicalSpecifications": "Enhance deriveSumWithAnnotations to detect enum types vs sealed traits using Mirror.SumOf. For enums, extract case names at compile-time and generate StringChez(enumValues = Some(caseNames)). Use constValue and compiletime reflection to get enum case names.",
-      "implementationConstraints": ["Must maintain compile-time-only derivation", "Cannot break sealed trait derivation", "Must work with Scala 3 enum syntax"],
+      "implementationConstraints": [
+        "Must maintain compile-time-only derivation",
+        "Cannot break sealed trait derivation",
+        "Must work with Scala 3 enum syntax"
+      ],
       "externalDependencies": [],
       "integrationPoints": ["Mirror.SumOf[T] type inspection", "StringChez enumValues field", "Compile-time case name extraction"],
       "acceptanceCriteria": [
         "Simple Scala 3 enum compiles without errors",
         "Enum generates StringChez with correct enumValues",
-        "Enum derivation works in case class fields", 
+        "Enum derivation works in case class fields",
         "Does not break existing sealed trait derivation"
       ],
       "successDefinition": "Scala 3 enums compile successfully and generate proper string enum JSON Schema",
@@ -250,7 +291,7 @@
       "title": "Implement Sealed Trait Discriminated Union Support",
       "description": "Enhance deriveSumWithAnnotations to generate discriminated unions using OneOfChez for sealed trait hierarchies with automatic type discriminator injection",
       "priority": "P1",
-      "status": "pending",
+      "status": "blocked",
       "estimatedHours": 4,
       "userStory": "As an enterprise developer, I want sealed trait support so that I can model complex domain hierarchies with type safety",
       "contextAnalysis": {
@@ -269,7 +310,11 @@
         "databaseChanges": []
       },
       "technicalSpecifications": "For sealed traits with case classes, generate OneOfChez where each case class gets enhanced with a 'type' field containing const value of the class name. Use Mirror.SumOf to iterate case classes and enhance their ObjectChez representations.",
-      "implementationConstraints": ["Must not break enum derivation from T6", "Must preserve existing case class derivation", "Cannot modify user-defined case classes"],
+      "implementationConstraints": [
+        "Must not break enum derivation from T6",
+        "Must preserve existing case class derivation",
+        "Cannot modify user-defined case classes"
+      ],
       "externalDependencies": [],
       "integrationPoints": ["OneOfChez constructor", "ObjectChez property enhancement", "Mirror.SumOf case iteration"],
       "acceptanceCriteria": [
@@ -282,7 +327,8 @@
       "outOfScope": ["Custom discriminator field names", "Multiple discriminator strategies", "Deep inheritance hierarchies"],
       "dependencies": ["T6"],
       "createdDate": "2025-07-12T00:00:00.000Z",
-      "updatedDate": "2025-07-12T00:00:00.000Z"
+      "updatedDate": "2025-07-12T00:00:00.000Z",
+      "blockedReason": "Depends on T15-T20 EnumChez implementation for proper enum/sealed trait distinction"
     },
     {
       "id": "T8",
@@ -308,7 +354,11 @@
         "databaseChanges": []
       },
       "technicalSpecifications": "Implement given instance: Either[A, B] maps to AnyOfChez(List(A.schema, B.schema)). Create new file UnionTypeSchemas.scala to organize union type derivations separately from collections.",
-      "implementationConstraints": ["Must integrate with existing AnyOfChez", "Cannot break case class derivation", "Must handle nested Either types"],
+      "implementationConstraints": [
+        "Must integrate with existing AnyOfChez",
+        "Cannot break case class derivation",
+        "Must handle nested Either types"
+      ],
       "externalDependencies": [],
       "integrationPoints": ["AnyOfChez constructor", "Schema type parameter resolution", "Either left/right type handling"],
       "acceptanceCriteria": [
@@ -332,7 +382,11 @@
       "estimatedHours": 3,
       "userStory": "As a library maintainer, I want comprehensive tests for collection types so that I can ensure reliability and catch regressions",
       "contextAnalysis": {
-        "whatExists": ["utest framework", "Existing derivation tests pattern in SchemaDerivationTests", "ArrayChezTests and ObjectChezTests patterns"],
+        "whatExists": [
+          "utest framework",
+          "Existing derivation tests pattern in SchemaDerivationTests",
+          "ArrayChezTests and ObjectChezTests patterns"
+        ],
         "whatsMissing": ["Collection-specific test file", "Map/Set/Vector test scenarios", "Integration tests"]
       },
       "fileStructureChanges": {
@@ -342,7 +396,13 @@
       },
       "implementationDetails": {
         "files": ["Chez/test/src/chez/derivation/CollectionDerivationTests.scala"],
-        "functions": ["Map derivation tests", "Set derivation tests", "Vector derivation tests", "nested collection tests", "case class integration tests"],
+        "functions": [
+          "Map derivation tests",
+          "Set derivation tests",
+          "Vector derivation tests",
+          "nested collection tests",
+          "case class integration tests"
+        ],
         "apiEndpoints": [],
         "databaseChanges": []
       },
@@ -388,12 +448,16 @@
         "databaseChanges": []
       },
       "technicalSpecifications": "Create utest test suite for: simple Scala 3 enums generating StringChez with enumValues, sealed traits generating OneOfChez with discriminator, case classes in sealed trait hierarchy, nested enum/sealed trait scenarios, JSON schema validation.",
-      "implementationConstraints": ["Must follow existing test patterns", "Must validate discriminator fields", "Must check enumValues arrays"],
+      "implementationConstraints": [
+        "Must follow existing test patterns",
+        "Must validate discriminator fields",
+        "Must check enumValues arrays"
+      ],
       "externalDependencies": ["utest"],
       "integrationPoints": ["Enum derivation from T6", "Sealed trait derivation from T7", "JSON schema output validation"],
       "acceptanceCriteria": [
         "Simple enum tests pass",
-        "Sealed trait discriminated union tests pass", 
+        "Sealed trait discriminated union tests pass",
         "Enum JSON schema contains correct enumValues",
         "Sealed trait JSON schema contains discriminator",
         "Nested ADT scenarios work correctly"
@@ -487,7 +551,7 @@
       "title": "Validation and Integration Testing",
       "description": "Run comprehensive test suite to ensure 100% test pass rate (157/157) and validate all new type support integrates correctly with existing functionality",
       "priority": "P0",
-      "status": "pending", 
+      "status": "pending",
       "estimatedHours": 2,
       "userStory": "As a library maintainer, I want all tests to pass so that I can confidently deploy to production",
       "contextAnalysis": {
@@ -506,7 +570,11 @@
         "databaseChanges": []
       },
       "technicalSpecifications": "Run './mill Chez.test' to execute full test suite. Validate that all 157 tests pass. Run performance checks to ensure compilation times under 5 seconds. Validate backward compatibility with existing Schema[T] usage.",
-      "implementationConstraints": ["All existing tests must continue to pass", "Cannot break existing API", "Performance must not degrade"],
+      "implementationConstraints": [
+        "All existing tests must continue to pass",
+        "Cannot break existing API",
+        "Performance must not degrade"
+      ],
       "externalDependencies": ["mill build system"],
       "integrationPoints": ["All implemented features T1-T12", "Existing Schema derivation system", "Full codebase integration"],
       "acceptanceCriteria": [
@@ -531,8 +599,17 @@
       "estimatedHours": 4,
       "userStory": "As a backend API developer, I want case class fields with Scala defaults (field: String = 'default') to not be marked as required so that my API schemas reflect the true optionality of fields",
       "contextAnalysis": {
-        "whatExists": ["hasScalaDefaultValueImpl macro stub in SchemaDerivation.scala", "getRequiredFieldsWithDefaults calling hasScalaDefaultValue", "Working @Schema.default annotation detection", "Knowledge of default method naming pattern ($lessinit$greater$default$N)"],
-        "whatsMissing": ["Proper Scala 3 macro implementation for default detection", "Compile-time reflection to access companion object methods", "Integration with Mirror.ProductOf field indexing"]
+        "whatExists": [
+          "hasScalaDefaultValueImpl macro stub in SchemaDerivation.scala",
+          "getRequiredFieldsWithDefaults calling hasScalaDefaultValue",
+          "Working @Schema.default annotation detection",
+          "Knowledge of default method naming pattern ($lessinit$greater$default$N)"
+        ],
+        "whatsMissing": [
+          "Proper Scala 3 macro implementation for default detection",
+          "Compile-time reflection to access companion object methods",
+          "Integration with Mirror.ProductOf field indexing"
+        ]
       },
       "fileStructureChanges": {
         "newFiles": [],
@@ -546,9 +623,20 @@
         "databaseChanges": []
       },
       "technicalSpecifications": "Fix the hasScalaDefaultValueImpl macro to properly detect Scala case class default methods using Scala 3 quoted reflection. The macro should: 1) Access the companion object of type T, 2) Look for methods named $lessinit$greater$default$N where N is fieldIndex+1, 3) Return true if the method exists. Use proper Symbol inspection and handle edge cases like missing companion objects.",
-      "implementationConstraints": ["Must maintain compile-time-only derivation", "Cannot use runtime reflection", "Must work with Scala 3 quoted reflection API", "Cannot break existing @Schema.default functionality", "Must handle missing companion objects gracefully"],
+      "implementationConstraints": [
+        "Must maintain compile-time-only derivation",
+        "Cannot use runtime reflection",
+        "Must work with Scala 3 quoted reflection API",
+        "Cannot break existing @Schema.default functionality",
+        "Must handle missing companion objects gracefully"
+      ],
       "externalDependencies": ["scala.quoted", "scala.compiletime"],
-      "integrationPoints": ["getRequiredFieldsWithDefaultsHelper function", "Mirror.ProductOf[T] field indexing", "Existing @Schema.default detection", "Case class companion object method inspection"],
+      "integrationPoints": [
+        "getRequiredFieldsWithDefaultsHelper function",
+        "Mirror.ProductOf[T] field indexing",
+        "Existing @Schema.default detection",
+        "Case class companion object method inspection"
+      ],
       "acceptanceCriteria": [
         "Case class with Scala default parameters (field: Type = defaultValue) does not mark those fields as required",
         "SchemaDerivationTests 'case class with default values' test passes",
@@ -557,10 +645,364 @@
         "No compilation errors with complex case class hierarchies"
       ],
       "successDefinition": "All remaining SchemaDerivationTests involving Scala case class defaults pass, bringing the total test pass rate closer to 100%",
-      "outOfScope": ["Advanced macro optimizations", "Complex inheritance scenarios", "Runtime default value extraction", "Custom default detection strategies"],
+      "outOfScope": [
+        "Advanced macro optimizations",
+        "Complex inheritance scenarios",
+        "Runtime default value extraction",
+        "Custom default detection strategies"
+      ],
       "dependencies": ["T1"],
       "createdDate": "2025-07-12T00:00:00.000Z",
       "updatedDate": "2025-07-12T00:00:00.000Z"
+    },
+    {
+      "id": "T15",
+      "title": "Create EnumChez.scala with mixed type enum support",
+      "description": "Create dedicated EnumChez class to handle both string-only and mixed data type enums, replacing enum functionality currently in StringChez",
+      "priority": "P1",
+      "status": "pending",
+      "estimatedHours": 4,
+      "userStory": "As a schema developer, I want to create enums with mixed data types like [\"red\", null, 42], so that I can represent complex JSON Schema enum constraints",
+      "contextAnalysis": {
+        "whatExists": [
+          "StringChez with enumValues: Option[List[String]]",
+          "Enum derivation in SchemaDerivation.scala (T6)",
+          "EnumDerivationTests.scala with roadmap (lines 531-557)",
+          "ujson.Value for JSON representation"
+        ],
+        "whatsMissing": [
+          "Dedicated EnumChez class",
+          "Mixed type enum support (List[ujson.Value])",
+          "Factory methods for enum creation",
+          "Validation for mixed enum types"
+        ]
+      },
+      "fileStructureChanges": {
+        "newFiles": ["Chez/src/main/scala/chez/primitives/EnumChez.scala"],
+        "modifiedFiles": [],
+        "movedFiles": []
+      },
+      "implementationDetails": {
+        "files": ["Chez/src/main/scala/chez/primitives/EnumChez.scala"],
+        "functions": ["toJsonSchema: ujson.Value", "validate(value: ujson.Value): List[ValidationError]"],
+        "apiEndpoints": [],
+        "databaseChanges": []
+      },
+      "technicalSpecifications": "Create EnumChez case class with enumValues: List[ujson.Value], supporting both StringEnum(List[String]) and MixedEnum(List[ujson.Value]) variants. Follow existing Chez pattern with toJsonSchema and validate methods.",
+      "implementationConstraints": [
+        "Must maintain backward compatibility with existing StringChez enum usage",
+        "Must follow existing Chez class patterns and inheritance",
+        "Must support JSON Schema 2020-12 enum specification",
+        "Must integrate with existing validation framework"
+      ],
+      "externalDependencies": ["ujson for JSON value representation", "existing chez.ValidationError types"],
+      "integrationPoints": [
+        "Chez object factory methods",
+        "StringChez enum delegation",
+        "Schema derivation system",
+        "Validation error reporting"
+      ],
+      "acceptanceCriteria": [
+        "EnumChez generates {\"enum\": [\"val1\", \"val2\"]} for string enums",
+        "EnumChez generates {\"enum\": [\"string\", null, 42, true]} for mixed enums",
+        "Validation correctly handles string values against string enums",
+        "Validation correctly handles mixed values against mixed enums",
+        "Integrates with existing Chez trait methods"
+      ],
+      "successDefinition": "EnumChez class exists with both string-only and mixed-type support, generates correct JSON Schema, and validates enum values properly",
+      "outOfScope": [
+        "Schema derivation updates (separate task)",
+        "StringChez refactoring (separate task)",
+        "Complex type coercion rules",
+        "Custom enum value serialization"
+      ],
+      "dependencies": ["T6"],
+      "createdDate": "2025-07-13T14:20:00.000Z",
+      "updatedDate": "2025-07-13T14:20:00.000Z"
+    },
+    {
+      "id": "T16",
+      "title": "Add Chez factory methods for enum creation",
+      "description": "Add factory methods to Chez object for creating string and mixed enums: Chez.StringEnum() and Chez.MixedEnum()",
+      "priority": "P1",
+      "status": "pending",
+      "estimatedHours": 2,
+      "userStory": "As a developer, I want convenient factory methods to create enums, so that I can easily instantiate enum schemas without constructor complexity",
+      "contextAnalysis": {
+        "whatExists": [
+          "Chez object with factory methods like String(), Integer(), Boolean()",
+          "Pattern of factory methods returning Chez instances",
+          "Existing enum creation via StringChez constructor"
+        ],
+        "whatsMissing": ["Chez.StringEnum() factory method", "Chez.MixedEnum() factory method", "Convenient enum creation API"]
+      },
+      "fileStructureChanges": {
+        "newFiles": [],
+        "modifiedFiles": ["Chez/src/main/scala/chez/Chez.scala"],
+        "movedFiles": []
+      },
+      "implementationDetails": {
+        "files": ["Chez/src/main/scala/chez/Chez.scala"],
+        "functions": ["StringEnum(values: List[String]): EnumChez", "MixedEnum(values: List[ujson.Value]): EnumChez"],
+        "apiEndpoints": [],
+        "databaseChanges": []
+      },
+      "technicalSpecifications": "Add factory methods following existing pattern in Chez object. StringEnum accepts List[String], MixedEnum accepts List[ujson.Value]. Both return appropriate EnumChez instances.",
+      "implementationConstraints": [
+        "Must follow existing Chez factory method naming and pattern",
+        "Must return EnumChez instances, not raw case classes",
+        "Must maintain API consistency with other factory methods"
+      ],
+      "externalDependencies": ["EnumChez class (from T15)"],
+      "integrationPoints": ["Chez object factory method collection", "EnumChez class instantiation", "Developer API surface"],
+      "acceptanceCriteria": [
+        "Chez.StringEnum(List(\"a\", \"b\")) creates valid string enum",
+        "Chez.MixedEnum(List(ujson.Str(\"a\"), ujson.Null)) creates valid mixed enum",
+        "Factory methods integrate with existing Chez API pattern",
+        "Methods are accessible from standard import chez.*"
+      ],
+      "successDefinition": "Factory methods exist in Chez object and create appropriate EnumChez instances with correct JSON Schema output",
+      "outOfScope": ["Builder pattern for complex enum creation", "Validation of input values", "Type inference for mixed enum creation"],
+      "dependencies": ["T15"],
+      "createdDate": "2025-07-13T14:20:00.000Z",
+      "updatedDate": "2025-07-13T14:20:00.000Z"
+    },
+    {
+      "id": "T17",
+      "title": "Refactor StringChez to delegate enum handling to EnumChez",
+      "description": "Update StringChez to delegate enum functionality to EnumChez while maintaining backward compatibility",
+      "priority": "P2",
+      "status": "pending",
+      "estimatedHours": 3,
+      "userStory": "As a developer using existing StringChez enum functionality, I want the same API to continue working, so that my existing code doesn't break",
+      "contextAnalysis": {
+        "whatExists": [
+          "StringChez with enumValues: Option[List[String]] (line 16)",
+          "StringChez.toJsonSchema handles enum generation (line 27)",
+          "StringChez.validate handles enum validation (lines 71-75)",
+          "Existing code using StringChez for enums"
+        ],
+        "whatsMissing": ["Delegation pattern to EnumChez", "Backward compatibility preservation", "Clean separation of enum logic"]
+      },
+      "fileStructureChanges": {
+        "newFiles": [],
+        "modifiedFiles": ["Chez/src/main/scala/chez/primitives/StringChez.scala"],
+        "movedFiles": []
+      },
+      "implementationDetails": {
+        "files": ["Chez/src/main/scala/chez/primitives/StringChez.scala"],
+        "functions": [
+          "toJsonSchema: ujson.Value (modify to delegate enum handling)",
+          "validate(value: String): List[ValidationError] (modify enum validation)"
+        ],
+        "apiEndpoints": [],
+        "databaseChanges": []
+      },
+      "technicalSpecifications": "When StringChez has enumValues, delegate toJsonSchema and enum validation to EnumChez.StringEnum. Maintain exact same external behavior and API.",
+      "implementationConstraints": [
+        "Must maintain 100% backward compatibility",
+        "Must not change StringChez constructor or public API",
+        "Must preserve existing JSON Schema output format",
+        "Must preserve existing validation behavior"
+      ],
+      "externalDependencies": ["EnumChez from T15"],
+      "integrationPoints": ["StringChez enum functionality", "EnumChez delegation", "Existing StringChez usage throughout codebase"],
+      "acceptanceCriteria": [
+        "Existing StringChez(enumValues = Some(List(\"a\", \"b\"))) works identically",
+        "JSON Schema output is unchanged for string enums",
+        "Validation behavior is identical to current implementation",
+        "All existing tests continue to pass",
+        "No breaking changes to public API"
+      ],
+      "successDefinition": "StringChez delegates enum functionality to EnumChez while maintaining complete backward compatibility",
+      "outOfScope": ["API changes to StringChez", "Performance optimization", "Adding new StringChez functionality"],
+      "dependencies": ["T15"],
+      "createdDate": "2025-07-13T14:20:00.000Z",
+      "updatedDate": "2025-07-13T14:20:00.000Z"
+    },
+    {
+      "id": "T18",
+      "title": "Update schema derivation to use EnumChez for Scala 3 enums",
+      "description": "Modify SchemaDerivation.scala to generate EnumChez instead of StringChez for Scala 3 enum types",
+      "priority": "P2",
+      "status": "pending",
+      "estimatedHours": 2,
+      "userStory": "As a developer using derives Schema on Scala 3 enums, I want the generated schemas to use EnumChez, so that I get proper enum schema representation",
+      "contextAnalysis": {
+        "whatExists": [
+          "SchemaDerivation.deriveSum generates StringChez for simple enums (lines 125-140)",
+          "isSimpleEnum detection for Scala 3 enums (lines 145-152)",
+          "String enum generation: chez.Chez.String(enumValues = Some(elemLabels)) (line 132)"
+        ],
+        "whatsMissing": ["EnumChez usage in schema derivation", "Proper enum schema generation", "Integration with new enum system"]
+      },
+      "fileStructureChanges": {
+        "newFiles": [],
+        "modifiedFiles": ["Chez/src/main/scala/chez/derivation/SchemaDerivation.scala"],
+        "movedFiles": []
+      },
+      "implementationDetails": {
+        "files": ["Chez/src/main/scala/chez/derivation/SchemaDerivation.scala"],
+        "functions": ["deriveSum[T](s: Mirror.SumOf[T]): Chez (modify to use EnumChez)"],
+        "apiEndpoints": [],
+        "databaseChanges": []
+      },
+      "technicalSpecifications": "Replace chez.Chez.String(enumValues = Some(elemLabels)) with chez.Chez.StringEnum(elemLabels) in deriveSum method for simple enums",
+      "implementationConstraints": [
+        "Must maintain same JSON Schema output for existing enum derivation",
+        "Must not break existing enum derives Schema usage",
+        "Must preserve enum value ordering",
+        "Must maintain integration with case class derivation"
+      ],
+      "externalDependencies": ["EnumChez from T15", "Chez.StringEnum factory method from T16"],
+      "integrationPoints": ["Schema derivation system", "Scala 3 enum detection", "Mirror-based reflection", "EnumChez generation"],
+      "acceptanceCriteria": [
+        "Derived Scala 3 enums generate EnumChez instead of StringChez",
+        "JSON Schema output remains identical to current behavior",
+        "All existing EnumDerivationTests continue to pass",
+        "Enum integration with case classes works correctly"
+      ],
+      "successDefinition": "Schema derivation generates EnumChez for Scala 3 enums while maintaining exact same behavior and test compatibility",
+      "outOfScope": [
+        "Mixed enum derivation (requires annotations/configuration)",
+        "Complex enum derivation beyond simple cases",
+        "Performance optimization of derivation"
+      ],
+      "dependencies": ["T15", "T16"],
+      "createdDate": "2025-07-13T14:20:00.000Z",
+      "updatedDate": "2025-07-13T14:20:00.000Z"
+    },
+    {
+      "id": "T19",
+      "title": "Add comprehensive validation for mixed enum types",
+      "description": "Implement validation logic in EnumChez for mixed data type enums with type coercion support",
+      "priority": "P2",
+      "status": "pending",
+      "estimatedHours": 4,
+      "userStory": "As a schema validator, I want to validate values against mixed enum types, so that I can ensure data conforms to complex enum constraints",
+      "contextAnalysis": {
+        "whatExists": [
+          "StringChez validation for string enums (lines 71-75)",
+          "ValidationError types in chez package",
+          "ujson.Value type system for JSON values",
+          "Basic enum validation pattern"
+        ],
+        "whatsMissing": [
+          "Mixed type enum validation",
+          "Type coercion logic (string \"42\" vs number 42)",
+          "Comprehensive error reporting for mixed enums",
+          "Null value handling in mixed enums"
+        ]
+      },
+      "fileStructureChanges": {
+        "newFiles": [],
+        "modifiedFiles": ["Chez/src/main/scala/chez/primitives/EnumChez.scala"],
+        "movedFiles": []
+      },
+      "implementationDetails": {
+        "files": ["Chez/src/main/scala/chez/primitives/EnumChez.scala"],
+        "functions": [
+          "validate(value: ujson.Value): List[ValidationError]",
+          "validateStringEnum(value: String, allowed: List[String]): List[ValidationError]",
+          "validateMixedEnum(value: ujson.Value, allowed: List[ujson.Value]): List[ValidationError]"
+        ],
+        "apiEndpoints": [],
+        "databaseChanges": []
+      },
+      "technicalSpecifications": "Implement validation that handles string enums (exact string matching) and mixed enums (type-aware matching with optional coercion). Support null, string, number, boolean values in mixed enums.",
+      "implementationConstraints": [
+        "Must maintain existing ValidationError types and patterns",
+        "Must handle null values correctly in mixed enums",
+        "Must provide clear error messages for validation failures",
+        "Type coercion should be configurable (default: strict)"
+      ],
+      "externalDependencies": ["chez.ValidationError hierarchy", "ujson value comparison logic"],
+      "integrationPoints": ["Validation framework", "Error reporting system", "JSON value type system", "Schema validation pipeline"],
+      "acceptanceCriteria": [
+        "String enum validation works identically to StringChez",
+        "Mixed enum validation accepts matching ujson.Value types",
+        "Null values validate correctly in mixed enums",
+        "Number values (42) match correctly against number enum values",
+        "String values (\"test\") match correctly against string enum values",
+        "Clear error messages for validation failures"
+      ],
+      "successDefinition": "EnumChez validates both string and mixed enum types correctly with comprehensive error reporting",
+      "outOfScope": [
+        "Complex type coercion rules (string \"42\" to number 42)",
+        "Custom validation hooks",
+        "Performance optimization for large enum sets",
+        "Internationalized error messages"
+      ],
+      "dependencies": ["T15"],
+      "createdDate": "2025-07-13T14:20:00.000Z",
+      "updatedDate": "2025-07-13T14:20:00.000Z"
+    },
+    {
+      "id": "T20",
+      "title": "Create comprehensive EnumChez tests",
+      "description": "Create test suite for EnumChez functionality covering string enums, mixed enums, validation, and integration",
+      "priority": "P1",
+      "status": "pending",
+      "estimatedHours": 3,
+      "userStory": "As a developer, I want comprehensive tests for EnumChez, so that I can be confident the enum functionality works correctly",
+      "contextAnalysis": {
+        "whatExists": [
+          "EnumDerivationTests.scala with enum integration tests",
+          "StringChezTests.scala pattern for primitive testing",
+          "utest framework usage throughout codebase",
+          "Test patterns for validation and JSON Schema generation"
+        ],
+        "whatsMissing": [
+          "Dedicated EnumChez test file",
+          "Mixed enum type testing",
+          "Comprehensive validation testing",
+          "Factory method testing"
+        ]
+      },
+      "fileStructureChanges": {
+        "newFiles": ["Chez/test/src/chez/primitives/EnumChezTests.scala"],
+        "modifiedFiles": [],
+        "movedFiles": []
+      },
+      "implementationDetails": {
+        "files": ["Chez/test/src/chez/primitives/EnumChezTests.scala"],
+        "functions": [
+          "Test suites for StringEnum functionality",
+          "Test suites for MixedEnum functionality",
+          "Validation test cases",
+          "JSON Schema generation tests",
+          "Factory method tests"
+        ],
+        "apiEndpoints": [],
+        "databaseChanges": []
+      },
+      "technicalSpecifications": "Create comprehensive test suite using utest framework following existing test patterns. Test string enums, mixed enums, validation, JSON Schema output, and factory methods.",
+      "implementationConstraints": [
+        "Must follow existing test file patterns and structure",
+        "Must use utest framework consistently",
+        "Must test all public API methods",
+        "Must include edge cases and error conditions"
+      ],
+      "externalDependencies": ["utest testing framework", "ujson for test value creation"],
+      "integrationPoints": ["Test discovery system", "EnumChez class functionality", "Chez factory methods", "Validation framework"],
+      "acceptanceCriteria": [
+        "StringEnum tests cover JSON Schema generation and validation",
+        "MixedEnum tests cover all supported JSON value types",
+        "Validation tests cover success and failure cases",
+        "Factory method tests verify correct instantiation",
+        "Edge cases tested (empty enums, null values, type mismatches)",
+        "All tests pass and integrate with existing test suite"
+      ],
+      "successDefinition": "Comprehensive test suite exists for EnumChez with full coverage of functionality and integration with test infrastructure",
+      "outOfScope": [
+        "Performance benchmarking tests",
+        "Property-based testing",
+        "Integration tests with external systems",
+        "UI/visual testing"
+      ],
+      "dependencies": ["T15", "T16"],
+      "createdDate": "2025-07-13T14:20:00.000Z",
+      "updatedDate": "2025-07-13T14:20:00.000Z"
     }
   ],
   "dependencies": [
@@ -570,13 +1012,13 @@
       "reason": "Map implementation needs default value fixes and examples serialization working"
     },
     {
-      "from": "T4", 
+      "from": "T4",
       "to": ["T3"],
       "reason": "Set implementation should come after Map to follow complexity order"
     },
     {
       "from": "T5",
-      "to": ["T4"], 
+      "to": ["T4"],
       "reason": "Vector implementation should come after Set as simplest collection"
     },
     {
@@ -618,6 +1060,31 @@
       "from": "T13",
       "to": ["T1", "T2", "T6", "T9", "T10", "T12"],
       "reason": "Final validation requires all critical implementations and tests complete"
+    },
+    {
+      "from": "T16",
+      "to": ["T15"],
+      "reason": "Factory methods depend on EnumChez class existence"
+    },
+    {
+      "from": "T17",
+      "to": ["T15"],
+      "reason": "StringChez delegation requires EnumChez"
+    },
+    {
+      "from": "T18",
+      "to": ["T15", "T16"],
+      "reason": "Schema derivation requires EnumChez class and factory methods"
+    },
+    {
+      "from": "T19",
+      "to": ["T15"],
+      "reason": "Validation is part of EnumChez implementation"
+    },
+    {
+      "from": "T20",
+      "to": ["T15", "T16"],
+      "reason": "Tests require EnumChez class and factory methods to exist"
     }
   ]
 }

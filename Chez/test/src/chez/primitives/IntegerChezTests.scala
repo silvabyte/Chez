@@ -59,13 +59,15 @@ object IntegerChezTests extends TestSuite {
       assert(schema.validate(0).nonEmpty)
     }
     
-    test("enum validation") {
-      val schema = IntegerChez(enumValues = Some(List(1, 5, 10)))
-      assert(schema.validate(1) == Nil)
-      assert(schema.validate(5) == Nil)
-      assert(schema.validate(10) == Nil)
-      assert(schema.validate(3).nonEmpty)
-      assert(schema.validate(0).nonEmpty)
+    test("enum validation - moved to EnumChez") {
+      // Note: enum validation is now handled by EnumChez, not IntegerChez
+      // This test exists for backward compatibility documentation
+      val enumSchema = chez.primitives.EnumChez.fromInts(1, 5, 10)
+      assert(enumSchema.validateInt(1) == Nil)
+      assert(enumSchema.validateInt(5) == Nil)
+      assert(enumSchema.validateInt(10) == Nil)
+      assert(enumSchema.validateInt(3).nonEmpty)
+      assert(enumSchema.validateInt(0).nonEmpty)
     }
     
     test("combined validations") {

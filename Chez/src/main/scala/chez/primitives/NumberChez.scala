@@ -12,8 +12,7 @@ case class NumberChez(
   exclusiveMinimum: Option[Double] = None,
   exclusiveMaximum: Option[Double] = None,
   multipleOf: Option[Double] = None,
-  const: Option[Double] = None,
-  enumValues: Option[List[Double]] = None
+  const: Option[Double] = None
 ) extends Chez {
   
   override def toJsonSchema: ujson.Value = {
@@ -25,7 +24,6 @@ case class NumberChez(
     exclusiveMaximum.foreach(max => schema("exclusiveMaximum") = ujson.Num(max))
     multipleOf.foreach(mul => schema("multipleOf") = ujson.Num(mul))
     const.foreach(c => schema("const") = ujson.Num(c))
-    enumValues.foreach(e => schema("enum") = ujson.Arr(e.map(ujson.Num(_))*))
     
     title.foreach(t => schema("title") = ujson.Str(t))
     description.foreach(d => schema("description") = ujson.Str(d))
@@ -83,12 +81,6 @@ case class NumberChez(
       }
     }
     
-    // Enum validation
-    enumValues.foreach { e =>
-      if (!e.contains(value)) {
-        errors = chez.ValidationError.TypeMismatch(e.mkString(","), value.toString, "/") :: errors
-      }
-    }
     
     errors.reverse
   }

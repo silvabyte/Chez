@@ -32,8 +32,8 @@ object AnnotationProcessor {
       multipleOf: Option[Double] = None,
       exclusiveMinimum: Option[Double] = None,
       exclusiveMaximum: Option[Double] = None,
-      enumValues: Option[List[String]] = None,
-      const: Option[String] = None,
+      enumValues: Option[List[String | Int | Boolean | Double | Null]] = None,
+      const: Option[String | Int | Boolean | Double | Null] = None,
       default: Option[String | Int | Boolean | Double] = None,
       examples: Option[List[String]] = None,
       readOnly: Option[Boolean] = None,
@@ -134,6 +134,8 @@ object AnnotationProcessor {
             var maxItemsOpt: Option[Int] = None
             var uniqueItemsOpt: Option[Boolean] = None
             var defaultOpt: Option[String | Int | Boolean | Double] = None
+            var enumValuesOpt: Option[List[String | Int | Boolean | Double | Null]] = None
+            var constOpt: Option[String | Int | Boolean | Double | Null] = None
             
             // Extract annotations from the field
             for (annotation <- fieldSymbol.annotations) {
@@ -200,6 +202,33 @@ object AnnotationProcessor {
                       uniqueItemsOpt = Some(true)
                     case _ =>
                   }
+                case "enumValues" =>
+                  annotation match {
+                    case Apply(_, args) =>
+                      val values = args.collect {
+                        case Literal(StringConstant(value)) => value: String | Int | Boolean | Double | Null
+                        case Literal(IntConstant(value)) => value: String | Int | Boolean | Double | Null
+                        case Literal(BooleanConstant(value)) => value: String | Int | Boolean | Double | Null
+                        case Literal(DoubleConstant(value)) => value: String | Int | Boolean | Double | Null
+                        case Literal(NullConstant()) => null: String | Int | Boolean | Double | Null
+                      }
+                      if (values.nonEmpty) enumValuesOpt = Some(values)
+                    case _ =>
+                  }
+                case "const" =>
+                  annotation match {
+                    case Apply(_, List(Literal(StringConstant(value)))) =>
+                      constOpt = Some(value)
+                    case Apply(_, List(Literal(IntConstant(value)))) =>
+                      constOpt = Some(value)
+                    case Apply(_, List(Literal(BooleanConstant(value)))) =>
+                      constOpt = Some(value)
+                    case Apply(_, List(Literal(DoubleConstant(value)))) =>
+                      constOpt = Some(value)
+                    case Apply(_, List(Literal(NullConstant()))) =>
+                      constOpt = Some(null)
+                    case _ =>
+                  }
                 case "default" =>
                   annotation match {
                     case Apply(_, List(Literal(StringConstant(value)))) =>
@@ -257,6 +286,26 @@ object AnnotationProcessor {
               case Some(value) => '{ Some(${ Expr(value) }) }
               case None => '{ None }
             }
+            val enumValuesExpr = enumValuesOpt match {
+              case Some(values) => 
+                val valueExprs = values.map {
+                  case s: String => '{ ${ Expr(s) }: String | Int | Boolean | Double | Null }
+                  case i: Int => '{ ${ Expr(i) }: String | Int | Boolean | Double | Null }
+                  case b: Boolean => '{ ${ Expr(b) }: String | Int | Boolean | Double | Null }
+                  case d: Double => '{ ${ Expr(d) }: String | Int | Boolean | Double | Null }
+                  case null => '{ null: String | Int | Boolean | Double | Null }
+                }
+                '{ Some(List(${ Expr.ofSeq(valueExprs) }*)) }
+              case None => '{ None }
+            }
+            val constExpr = constOpt match {
+              case Some(value: String) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+              case Some(value: Int) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+              case Some(value: Boolean) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+              case Some(value: Double) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+              case Some(null) => '{ Some(null: String | Int | Boolean | Double | Null) }
+              case None => '{ None }
+            }
             val defaultExpr = defaultOpt match {
               case Some(value: String) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
               case Some(value: Int) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
@@ -277,6 +326,8 @@ object AnnotationProcessor {
                 minItems = $minItemsExpr,
                 maxItems = $maxItemsExpr,
                 uniqueItems = $uniqueItemsExpr,
+                enumValues = $enumValuesExpr,
+                const = $constExpr,
                 default = $defaultExpr
               )
             }
@@ -331,6 +382,8 @@ object AnnotationProcessor {
     var maxItemsOpt: Option[Int] = None
     var uniqueItemsOpt: Option[Boolean] = None
     var defaultOpt: Option[String | Int | Boolean | Double] = None
+    var enumValuesOpt: Option[List[String | Int | Boolean | Double | Null]] = None
+    var constOpt: Option[String | Int | Boolean | Double | Null] = None
     
     // Extract annotations from the field
     for (annotation <- fieldSymbol.annotations) {
@@ -397,6 +450,33 @@ object AnnotationProcessor {
               uniqueItemsOpt = Some(true)
             case _ =>
           }
+        case "enumValues" =>
+          annotation match {
+            case Apply(_, args) =>
+              val values = args.collect {
+                case Literal(StringConstant(value)) => value: String | Int | Boolean | Double | Null
+                case Literal(IntConstant(value)) => value: String | Int | Boolean | Double | Null
+                case Literal(BooleanConstant(value)) => value: String | Int | Boolean | Double | Null
+                case Literal(DoubleConstant(value)) => value: String | Int | Boolean | Double | Null
+                case Literal(NullConstant()) => null: String | Int | Boolean | Double | Null
+              }
+              if (values.nonEmpty) enumValuesOpt = Some(values)
+            case _ =>
+          }
+        case "const" =>
+          annotation match {
+            case Apply(_, List(Literal(StringConstant(value)))) =>
+              constOpt = Some(value)
+            case Apply(_, List(Literal(IntConstant(value)))) =>
+              constOpt = Some(value)
+            case Apply(_, List(Literal(BooleanConstant(value)))) =>
+              constOpt = Some(value)
+            case Apply(_, List(Literal(DoubleConstant(value)))) =>
+              constOpt = Some(value)
+            case Apply(_, List(Literal(NullConstant()))) =>
+              constOpt = Some(null)
+            case _ =>
+          }
         case "default" =>
           annotation match {
             case Apply(_, List(Literal(StringConstant(value)))) =>
@@ -454,6 +534,26 @@ object AnnotationProcessor {
       case Some(value) => '{ Some(${ Expr(value) }) }
       case None => '{ None }
     }
+    val enumValuesExpr = enumValuesOpt match {
+      case Some(values) => 
+        val valueExprs = values.map {
+          case s: String => '{ ${ Expr(s) }: String | Int | Boolean | Double | Null }
+          case i: Int => '{ ${ Expr(i) }: String | Int | Boolean | Double | Null }
+          case b: Boolean => '{ ${ Expr(b) }: String | Int | Boolean | Double | Null }
+          case d: Double => '{ ${ Expr(d) }: String | Int | Boolean | Double | Null }
+          case null => '{ null: String | Int | Boolean | Double | Null }
+        }
+        '{ Some(List(${ Expr.ofSeq(valueExprs) }*)) }
+      case None => '{ None }
+    }
+    val constExpr = constOpt match {
+      case Some(value: String) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+      case Some(value: Int) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+      case Some(value: Boolean) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+      case Some(value: Double) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+      case Some(null) => '{ Some(null: String | Int | Boolean | Double | Null) }
+      case None => '{ None }
+    }
     val defaultExpr = defaultOpt match {
       case Some(value: String) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
       case Some(value: Int) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
@@ -474,6 +574,8 @@ object AnnotationProcessor {
         minItems = $minItemsExpr,
         maxItems = $maxItemsExpr,
         uniqueItems = $uniqueItemsExpr,
+        enumValues = $enumValuesExpr,
+        const = $constExpr,
         default = $defaultExpr
       )
     }
@@ -485,6 +587,35 @@ object AnnotationProcessor {
   def applyMetadata(chez: Chez, metadata: AnnotationMetadata): Chez = {
     if (metadata.isEmpty) return chez
 
+    // If enumValues is specified, create an EnumChez instead
+    metadata.enumValues match {
+      case Some(values) =>
+        val ujsonValues = values.map {
+          case s: String => ujson.Str(s)
+          case i: Int => ujson.Num(i)
+          case b: Boolean => ujson.Bool(b)
+          case d: Double => ujson.Num(d)
+          case null => ujson.Null
+        }
+        var result: Chez = EnumChez(ujsonValues)
+        
+        // Apply general metadata to the enum
+        metadata.title.foreach(title => result = result.withTitle(title))
+        metadata.description.foreach(desc => result = result.withDescription(desc))
+        metadata.default.foreach { defaultValue =>
+          val ujsonDefault = defaultValue match {
+            case s: String => ujson.Str(s)
+            case i: Int => ujson.Num(i)
+            case b: Boolean => ujson.Bool(b)
+            case d: Double => ujson.Num(d)
+          }
+          result = result.withDefault(ujsonDefault)
+        }
+        
+        return result
+      case None =>
+    }
+
     // Apply format-specific metadata FIRST, before wrapping with general metadata
     var result = chez match {
       case sc: StringChez =>
@@ -493,7 +624,10 @@ object AnnotationProcessor {
         metadata.minLength.foreach(ml => enhanced = enhanced.copy(minLength = Some(ml)))
         metadata.maxLength.foreach(ml => enhanced = enhanced.copy(maxLength = Some(ml)))
         metadata.pattern.foreach(p => enhanced = enhanced.copy(pattern = Some(p)))
-        metadata.const.foreach(c => enhanced = enhanced.copy(const = Some(c)))
+        metadata.const.foreach {
+          case s: String => enhanced = enhanced.copy(const = Some(s))
+          case _ => // Non-string const values don't apply to StringChez
+        }
         enhanced
 
       case nc: NumberChez =>
@@ -503,6 +637,11 @@ object AnnotationProcessor {
         metadata.exclusiveMinimum.foreach(emin => enhanced = enhanced.copy(exclusiveMinimum = Some(emin)))
         metadata.exclusiveMaximum.foreach(emax => enhanced = enhanced.copy(exclusiveMaximum = Some(emax)))
         metadata.multipleOf.foreach(mult => enhanced = enhanced.copy(multipleOf = Some(mult)))
+        metadata.const.foreach {
+          case d: Double => enhanced = enhanced.copy(const = Some(d))
+          case i: Int => enhanced = enhanced.copy(const = Some(i.toDouble))
+          case _ => // Non-numeric const values don't apply to NumberChez
+        }
         enhanced
 
       case ic: IntegerChez =>
@@ -512,6 +651,11 @@ object AnnotationProcessor {
         metadata.exclusiveMinimum.foreach(emin => enhanced = enhanced.copy(exclusiveMinimum = Some(emin.toInt)))
         metadata.exclusiveMaximum.foreach(emax => enhanced = enhanced.copy(exclusiveMaximum = Some(emax.toInt)))
         metadata.multipleOf.foreach(mult => enhanced = enhanced.copy(multipleOf = Some(mult.toInt)))
+        metadata.const.foreach {
+          case i: Int => enhanced = enhanced.copy(const = Some(i))
+          case d: Double => enhanced = enhanced.copy(const = Some(d.toInt))
+          case _ => // Non-numeric const values don't apply to IntegerChez
+        }
         enhanced
 
       case ac: ArrayChez[_] =>

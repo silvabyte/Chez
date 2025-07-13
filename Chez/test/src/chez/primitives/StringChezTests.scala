@@ -44,13 +44,15 @@ object StringChezTests extends TestSuite {
       assert(schema.validate("EXACTLY THIS").nonEmpty)
     }
     
-    test("enum validation") {
-      val schema = StringChez(enumValues = Some(List("red", "green", "blue")))
-      assert(schema.validate("red") == Nil)
-      assert(schema.validate("green") == Nil)
-      assert(schema.validate("blue") == Nil)
-      assert(schema.validate("yellow").nonEmpty)
-      assert(schema.validate("Red").nonEmpty) // case sensitive
+    test("enum validation - moved to EnumChez") {
+      // Note: enum validation is now handled by EnumChez, not StringChez
+      // This test exists for backward compatibility documentation
+      val enumSchema = chez.primitives.EnumChez.fromStrings("red", "green", "blue")
+      assert(enumSchema.validateString("red") == Nil)
+      assert(enumSchema.validateString("green") == Nil)
+      assert(enumSchema.validateString("blue") == Nil)
+      assert(enumSchema.validateString("yellow").nonEmpty)
+      assert(enumSchema.validateString("Red").nonEmpty) // case sensitive
     }
     
     test("email format validation") {
