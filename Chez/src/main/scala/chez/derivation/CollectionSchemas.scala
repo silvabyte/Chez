@@ -58,6 +58,19 @@ object CollectionSchemas {
   }
 
   /**
+   * Schema derivation for Vector[T] types
+   * 
+   * Vectors are represented as JSON arrays without uniqueItems constraint,
+   * allowing duplicate values and preserving order.
+   */
+  inline given [T](using tSchema: Schema[T]): Schema[Vector[T]] = {
+    Schema.instance(ArrayChez(
+      items = tSchema.schema
+      // uniqueItems is None (default) to allow duplicates
+    ))
+  }
+
+  /**
    * Helper to get type name for descriptions
    */
   private inline def typeNameOf[T]: String = {
