@@ -172,6 +172,10 @@ object Chez {
   def Ref(ref: String): RefChez = RefChez(ref)
   def DynamicRef(ref: String): DynamicRefChez = DynamicRefChez(ref)
 
+  // Definitions
+  def Defs(defs: (String, Chez)*): DefsChez[Null] = modifiers.DefsChez(null, defs.toMap)
+  def Defs(defs: Map[String, Chez]): DefsChez[Null] = modifiers.DefsChez(null, defs)
+
   // Enum factory methods
   def StringEnum(values: String*): EnumChez = EnumChez.fromStrings(values*)
   def StringEnum(values: List[String]): EnumChez = EnumChez.fromStrings(values)

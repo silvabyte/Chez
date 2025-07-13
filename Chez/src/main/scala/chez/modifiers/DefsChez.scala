@@ -4,10 +4,33 @@ import chez.Chez
 import upickle.default.*
 
 /**
- * Wrapper for adding $defs metadata to a schema
+ * JSON Schema $defs keyword implementation
  * 
- * According to JSON Schema 2020-12, $defs provides a location for reusable
- * schema definitions within a schema document.
+ * The $defs keyword provides a location for reusable schema definitions within a schema document.
+ * These definitions can be referenced using $ref with a JSON Pointer to the definition.
+ * 
+ * According to JSON Schema 2020-12, $defs is the standardized way to define reusable schemas
+ * (replacing the draft-07 "definitions" keyword).
+ * 
+ * This class supports two modes:
+ * 1. Wrapper mode: Add $defs to an existing schema (underlying != null)
+ * 2. Standalone mode: Create a schema containing only $defs (underlying == null)
+ * 
+ * Example:
+ * {
+ *   "$defs": {
+ *     "User": {
+ *       "type": "object",
+ *       "properties": {
+ *         "name": { "type": "string" }
+ *       }
+ *     }
+ *   },
+ *   "type": "object",
+ *   "properties": {
+ *     "user": { "$ref": "#/$defs/User" }
+ *   }
+ * }
  */
 case class DefsChez[T <: Chez](
   underlying: T,
@@ -16,26 +39,36 @@ case class DefsChez[T <: Chez](
   
   override def $defs: Option[Map[String, Chez]] = Some(defsValue)
   
-  // Delegate all other core vocabulary to underlying schema
-  override def $schema: Option[String] = underlying.$schema
-  override def $id: Option[String] = underlying.$id
-  override def $ref: Option[String] = underlying.$ref
-  override def $dynamicRef: Option[String] = underlying.$dynamicRef
-  override def $dynamicAnchor: Option[String] = underlying.$dynamicAnchor
-  override def $vocabulary: Option[Map[String, Boolean]] = underlying.$vocabulary
-  override def $comment: Option[String] = underlying.$comment
+  // Delegate all other core vocabulary to underlying schema (if present)
+  override def $schema: Option[String] = Option(underlying).flatMap(_.$schema)
+  override def $id: Option[String] = Option(underlying).flatMap(_.$id)
+  override def $ref: Option[String] = Option(underlying).flatMap(_.$ref)
+  override def $dynamicRef: Option[String] = Option(underlying).flatMap(_.$dynamicRef)
+  override def $dynamicAnchor: Option[String] = Option(underlying).flatMap(_.$dynamicAnchor)
+  override def $vocabulary: Option[Map[String, Boolean]] = Option(underlying).flatMap(_.$vocabulary)
+  override def $comment: Option[String] = Option(underlying).flatMap(_.$comment)
   
-  // Delegate all metadata to underlying schema
-  override def title: Option[String] = underlying.title
-  override def description: Option[String] = underlying.description
-  override def default: Option[ujson.Value] = underlying.default
-  override def examples: Option[List[ujson.Value]] = underlying.examples
-  override def readOnly: Option[Boolean] = underlying.readOnly
-  override def writeOnly: Option[Boolean] = underlying.writeOnly
-  override def deprecated: Option[Boolean] = underlying.deprecated
+  // Delegate all metadata to underlying schema (if present)
+  override def title: Option[String] = Option(underlying).flatMap(_.title)
+  override def description: Option[String] = Option(underlying).flatMap(_.description)
+  override def default: Option[ujson.Value] = Option(underlying).flatMap(_.default)
+  override def examples: Option[List[ujson.Value]] = Option(underlying).flatMap(_.examples)
+  override def readOnly: Option[Boolean] = Option(underlying).flatMap(_.readOnly)
+  override def writeOnly: Option[Boolean] = Option(underlying).flatMap(_.writeOnly)
+  override def deprecated: Option[Boolean] = Option(underlying).flatMap(_.deprecated)
   
   override def toJsonSchema: ujson.Value = {
-    val base = underlying.toJsonSchema
+    val base = if (underlying != null) {
+      underlying.toJsonSchema
+    } else {
+      // Standalone mode: create a new schema with only $defs
+      val schema = ujson.Obj()
+      // Add meta-data keywords if present (from standalone usage)
+      title.foreach(t => schema("title") = ujson.Str(t))
+      description.foreach(d => schema("description") = ujson.Str(d))
+      schema
+    }
+    
     if (defsValue.nonEmpty) {
       val defsObj = ujson.Obj()
       defsValue.foreach { case (name, chez) =>
@@ -56,4 +89,44 @@ case class DefsChez[T <: Chez](
   override def withDescription(desc: String): Chez = DescriptionChez(this, desc)
   override def withSchema(schema: String): Chez = SchemaChez(this, schema)
   override def withId(id: String): Chez = IdChez(this, id)
+  
+  /**
+   * Validate a value against this $defs schema
+   * 
+   * Note: $defs by itself doesn't validate instances - it only provides definitions.
+   * Validation happens when these definitions are referenced via $ref.
+   * This method returns empty errors since $defs alone doesn't constrain values.
+   */
+  def validate(value: ujson.Value): List[chez.ValidationError] = {
+    if (underlying != null) {
+      // If there's an underlying schema, delegate validation to it
+      // Note: underlying schemas don't have validate method in current design
+      List.empty
+    } else {
+      // $defs itself doesn't validate anything - it just provides definitions
+      // The actual validation happens when the definitions are referenced
+      List.empty
+    }
+  }
+  
+  /**
+   * Get a definition by name
+   */
+  def getDefinition(name: String): Option[Chez] = {
+    defsValue.get(name)
+  }
+  
+  /**
+   * Check if a definition exists
+   */
+  def hasDefinition(name: String): Boolean = {
+    defsValue.contains(name)
+  }
+  
+  /**
+   * Get all definition names
+   */
+  def definitionNames: Set[String] = {
+    defsValue.keySet
+  }
 }
