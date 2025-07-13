@@ -141,22 +141,83 @@ object Schema {
   
   /**
    * Check if this is a simple enum by examining the element types at compile time
+   * Simple enums have singleton cases with empty parameter lists
+   * Sealed traits have case classes with non-empty parameter lists
    */
   inline def isSimpleEnum[Elems <: Tuple]: Boolean =
     inline erasedValue[Elems] match
       case _: (head *: tail) =>
-        // Check if head is a singleton type (enum case object)
-        inline erasedValue[head] match
-          case _: Singleton => isSimpleEnum[tail]
-          case _ => false
+        // Use a different approach: check if this type can be treated as a simple singleton
+        // by trying to examine its structure more directly
+        inline if (isEmptyProductType[head]) {
+          isSimpleEnum[tail] // Continue checking if this is an empty product (enum case)
+        } else {
+          false // Has fields, so not a simple enum
+        }
       case _: EmptyTuple => true
+  
+  /**
+   * Check if a type is an empty product type (no constructor parameters)
+   * This distinguishes enum cases from case classes with parameters
+   */
+  inline def isEmptyProductType[T]: Boolean =
+    summonFrom {
+      case mirror: Mirror.ProductOf[T] =>
+        // Check if the mirrored element types is EmptyTuple
+        inline erasedValue[mirror.MirroredElemTypes] match
+          case _: EmptyTuple => true  // No parameters = enum case
+          case _ => false             // Has parameters = case class
+      case _ => 
+        // If no Mirror.ProductOf, treat as enum case (true singleton)
+        true
+    }
 
   /**
    * Derive schema for sum types (enums/sealed traits) with annotation processing
    */
   inline def deriveSumWithAnnotations[T](s: Mirror.SumOf[T]): Chez =
-    // For sum types, use regular schema derivation since annotations are applied at the product level
-    deriveSum(s)
+    val elemLabels = getElemLabels[s.MirroredElemLabels]
+    
+    // For Scala 3 enums, we detect them by checking if all element types are singletons
+    // If so, generate a string enum schema instead of trying to derive schemas for each case
+    inline if (isSimpleEnum[s.MirroredElemTypes]) {
+      // Generate enum schema for simple Scala 3 enums using EnumChez
+      chez.Chez.StringEnum(elemLabels)
+    } else {
+      // For sealed traits, derive schemas with discriminator field injection
+      val elemSchemas = getElemSchemas[T, s.MirroredElemTypes]
+      if elemSchemas.nonEmpty then 
+        // Add type discriminator field to each schema variant
+        val discriminatedSchemas = elemLabels.zip(elemSchemas).map { case (typeName, schema) =>
+          addTypeDiscriminator(schema, typeName)
+        }
+        chez.Chez.OneOf(discriminatedSchemas*)
+      else 
+        chez.Chez.String()
+    }
+  
+  /**
+   * Add a type discriminator field to a schema for sealed trait variants
+   */
+  def addTypeDiscriminator(schema: Chez, typeName: String): Chez =
+    schema match {
+      case obj: chez.complex.ObjectChez =>
+        // Add "type" field with the variant name as a constant
+        val typeField = chez.Chez.String(const = Some(typeName))
+        val updatedProperties = obj.properties + ("type" -> typeField)
+        val updatedRequired = obj.required + "type"
+        
+        obj.copy(
+          properties = updatedProperties,
+          required = updatedRequired
+        )
+      case other =>
+        // For non-object schemas, wrap in an object with just the type field
+        chez.Chez.Object(
+          properties = Map("type" -> chez.Chez.String(const = Some(typeName))),
+          required = Set("type")
+        )
+    }
 
   /**
    * Get element labels as List[String]
