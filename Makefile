@@ -328,25 +328,3 @@ benchmark:
 docs:
 	@echo "📖 Generating documentation..."
 	./mill Chez.docJar
-
-# ============================================================================
-# LEGACY COMPATIBILITY
-# ============================================================================
-
-# Legacy command for basic usage example
-.PHONY: run-example-basic-usage
-run-example-basic-usage: example-basic
-
-# Legacy command for complex types example
-.PHONY: run-example-complex-types  
-run-example-complex-types: example-complex
-
-# Legacy command for validation example
-.PHONY: run-example-validation
-run-example-validation: example-validation
-
-# Legacy command for running all examples
-.PHONY: run-example-all
-run-example-all: examples
-
-# End of Makefile
