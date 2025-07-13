@@ -123,10 +123,33 @@ object Schema {
    * Derive schema for sum types (enums/sealed traits)
    */
   inline def deriveSum[T](s: Mirror.SumOf[T]): Chez =
-    val elemSchemas = getElemSchemas[T, s.MirroredElemTypes]
-    // For now, use the first alternative for sum types
-    // TODO: Implement proper AnyOf support
-    if elemSchemas.nonEmpty then elemSchemas.head else chez.Chez.String()
+    val elemLabels = getElemLabels[s.MirroredElemLabels]
+    
+    // For Scala 3 enums, we detect them by checking if all element types are singletons
+    // If so, generate a string enum schema instead of trying to derive schemas for each case
+    inline if (isSimpleEnum[s.MirroredElemTypes]) {
+      // Generate string enum schema for simple Scala 3 enums
+      chez.Chez.String(enumValues = Some(elemLabels))
+    } else {
+      // For complex sum types, derive schemas and use OneOf
+      val elemSchemas = getElemSchemas[T, s.MirroredElemTypes]
+      if elemSchemas.nonEmpty then 
+        chez.Chez.OneOf(elemSchemas*)
+      else 
+        chez.Chez.String()
+    }
+  
+  /**
+   * Check if this is a simple enum by examining the element types at compile time
+   */
+  inline def isSimpleEnum[Elems <: Tuple]: Boolean =
+    inline erasedValue[Elems] match
+      case _: (head *: tail) =>
+        // Check if head is a singleton type (enum case object)
+        inline erasedValue[head] match
+          case _: Singleton => isSimpleEnum[tail]
+          case _ => false
+      case _: EmptyTuple => true
 
   /**
    * Derive schema for sum types (enums/sealed traits) with annotation processing
