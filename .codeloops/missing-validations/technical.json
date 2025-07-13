@@ -1,0 +1,272 @@
+{
+  "metadata": {
+    "created": "2025-07-13T17:40:00.000Z",
+    "updated": "2025-07-13T17:40:00.000Z",
+    "version": "1.0.0",
+    "featureName": "missing-validations"
+  },
+  "technologyStack": {
+    "language": "Scala 3.6.2",
+    "framework": "Custom JSON Schema library (Chez) with Cask web framework integration",
+    "buildTool": "Mill build system",
+    "dependencies": [
+      "com.lihaoyi::upickle:4.1.0 (existing - ujson.Value)",
+      "com.lihaoyi::cask:0.9.7 (existing - web framework)",
+      "com.lihaoyi::utest:0.8.5 (existing - testing framework)",
+      "scala.util.{Try, Success, Failure} (existing - error handling)"
+    ],
+    "database": "Not applicable - pure validation library",
+    "infrastructure": "Library deployment, no infrastructure changes needed"
+  },
+  "dataModels": [
+    {
+      "name": "ValidationError",
+      "schema": "enum ValidationError (already exists in ChezType.scala)",
+      "validationRules": "Comprehensive error types for all validation scenarios",
+      "relationships": ["All Chez schema types", "ValidationResult", "CaskChez ValidationError"],
+      "location": "Chez/src/main/scala/chez/ChezType.scala (enhance existing)",
+      "purpose": "Unified error type system across all validation scenarios"
+    },
+    {
+      "name": "ValidationResult",
+      "schema": "sealed trait ValidationResult { def isValid: Boolean; def errors: List[ValidationError] }",
+      "validationRules": "Either valid result or list of validation errors",
+      "relationships": ["ValidationError", "SchemaValidator"],
+      "location": "Chez/src/main/scala/chez/validation/ValidationResult.scala (new)",
+      "purpose": "Standard result type for all validation operations"
+    },
+    {
+      "name": "ValidationContext",
+      "schema": "case class ValidationContext(path: String, rootSchema: Option[Chez] = None)",
+      "validationRules": "Tracks current JSON path and schema context for error reporting",
+      "relationships": ["All validation methods", "ValidationError path tracking"],
+      "location": "Chez/src/main/scala/chez/validation/ValidationContext.scala (new)",
+      "purpose": "Maintain context during recursive validation for accurate error paths"
+    },
+    {
+      "name": "SchemaValidator",
+      "schema": "object SchemaValidator with validate methods for each schema type",
+      "validationRules": "Central validation logic coordinating all schema types",
+      "relationships": ["All Chez types", "ValidationResult", "ValidationContext"],
+      "location": "Chez/src/main/scala/chez/validation/SchemaValidator.scala (new)",
+      "purpose": "Centralized validation orchestration and type-specific validation dispatch"
+    }
+  ],
+  "architecture": {
+    "components": [
+      {
+        "name": "Core Validation Framework",
+        "purpose": "Add validate methods to Chez trait and all implementations",
+        "files": [
+          "Chez/src/main/scala/chez/Chez.scala",
+          "Chez/src/main/scala/chez/validation/ValidationEngine.scala"
+        ],
+        "responsibilities": [
+          "Define standard validation interface in Chez trait",
+          "Implement validation for all primitive types",
+          "Handle validation context and error path tracking",
+          "Coordinate recursive validation for complex types"
+        ]
+      },
+      {
+        "name": "Primitive Type Validation",
+        "purpose": "Complete validation implementation for all primitive schema types",
+        "files": [
+          "Chez/src/main/scala/chez/primitives/StringChez.scala (enhance existing)",
+          "Chez/src/main/scala/chez/primitives/NumberChez.scala (enhance existing)",
+          "Chez/src/main/scala/chez/primitives/IntegerChez.scala (enhance existing)",
+          "Chez/src/main/scala/chez/primitives/BooleanChez.scala (enhance existing)",
+          "Chez/src/main/scala/chez/primitives/NullChez.scala (enhance existing)",
+          "Chez/src/main/scala/chez/primitives/EnumChez.scala (enhance existing)"
+        ],
+        "responsibilities": [
+          "Type checking against ujson.Value types",
+          "Range validation (min/max/exclusiveMin/exclusiveMax)",
+          "Length validation (minLength/maxLength)",
+          "Pattern validation (regex patterns)",
+          "Format validation (email, uri, uuid, date, etc.)",
+          "Const and enum value validation"
+        ]
+      },
+      {
+        "name": "Complex Type Validation",
+        "purpose": "Implement missing validation for ObjectChez and ArrayChez",
+        "files": [
+          "Chez/src/main/scala/chez/complex/ObjectChez.scala (complete TODO implementation)",
+          "Chez/src/main/scala/chez/complex/ArrayChez.scala (enhance existing)"
+        ],
+        "responsibilities": [
+          "Object property validation against schemas",
+          "Required field validation",
+          "Additional properties validation",
+          "Pattern properties validation",
+          "Recursive nested object validation",
+          "Array item validation against item schema",
+          "Array constraints (minItems, maxItems, uniqueItems)"
+        ]
+      },
+      {
+        "name": "Composition Schema Validation",
+        "purpose": "Implement validation for AnyOf, OneOf, AllOf, Not, IfThenElse schemas",
+        "files": [
+          "Chez/src/main/scala/chez/composition/AnyOfChez.scala (complete TODO)",
+          "Chez/src/main/scala/chez/composition/OneOfChez.scala (complete TODO)",
+          "Chez/src/main/scala/chez/composition/AllOfChez.scala (complete TODO)",
+          "Chez/src/main/scala/chez/composition/NotChez.scala (complete TODO)",
+          "Chez/src/main/scala/chez/composition/IfThenElseChez.scala (complete TODO)"
+        ],
+        "responsibilities": [
+          "AnyOf: value validates against at least one schema",
+          "OneOf: value validates against exactly one schema",
+          "AllOf: value validates against all schemas",
+          "Not: value does not validate against schema",
+          "IfThenElse: conditional validation based on condition schema"
+        ]
+      },
+      {
+        "name": "CaskChez Web Integration",
+        "purpose": "Complete HTTP request validation against RouteSchema",
+        "files": [
+          "CaskChez/src/main/scala/caskchez/Validation.scala (complete TODOs)",
+          "CaskChez/src/main/scala/caskchez/SchemaEndpoint.scala (enhance error handling)"
+        ],
+        "responsibilities": [
+          "Request body validation against Chez schemas",
+          "Query parameter validation and type conversion",
+          "Path parameter validation",
+          "Header validation",
+          "Structured error response generation",
+          "Integration with ValidatedRequest data model"
+        ]
+      },
+      {
+        "name": "Schema Derivation Integration",
+        "purpose": "Enable validation for derived schemas from case classes",
+        "files": [
+          "Chez/src/main/scala/chez/derivation/SchemaDerivation.scala (complete ValidatedReadWriter TODO)"
+        ],
+        "responsibilities": [
+          "ValidatedReadWriter actual schema validation",
+          "Integration between derived Schema[T] and validation",
+          "Type-safe validation for case class schemas"
+        ]
+      }
+    ],
+    "apiEndpoints": [
+      {
+        "component": "Chez trait",
+        "method": "def validate(value: ujson.Value): ValidationResult",
+        "purpose": "Core validation interface for all schema types"
+      },
+      {
+        "component": "Chez trait", 
+        "method": "def validateAtPath(value: ujson.Value, path: String): ValidationResult",
+        "purpose": "Validation with custom path context for error reporting"
+      },
+      {
+        "component": "SchemaValidator",
+        "method": "def validate(schema: Chez, value: ujson.Value): ValidationResult",
+        "purpose": "Central validation orchestration"
+      },
+      {
+        "component": "CaskChez SchemaValidator",
+        "method": "def validateRequest(request: cask.Request, schema: RouteSchema): Either[List[ValidationError], ValidatedRequest]",
+        "purpose": "Complete HTTP request validation (enhance existing)"
+      }
+    ],
+    "integrationPoints": [
+      {
+        "system": "Existing Chez Schema Generation",
+        "interface": "Add validate method to Chez trait without breaking schema generation",
+        "impact": "Additive only - no breaking changes to existing APIs"
+      },
+      {
+        "system": "CaskChez Web Framework", 
+        "interface": "Complete validation implementation in SchemaValidator.validateRequest",
+        "impact": "Replace TODO placeholders with actual validation logic"
+      },
+      {
+        "system": "Schema Derivation System",
+        "interface": "Integrate validation with Mirror-based derivation",
+        "impact": "Enable validation for case class derived schemas"
+      },
+      {
+        "system": "utest Testing Framework",
+        "interface": "Comprehensive test coverage for all validation scenarios",
+        "impact": "New test files for each validation component"
+      }
+    ],
+    "fileOrganization": [
+      "Chez/src/main/scala/chez/validation/ (new package)",
+      "├── ValidationEngine.scala (central validation orchestration)",
+      "├── ValidationResult.scala (result types)",
+      "├── ValidationContext.scala (path and context tracking)",
+      "└── ValidationUtils.scala (shared validation utilities)",
+      "",
+      "Enhanced existing files:",
+      "├── Chez/src/main/scala/chez/Chez.scala (add validate methods)",
+      "├── Chez/src/main/scala/chez/primitives/*.scala (complete validation)",
+      "├── Chez/src/main/scala/chez/complex/*.scala (complete validation)",
+      "├── Chez/src/main/scala/chez/composition/*.scala (complete validation)",
+      "└── CaskChez/src/main/scala/caskchez/Validation.scala (complete TODOs)",
+      "",
+      "New test files:",
+      "├── Chez/test/src/chez/validation/ValidationEngineTests.scala",
+      "├── Chez/test/src/chez/validation/PrimitiveValidationTests.scala", 
+      "├── Chez/test/src/chez/validation/ComplexValidationTests.scala",
+      "├── Chez/test/src/chez/validation/CompositionValidationTests.scala",
+      "└── CaskChez/test/src/caskchez/WebValidationTests.scala"
+    ]
+  },
+  "security": {
+    "authentication": "Not applicable - validation library does not handle authentication",
+    "authorization": "Not applicable - validation library operates on data validation only",
+    "validation": "Core feature - comprehensive input validation against JSON Schema 2020-12 specification including type checking, range validation, format validation, pattern matching, and complex composition validation",
+    "errorHandling": "Structured error reporting with ValidationError enum providing detailed error types, JSON path information, expected vs actual values, and actionable error messages. Fail-fast validation with comprehensive error collection for debugging."
+  },
+  "implementationStrategy": {
+    "phase1_primitives": {
+      "priority": "P0 - Critical Foundation",
+      "description": "Complete validation for all primitive types",
+      "components": ["StringChez", "NumberChez", "IntegerChez", "BooleanChez", "NullChez", "EnumChez"],
+      "deliverables": ["Full primitive type validation", "Comprehensive error reporting", "Path-aware validation context"]
+    },
+    "phase2_complex": {
+      "priority": "P0 - Critical Foundation", 
+      "description": "Implement ObjectChez and ArrayChez validation",
+      "components": ["ObjectChez property validation", "ArrayChez item validation", "Recursive nested validation"],
+      "deliverables": ["Complete complex type validation", "Nested object support", "Array constraint validation"]
+    },
+    "phase3_composition": {
+      "priority": "P1 - High Value",
+      "description": "Implement composition schema validation",
+      "components": ["AnyOfChez", "OneOfChez", "AllOfChez", "NotChez", "IfThenElseChez"],
+      "deliverables": ["Union type validation", "Conditional validation", "Complex composition support"]
+    },
+    "phase4_web_integration": {
+      "priority": "P1 - High Value",
+      "description": "Complete CaskChez web request validation",
+      "components": ["Request body validation", "Query/path parameter validation", "Header validation"],
+      "deliverables": ["Full HTTP request validation", "Structured error responses", "RouteSchema integration"]
+    },
+    "phase5_derivation": {
+      "priority": "P2 - Enhancement",
+      "description": "Integrate validation with schema derivation",
+      "components": ["ValidatedReadWriter", "Schema[T] integration", "Case class validation"],
+      "deliverables": ["Type-safe validation", "Derivation integration", "Compile-time schema validation"]
+    }
+  },
+  "performanceConsiderations": {
+    "validationSpeed": "Target sub-millisecond validation for simple schemas, recursive validation optimized to prevent stack overflow",
+    "memoryUsage": "Minimal allocation during validation, reuse ValidationContext objects",
+    "recursionHandling": "Tail-recursive validation where possible, depth limiting for deeply nested structures",
+    "errorCollection": "Efficient error accumulation using List builders, early termination for fail-fast scenarios"
+  },
+  "testingStrategy": {
+    "unitTests": "Comprehensive unit tests for each validation component using utest framework",
+    "integrationTests": "End-to-end validation testing with CaskChez request validation",
+    "propertyTests": "Property-based testing for validation correctness using generated ujson.Value data",
+    "performanceTests": "Validation performance benchmarks for production readiness",
+    "coverageTarget": "100% test coverage for all validation functionality"
+  }
+}
