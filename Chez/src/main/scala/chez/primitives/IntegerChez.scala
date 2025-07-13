@@ -1,6 +1,7 @@
 package chez.primitives
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -83,5 +84,67 @@ case class IntegerChez(
     
     
     errors.reverse
+  }
+
+  /**
+   * Validate a ujson.Value against this integer schema
+   */
+  def validate(value: ujson.Value): ValidationResult = {
+    validate(value, ValidationContext())
+  }
+
+  /**
+   * Validate a ujson.Value against this integer schema with context
+   */
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    // Type check for ujson.Num that represents an integer
+    value match {
+      case ujson.Num(numberValue) if numberValue.isWhole =>
+        // Delegate to existing validate(Int) method but update error paths
+        val errors = validate(numberValue.toInt)
+        val pathAwareErrors = errors.map(updateErrorPath(_, context.path))
+        if (pathAwareErrors.isEmpty) {
+          ValidationResult.valid()
+        } else {
+          ValidationResult.invalid(pathAwareErrors)
+        }
+      case ujson.Num(_) =>
+        // Non-integer number - return TypeMismatch error
+        val error = chez.ValidationError.TypeMismatch("integer", "number", context.path)
+        ValidationResult.invalid(error)
+      case _ =>
+        // Non-number ujson.Value type - return TypeMismatch error
+        val error = chez.ValidationError.TypeMismatch("integer", getValueType(value), context.path)
+        ValidationResult.invalid(error)
+    }
+  }
+
+  /**
+   * Update error path for context-aware error reporting
+   */
+  private def updateErrorPath(error: chez.ValidationError, path: String): chez.ValidationError = {
+    error match {
+      case chez.ValidationError.OutOfRange(min, max, actual, _) =>
+        chez.ValidationError.OutOfRange(min, max, actual, path)
+      case chez.ValidationError.MultipleOfViolation(multiple, value, _) =>
+        chez.ValidationError.MultipleOfViolation(multiple, value, path)
+      case chez.ValidationError.TypeMismatch(expected, actual, _) =>
+        chez.ValidationError.TypeMismatch(expected, actual, path)
+      case other => other // For error types that don't need path updates
+    }
+  }
+
+  /**
+   * Get string representation of ujson.Value type for error messages
+   */
+  private def getValueType(value: ujson.Value): String = {
+    value match {
+      case _: ujson.Str => "string"
+      case _: ujson.Num => "number"  
+      case _: ujson.Bool => "boolean"
+      case ujson.Null => "null"
+      case _: ujson.Arr => "array"
+      case _: ujson.Obj => "object"
+    }
   }
 }

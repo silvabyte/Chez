@@ -2,6 +2,8 @@ package chez.primitives
 
 import utest.*
 import chez.primitives.*
+import chez.*
+import chez.validation.*
 
 object StringChezTests extends TestSuite {
 
@@ -155,6 +157,241 @@ object StringChezTests extends TestSuite {
       val jsonEmail = schemaEmail.toJsonSchema
       assert(jsonEmail("default").str == "user@example.com")
       assert(jsonEmail("format").str == "email")
+    }
+    
+    test("StringChez validates ujson.Str values correctly") {
+      val schema = Chez.String(minLength = Some(3), maxLength = Some(10))
+      
+      test("valid string") {
+        val result = schema.validate(ujson.Str("hello"))
+        assert(result.isValid)
+        assert(result.errors.isEmpty)
+      }
+      
+      test("string too short") {
+        val result = schema.validate(ujson.Str("hi"))
+        assert(!result.isValid)
+        assert(result.errors.length == 1)
+        assert(result.errors.head.isInstanceOf[ValidationError.MinLengthViolation])
+      }
+      
+      test("string too long") {
+        val result = schema.validate(ujson.Str("this is way too long"))
+        assert(!result.isValid)
+        assert(result.errors.length == 1)
+        assert(result.errors.head.isInstanceOf[ValidationError.MaxLengthViolation])
+      }
+    }
+    
+    test("StringChez rejects non-string ujson.Value types with TypeMismatch error") {
+      val schema = Chez.String()
+      
+      test("number value") {
+        val result = schema.validate(ujson.Num(42))
+        assert(!result.isValid)
+        assert(result.errors.length == 1)
+        val error = result.errors.head.asInstanceOf[ValidationError.TypeMismatch]
+        assert(error.expected == "string")
+        assert(error.actual == "number")
+      }
+      
+      test("boolean value") {
+        val result = schema.validate(ujson.Bool(true))
+        assert(!result.isValid)
+        assert(result.errors.length == 1)
+        val error = result.errors.head.asInstanceOf[ValidationError.TypeMismatch]
+        assert(error.expected == "string")
+        assert(error.actual == "boolean")
+      }
+      
+      test("null value") {
+        val result = schema.validate(ujson.Null)
+        assert(!result.isValid)
+        assert(result.errors.length == 1)
+        val error = result.errors.head.asInstanceOf[ValidationError.TypeMismatch]
+        assert(error.expected == "string")
+        assert(error.actual == "null")
+      }
+      
+      test("array value") {
+        val result = schema.validate(ujson.Arr(ujson.Str("test")))
+        assert(!result.isValid)
+        assert(result.errors.length == 1)
+        val error = result.errors.head.asInstanceOf[ValidationError.TypeMismatch]
+        assert(error.expected == "string")
+        assert(error.actual == "array")
+      }
+      
+      test("object value") {
+        val result = schema.validate(ujson.Obj("key" -> ujson.Str("value")))
+        assert(!result.isValid)
+        assert(result.errors.length == 1)
+        val error = result.errors.head.asInstanceOf[ValidationError.TypeMismatch]
+        assert(error.expected == "string")
+        assert(error.actual == "object")
+      }
+    }
+    
+    test("All existing validation logic works with ujson.Value") {
+      test("pattern validation") {
+        val schema = Chez.String(pattern = Some("^[A-Z]+$"))
+        
+        val validResult = schema.validate(ujson.Str("HELLO"))
+        assert(validResult.isValid)
+        
+        val invalidResult = schema.validate(ujson.Str("hello"))
+        assert(!invalidResult.isValid)
+        assert(invalidResult.errors.head.isInstanceOf[ValidationError.PatternMismatch])
+      }
+      
+      test("const validation") {
+        val schema = Chez.String(const = Some("expected"))
+        
+        val validResult = schema.validate(ujson.Str("expected"))
+        assert(validResult.isValid)
+        
+        val invalidResult = schema.validate(ujson.Str("unexpected"))
+        assert(!invalidResult.isValid)
+        assert(invalidResult.errors.head.isInstanceOf[ValidationError.TypeMismatch])
+      }
+      
+      test("format validation") {
+        val emailSchema = Chez.String(format = Some("email"))
+        
+        val validResult = emailSchema.validate(ujson.Str("test@example.com"))
+        assert(validResult.isValid)
+        
+        val invalidResult = emailSchema.validate(ujson.Str("not-an-email"))
+        assert(!invalidResult.isValid)
+        assert(invalidResult.errors.head.isInstanceOf[ValidationError.InvalidFormat])
+      }
+      
+      test("multiple constraint validation") {
+        val schema = Chez.String(
+          minLength = Some(5),
+          maxLength = Some(15), 
+          pattern = Some("^[a-z]+$")
+        )
+        
+        val validResult = schema.validate(ujson.Str("hello"))
+        assert(validResult.isValid)
+        
+        val invalidResult = schema.validate(ujson.Str("Hi"))
+        assert(!invalidResult.isValid)
+        // Should have both minLength and pattern violations
+        assert(invalidResult.errors.length == 2)
+      }
+    }
+    
+    test("Error paths are correctly set using ValidationContext") {
+      val schema = Chez.String(minLength = Some(5))
+      
+      test("default context") {
+        val result = schema.validate(ujson.Str("hi"))
+        assert(!result.isValid)
+        val error = result.errors.head.asInstanceOf[ValidationError.MinLengthViolation]
+        assert(error.path == "/")
+      }
+      
+      test("custom context path") {
+        val context = ValidationContext("/user/name")
+        val result = schema.validate(ujson.Str("hi"), context)
+        assert(!result.isValid)
+        val error = result.errors.head.asInstanceOf[ValidationError.MinLengthViolation]
+        assert(error.path == "/user/name")
+      }
+      
+      test("nested context path") {
+        val context = ValidationContext()
+          .withProperty("user")
+          .withProperty("profile")
+          .withProperty("name")
+        val result = schema.validate(ujson.Str("hi"), context)
+        assert(!result.isValid)
+        val error = result.errors.head.asInstanceOf[ValidationError.MinLengthViolation]
+        assert(error.path == "/user/profile/name")
+      }
+      
+      test("type mismatch error path") {
+        val context = ValidationContext("/data/field")
+        val result = schema.validate(ujson.Num(42), context)
+        assert(!result.isValid)
+        val error = result.errors.head.asInstanceOf[ValidationError.TypeMismatch]
+        assert(error.path == "/data/field")
+      }
+    }
+    
+    test("ValidationResult is returned with proper valid/invalid state") {
+      val schema = Chez.String(minLength = Some(3))
+      
+      test("valid state") {
+        val result = schema.validate(ujson.Str("hello"))
+        assert(result.isValid)
+        assert(result.errors.isEmpty)
+        assert(result.isInstanceOf[ValidationResult.Valid.type])
+      }
+      
+      test("invalid state") {
+        val result = schema.validate(ujson.Str("hi"))
+        assert(!result.isValid)
+        assert(result.errors.nonEmpty)
+        assert(result.isInstanceOf[ValidationResult.Invalid])
+      }
+    }
+    
+    test("Existing validate(String) method continues to work unchanged") {
+      val schema = Chez.String(minLength = Some(3), pattern = Some("^[a-z]+$"))
+      
+      test("valid string") {
+        val errors = schema.validate("hello")
+        assert(errors.isEmpty)
+      }
+      
+      test("invalid string") {
+        val errors = schema.validate("Hi")
+        assert(errors.length == 2) // Both minLength and pattern violations
+        assert(errors.exists(_.isInstanceOf[ValidationError.MinLengthViolation]))
+        assert(errors.exists(_.isInstanceOf[ValidationError.PatternMismatch]))
+      }
+      
+      test("string too short") {
+        val errors = schema.validate("hi")
+        assert(errors.length == 1)
+        assert(errors.head.isInstanceOf[ValidationError.MinLengthViolation])
+      }
+      
+      test("errors still use default path") {
+        val errors = schema.validate("X")
+        assert(errors.nonEmpty)
+        // Original method should still use "/" path
+        errors.foreach { error =>
+          val path = error match {
+            case ValidationError.MinLengthViolation(_, _, path) => path
+            case ValidationError.PatternMismatch(_, _, path) => path
+            case _ => "/"
+          }
+          assert(path == "/")
+        }
+      }
+    }
+    
+    test("Direct schema validation") {
+      val schema = Chez.String(const = Some("test"))
+      
+      test("direct validate works") {
+        val result = schema.validate(ujson.Str("test"), ValidationContext())
+        assert(result.isValid)
+        
+        val invalidResult = schema.validate(ujson.Str("wrong"), ValidationContext())
+        assert(!invalidResult.isValid)
+      }
+      
+      test("validate with custom path works") {
+        val context = ValidationContext("/custom/path")
+        val result = schema.validate(ujson.Str("wrong"), context)
+        assert(!result.isValid)
+        assert(result.errors.head.asInstanceOf[ValidationError.TypeMismatch].path == "/custom/path")
+      }
     }
   }
 }

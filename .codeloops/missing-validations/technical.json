@@ -1,8 +1,8 @@
 {
   "metadata": {
     "created": "2025-07-13T17:40:00.000Z",
-    "updated": "2025-07-13T17:40:00.000Z",
-    "version": "1.0.0",
+    "updated": "2025-07-13T20:58:00.000Z",
+    "version": "2.0.0",
     "featureName": "missing-validations"
   },
   "technologyStack": {
@@ -31,8 +31,8 @@
       "name": "ValidationResult",
       "schema": "sealed trait ValidationResult { def isValid: Boolean; def errors: List[ValidationError] }",
       "validationRules": "Either valid result or list of validation errors",
-      "relationships": ["ValidationError", "SchemaValidator"],
-      "location": "Chez/src/main/scala/chez/validation/ValidationResult.scala (new)",
+      "relationships": ["ValidationError", "Direct schema validation"],
+      "location": "✅ Chez/src/main/scala/chez/validation/ValidationResult.scala (implemented)",
       "purpose": "Standard result type for all validation operations"
     },
     {
@@ -40,52 +40,52 @@
       "schema": "case class ValidationContext(path: String, rootSchema: Option[Chez] = None)",
       "validationRules": "Tracks current JSON path and schema context for error reporting",
       "relationships": ["All validation methods", "ValidationError path tracking"],
-      "location": "Chez/src/main/scala/chez/validation/ValidationContext.scala (new)",
+      "location": "✅ Chez/src/main/scala/chez/validation/ValidationContext.scala (implemented)",
       "purpose": "Maintain context during recursive validation for accurate error paths"
     },
     {
-      "name": "SchemaValidator",
-      "schema": "object SchemaValidator with validate methods for each schema type",
-      "validationRules": "Central validation logic coordinating all schema types",
+      "name": "Direct Schema Validation",
+      "schema": "validate(ujson.Value, ValidationContext): ValidationResult implemented in each Chez type",
+      "validationRules": "Each schema type handles its own validation logic directly",
       "relationships": ["All Chez types", "ValidationResult", "ValidationContext"],
-      "location": "Chez/src/main/scala/chez/validation/SchemaValidator.scala (new)",
-      "purpose": "Centralized validation orchestration and type-specific validation dispatch"
+      "location": "✅ All primitive types implement direct validation (no central engine needed)",
+      "purpose": "Eliminated redundant ValidationEngine - each schema validates directly"
     }
   ],
   "architecture": {
     "components": [
       {
         "name": "Core Validation Framework",
-        "purpose": "Add validate methods to Chez trait and all implementations",
+        "purpose": "✅ COMPLETED - Direct validation in Chez trait, ValidationEngine eliminated",
         "files": [
-          "Chez/src/main/scala/chez/Chez.scala",
-          "Chez/src/main/scala/chez/validation/ValidationEngine.scala"
+          "✅ Chez/src/main/scala/chez/Chez.scala (abstract validate method)",
+          "❌ ValidationEngine.scala (removed - was redundant)"
         ],
         "responsibilities": [
-          "Define standard validation interface in Chez trait",
-          "Implement validation for all primitive types",
-          "Handle validation context and error path tracking",
-          "Coordinate recursive validation for complex types"
+          "✅ Define standard validation interface in Chez trait",
+          "✅ Implement validation for all primitive types directly",
+          "✅ Handle validation context and error path tracking",
+          "✅ Support modifier types (OptionalChez, NullableChez, DefaultChez)"
         ]
       },
       {
         "name": "Primitive Type Validation",
-        "purpose": "Complete validation implementation for all primitive schema types",
+        "purpose": "✅ COMPLETED - Full validation for all primitive schema types",
         "files": [
-          "Chez/src/main/scala/chez/primitives/StringChez.scala (enhance existing)",
-          "Chez/src/main/scala/chez/primitives/NumberChez.scala (enhance existing)",
-          "Chez/src/main/scala/chez/primitives/IntegerChez.scala (enhance existing)",
-          "Chez/src/main/scala/chez/primitives/BooleanChez.scala (enhance existing)",
-          "Chez/src/main/scala/chez/primitives/NullChez.scala (enhance existing)",
-          "Chez/src/main/scala/chez/primitives/EnumChez.scala (enhance existing)"
+          "✅ Chez/src/main/scala/chez/primitives/StringChez.scala (completed)",
+          "✅ Chez/src/main/scala/chez/primitives/NumberChez.scala (completed)",
+          "✅ Chez/src/main/scala/chez/primitives/IntegerChez.scala (completed)",
+          "✅ Chez/src/main/scala/chez/primitives/BooleanChez.scala (completed)",
+          "✅ Chez/src/main/scala/chez/primitives/NullChez.scala (completed)",
+          "✅ Chez/src/main/scala/chez/primitives/EnumChez.scala (completed)"
         ],
         "responsibilities": [
-          "Type checking against ujson.Value types",
-          "Range validation (min/max/exclusiveMin/exclusiveMax)",
-          "Length validation (minLength/maxLength)",
-          "Pattern validation (regex patterns)",
-          "Format validation (email, uri, uuid, date, etc.)",
-          "Const and enum value validation"
+          "✅ Type checking against ujson.Value types",
+          "✅ Range validation (min/max/exclusiveMin/exclusiveMax)",
+          "✅ Length validation (minLength/maxLength)",
+          "✅ Pattern validation (regex patterns)",
+          "✅ Format validation (email, uri, uuid, date, etc.)",
+          "✅ Const and enum value validation"
         ]
       },
       {
@@ -197,25 +197,25 @@
       }
     ],
     "fileOrganization": [
-      "Chez/src/main/scala/chez/validation/ (new package)",
-      "├── ValidationEngine.scala (central validation orchestration)",
-      "├── ValidationResult.scala (result types)",
-      "├── ValidationContext.scala (path and context tracking)",
-      "└── ValidationUtils.scala (shared validation utilities)",
+      "✅ Chez/src/main/scala/chez/validation/ (implemented)",
+      "├── ❌ ValidationEngine.scala (removed - was redundant)",
+      "├── ✅ ValidationResult.scala (result types)",
+      "├── ✅ ValidationContext.scala (path and context tracking)",
+      "└── ValidationUtils.scala (not needed yet)",
       "",
-      "Enhanced existing files:",
-      "├── Chez/src/main/scala/chez/Chez.scala (add validate methods)",
-      "├── Chez/src/main/scala/chez/primitives/*.scala (complete validation)",
-      "├── Chez/src/main/scala/chez/complex/*.scala (complete validation)",
-      "├── Chez/src/main/scala/chez/composition/*.scala (complete validation)",
-      "└── CaskChez/src/main/scala/caskchez/Validation.scala (complete TODOs)",
+      "✅ Enhanced existing files (completed):",
+      "├── ✅ Chez/src/main/scala/chez/Chez.scala (abstract validate method)",
+      "├── ✅ Chez/src/main/scala/chez/primitives/*.scala (completed validation)",
+      "├── ⏳ Chez/src/main/scala/chez/complex/*.scala (pending)",
+      "├── ⏳ Chez/src/main/scala/chez/composition/*.scala (pending)",
+      "└── ⏳ CaskChez/src/main/scala/caskchez/Validation.scala (pending)",
       "",
-      "New test files:",
-      "├── Chez/test/src/chez/validation/ValidationEngineTests.scala",
-      "├── Chez/test/src/chez/validation/PrimitiveValidationTests.scala", 
-      "├── Chez/test/src/chez/validation/ComplexValidationTests.scala",
-      "├── Chez/test/src/chez/validation/CompositionValidationTests.scala",
-      "└── CaskChez/test/src/caskchez/WebValidationTests.scala"
+      "✅ Test files (updated):",
+      "├── ✅ Chez/test/src/chez/validation/ValidationCoreTests.scala",
+      "├── ✅ Chez/test/src/chez/primitives/StringChezTests.scala (merged validation tests)",
+      "├── ⏳ Chez/test/src/chez/validation/ComplexValidationTests.scala",
+      "├── ⏳ Chez/test/src/chez/validation/CompositionValidationTests.scala",
+      "└── ⏳ CaskChez/test/src/caskchez/WebValidationTests.scala"
     ]
   },
   "security": {
@@ -226,10 +226,10 @@
   },
   "implementationStrategy": {
     "phase1_primitives": {
-      "priority": "P0 - Critical Foundation",
-      "description": "Complete validation for all primitive types",
-      "components": ["StringChez", "NumberChez", "IntegerChez", "BooleanChez", "NullChez", "EnumChez"],
-      "deliverables": ["Full primitive type validation", "Comprehensive error reporting", "Path-aware validation context"]
+      "priority": "✅ P0 - COMPLETED",
+      "description": "✅ Complete validation for all primitive types",
+      "components": ["✅ StringChez", "✅ NumberChez", "✅ IntegerChez", "✅ BooleanChez", "✅ NullChez", "✅ EnumChez"],
+      "deliverables": ["✅ Full primitive type validation", "✅ Comprehensive error reporting", "✅ Path-aware validation context"]
     },
     "phase2_complex": {
       "priority": "P0 - Critical Foundation", 

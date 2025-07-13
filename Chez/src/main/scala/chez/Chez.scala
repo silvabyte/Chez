@@ -7,7 +7,7 @@ import chez.composition.*
 import chez.references.*
 import chez.modifiers.*
 import chez.derivation.*
-import chez.validation.*
+import chez.validation.{ValidationResult, ValidationContext}
 
 /**
  * Core Chez trait - represents a JSON Schema with compile-time type information
@@ -43,9 +43,7 @@ trait Chez {
    * Validate a ujson.Value against this schema using ValidationContext
    * This provides the unified validation framework interface
    */
-  def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
-    ValidationEngine.validate(this, value, context)
-  }
+  def validate(value: ujson.Value, context: ValidationContext): ValidationResult
 
   // Modifier methods for chaining
   def optional: Chez = OptionalChez(this)
@@ -65,6 +63,10 @@ trait Chez {
 case class OptionalChez[T <: Chez](underlying: T) extends Chez {
   override def toJsonSchema: ujson.Value = underlying.toJsonSchema
 
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    underlying.validate(value, context)
+  }
+
   override def nullable: Chez = OptionalNullableChez(underlying)
 }
 
@@ -76,6 +78,13 @@ case class NullableChez[T <: Chez](underlying: T) extends Chez {
     val base = underlying.toJsonSchema
     base("type") = ujson.Arr(base("type"), ujson.Str("null"))
     base
+  }
+
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    value match {
+      case ujson.Null => ValidationResult.valid() // null is valid for nullable schemas
+      case _ => underlying.validate(value, context)
+    }
   }
 
   override def optional: Chez = OptionalNullableChez(underlying)
@@ -90,6 +99,13 @@ case class OptionalNullableChez[T <: Chez](underlying: T) extends Chez {
     base("type") = ujson.Arr(base("type"), ujson.Str("null"))
     base
   }
+
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    value match {
+      case ujson.Null => ValidationResult.valid() // null is valid for nullable schemas
+      case _ => underlying.validate(value, context)
+    }
+  }
 }
 
 /**
@@ -100,6 +116,10 @@ case class DefaultChez[T <: Chez](underlying: T, defaultValue: ujson.Value) exte
     val base = underlying.toJsonSchema
     base("default") = defaultValue
     base
+  }
+
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    underlying.validate(value, context)
   }
 
   override def optional: Chez = OptionalChez(this)

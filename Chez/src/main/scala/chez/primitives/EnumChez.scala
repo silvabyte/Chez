@@ -1,6 +1,7 @@
 package chez.primitives
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -129,6 +130,25 @@ case class EnumChez(
       case _: ujson.Obj             => "object"
       case _: ujson.Arr             => "array"
     }.toSet
+  }
+
+  /**
+   * Validate a ujson.Value against this enum schema using ValidationResult
+   */
+  def validateResult(value: ujson.Value): ValidationResult = {
+    validate(value, ValidationContext())
+  }
+
+  /**
+   * Validate a ujson.Value against this enum schema with context using ValidationResult
+   */
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    val errors = validateAtPath(value, context.path)
+    if (errors.isEmpty) {
+      ValidationResult.valid()
+    } else {
+      ValidationResult.invalid(errors)
+    }
   }
 }
 
