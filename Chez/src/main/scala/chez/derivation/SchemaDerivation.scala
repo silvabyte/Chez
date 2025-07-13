@@ -7,6 +7,7 @@ import chez.*
 import chez.primitives.*
 import chez.complex.*
 import chez.derivation.SchemaAnnotations.*
+import chez.derivation.CollectionSchemas.given
 import upickle.default.*
 
 /**

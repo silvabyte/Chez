@@ -12,6 +12,7 @@ case class ObjectChez(
     minProperties: Option[Int] = None,
     maxProperties: Option[Int] = None,
     additionalProperties: Option[Boolean] = None,
+    additionalPropertiesSchema: Option[Chez] = None,
     patternProperties: Map[String, Chez] = Map.empty,
     propertyNames: Option[Chez] = None,
     dependentRequired: Map[String, Set[String]] = Map.empty,
@@ -38,7 +39,10 @@ case class ObjectChez(
     // Validation keywords
     minProperties.foreach(min => schema("minProperties") = ujson.Num(min))
     maxProperties.foreach(max => schema("maxProperties") = ujson.Num(max))
+    
+    // Additional properties - can be boolean or schema
     additionalProperties.foreach(add => schema("additionalProperties") = ujson.Bool(add))
+    additionalPropertiesSchema.foreach(aps => schema("additionalProperties") = aps.toJsonSchema)
 
     // Pattern properties
     if (patternProperties.nonEmpty) {

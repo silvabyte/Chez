@@ -153,10 +153,11 @@ object Chez {
       minProperties: Option[Int] = None,
       maxProperties: Option[Int] = None,
       additionalProperties: Option[Boolean] = None,
+      additionalPropertiesSchema: Option[Chez] = None,
       patternProperties: Map[String, Chez] = Map.empty,
       propertyNames: Option[Chez] = None
   ): ObjectChez =
-    ObjectChez(properties, required, minProperties, maxProperties, additionalProperties, patternProperties, propertyNames)
+    ObjectChez(properties, required, minProperties, maxProperties, additionalProperties, additionalPropertiesSchema, patternProperties, propertyNames)
 
   // Composition keywords
   def AnyOf(schemas: Chez*): AnyOfChez = AnyOfChez(schemas.toList)
