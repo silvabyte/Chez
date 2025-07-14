@@ -3,6 +3,7 @@ package chez.examples
 import chez.*
 import chez.primitives.*
 import chez.complex.*
+import chez.composition.*
 import chez.validation.*
 import upickle.default.*
 import scala.util.{Try, Success, Failure}
@@ -193,6 +194,58 @@ object Validation {
     testArrayValidation(stringArraySchema, tooLongArray, "array too long")
     testArrayValidation(stringArraySchema, nonUniqueArray, "non-unique array")
 
+    println("\nEnhanced Array Validation (Tuple & Contains):")
+
+    // Tuple validation with prefixItems
+    val tupleSchema = ArrayChez(
+      items = Chez.String(), // fallback for items beyond prefix
+      prefixItems = Some(List(
+        Chez.Integer(minimum = Some(0)), // First item: positive integer
+        Chez.String(minLength = Some(1)), // Second item: non-empty string
+        Chez.Boolean() // Third item: boolean
+      )),
+      minItems = Some(2),
+      maxItems = Some(5)
+    )
+
+    val validTuple = ujson.Arr(ujson.Num(42), ujson.Str("hello"), ujson.Bool(true), ujson.Str("extra"))
+    val invalidTuple = ujson.Arr(ujson.Num(-5), ujson.Str(""), ujson.Bool(false)) // negative number, empty string
+
+    testArrayValidation(tupleSchema, validTuple, "valid tuple with prefixItems")
+    testArrayValidation(tupleSchema, invalidTuple, "invalid tuple with constraint violations")
+
+    // Contains validation
+    val containsSchema = ArrayChez(
+      items = Chez.String(),
+      contains = Some(Chez.String(pattern = Some("^test.*"))), // Must contain strings starting with "test"
+      minContains = Some(1),
+      maxContains = Some(2)
+    )
+
+    val validContainsArray = ujson.Arr(ujson.Str("test1"), ujson.Str("other"), ujson.Str("test2"))
+    val tooFewContainsArray = ujson.Arr(ujson.Str("other"), ujson.Str("another"))
+    val tooManyContainsArray = ujson.Arr(ujson.Str("test1"), ujson.Str("test2"), ujson.Str("test3"))
+
+    testArrayValidation(containsSchema, validContainsArray, "valid contains validation")
+    testArrayValidation(containsSchema, tooFewContainsArray, "too few matching items")
+    testArrayValidation(containsSchema, tooManyContainsArray, "too many matching items")
+
+    // Complex scenario: both tuple and contains validation
+    val complexArraySchema = ArrayChez(
+      items = Chez.String(),
+      prefixItems = Some(List(
+        Chez.Integer(minimum = Some(1)),
+        Chez.String(minLength = Some(3))
+      )),
+      contains = Some(Chez.String(pattern = Some("^valid.*"))),
+      minContains = Some(1),
+      minItems = Some(3),
+      maxItems = Some(6)
+    )
+
+    val validComplexArray = ujson.Arr(ujson.Num(10), ujson.Str("hello"), ujson.Str("validstring"), ujson.Str("other"))
+    testArrayValidation(complexArraySchema, validComplexArray, "complex array with tuple + contains validation")
+
     // 4. Number validation with ranges
     println("\n4. Number Validation with Ranges:")
 
@@ -277,6 +330,100 @@ object Validation {
     println("\nNot validation:")
     println(s"- Schema: ${notStringSchema.toJsonSchema}")
     println("- Must NOT match the schema")
+
+    println("\nEnhanced Composition Validation:")
+
+    // AnyOf validation examples
+    println("\nAnyOf - Validates if at least one schema matches:")
+    val flexibleValueSchema = AnyOfChez(List(
+      StringChez(format = Some("email")),
+      StringChez(format = Some("uuid")),
+      IntegerChez(minimum = Some(0))
+    ))
+
+    val validEmailValue = ujson.Str("user@example.com")
+    val validUuidValue = ujson.Str("550e8400-e29b-41d4-a716-446655440000")
+    val validIntegerValue = ujson.Num(42)
+    val invalidValue = ujson.Str("invalid-format")
+
+    testValidationResult(flexibleValueSchema, validEmailValue, "valid email in anyOf")
+    testValidationResult(flexibleValueSchema, validUuidValue, "valid UUID in anyOf")
+    testValidationResult(flexibleValueSchema, validIntegerValue, "valid integer in anyOf")
+    testValidationResult(flexibleValueSchema, invalidValue, "invalid value in anyOf")
+
+    // OneOf validation examples with discriminated union
+    println("\nOneOf - Validates if exactly one schema matches:")
+    val shapeSchema = OneOfChez(List(
+      ObjectChez(
+        properties = Map(
+          "type" -> StringChez(const = Some("circle")),
+          "radius" -> NumberChez(minimum = Some(0))
+        ),
+        required = Set("type", "radius")
+      ),
+      ObjectChez(
+        properties = Map(
+          "type" -> StringChez(const = Some("rectangle")),
+          "width" -> NumberChez(minimum = Some(0)),
+          "height" -> NumberChez(minimum = Some(0))
+        ),
+        required = Set("type", "width", "height")
+      )
+    ))
+
+    val validCircle = ujson.Obj(
+      "type" -> ujson.Str("circle"),
+      "radius" -> ujson.Num(5.0)
+    )
+    val validRectangle = ujson.Obj(
+      "type" -> ujson.Str("rectangle"),
+      "width" -> ujson.Num(10.0),
+      "height" -> ujson.Num(5.0)
+    )
+    val invalidShape = ujson.Obj(
+      "type" -> ujson.Str("triangle"),
+      "sides" -> ujson.Num(3)
+    )
+
+    testValidationResult(shapeSchema, validCircle, "valid circle in oneOf")
+    testValidationResult(shapeSchema, validRectangle, "valid rectangle in oneOf")
+    testValidationResult(shapeSchema, invalidShape, "invalid shape in oneOf")
+
+    // Nested composition example
+    println("\nNested Composition - Complex schema structures:")
+    val apiResponseSchema = OneOfChez(List(
+      ObjectChez(
+        properties = Map(
+          "status" -> StringChez(const = Some("success")),
+          "data" -> AnyOfChez(List(
+            ObjectChez(),
+            ArrayChez(ObjectChez())
+          ))
+        ),
+        required = Set("status", "data")
+      ),
+      ObjectChez(
+        properties = Map(
+          "status" -> StringChez(const = Some("error")),
+          "message" -> StringChez(),
+          "code" -> IntegerChez()
+        ),
+        required = Set("status", "message")
+      )
+    ))
+
+    val successResponse = ujson.Obj(
+      "status" -> ujson.Str("success"),
+      "data" -> ujson.Obj("result" -> ujson.Str("OK"))
+    )
+    val errorResponse = ujson.Obj(
+      "status" -> ujson.Str("error"),
+      "message" -> ujson.Str("Not found"),
+      "code" -> ujson.Num(404)
+    )
+
+    testValidationResult(apiResponseSchema, successResponse, "valid success response")
+    testValidationResult(apiResponseSchema, errorResponse, "valid error response")
 
     // 9. Conditional validation
     println("\n9. Conditional Validation:")

@@ -83,12 +83,55 @@ case class ArrayChez[T <: Chez](
           }
         }
 
-        // Validate each item against the items schema
-        arrayValue.zipWithIndex.foreach { case (item, index) =>
-          val itemContext = context.withIndex(index)
-          val itemResult = items.validate(item, itemContext)
-          if (!itemResult.isValid) {
-            errors = itemResult.errors ++ errors
+        // Handle prefixItems (tuple validation) if specified
+        prefixItems match {
+          case Some(prefixes) =>
+            // Validate prefix items with their specific schemas
+            prefixes.zipWithIndex.foreach { case (prefixSchema, index) =>
+              if (index < arrayValue.length) {
+                val item = arrayValue(index)
+                val itemContext = context.withIndex(index)
+                val itemResult = prefixSchema.validate(item, itemContext)
+                if (!itemResult.isValid) {
+                  errors = itemResult.errors ++ errors
+                }
+              }
+            }
+            
+            // Validate remaining items (beyond prefixItems) against the items schema
+            arrayValue.zipWithIndex.drop(prefixes.length).foreach { case (item, index) =>
+              val itemContext = context.withIndex(index)
+              val itemResult = items.validate(item, itemContext)
+              if (!itemResult.isValid) {
+                errors = itemResult.errors ++ errors
+              }
+            }
+            
+          case None =>
+            // Standard validation: validate each item against the items schema
+            arrayValue.zipWithIndex.foreach { case (item, index) =>
+              val itemContext = context.withIndex(index)
+              val itemResult = items.validate(item, itemContext)
+              if (!itemResult.isValid) {
+                errors = itemResult.errors ++ errors
+              }
+            }
+        }
+
+        // Contains validation - check that items matching the contains schema are within bounds
+        contains.foreach { containsSchema =>
+          val containsCount = arrayValue.count { item =>
+            val itemResult = containsSchema.validate(item, context)
+            itemResult.isValid
+          }
+          
+          val minContainsCheck = minContains.forall(min => containsCount >= min)
+          val maxContainsCheck = maxContains.forall(max => containsCount <= max)
+          
+          if (!minContainsCheck || !maxContainsCheck) {
+            errors = chez.ValidationError.ContainsViolation(
+              minContains, maxContains, containsCount, context.path
+            ) :: errors
           }
         }
 
