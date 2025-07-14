@@ -562,6 +562,132 @@ object Validation {
       "invalid additional properties with schema"
     )
 
+    // T7: Advanced Composition Validation Examples
+    println("\n🔀 T7: Advanced Composition Validation (AllOf, Not, IfThenElse):")
+
+    // AllOf Example: String with multiple constraints
+    println("\n📋 AllOf - All schemas must validate:")
+    val strongPasswordSchema = AllOfChez(List(
+      Chez.String(minLength = Some(8)),        // At least 8 characters
+      Chez.String(pattern = Some(".*[A-Z].*")), // Contains uppercase
+      Chez.String(pattern = Some(".*[0-9].*"))  // Contains digit
+    ))
+
+    testValidationResult(
+      strongPasswordSchema,
+      ujson.Str("Password123"),
+      "valid strong password (all constraints met)"
+    )
+    testValidationResult(
+      strongPasswordSchema,
+      ujson.Str("weak"),
+      "invalid weak password (fails multiple constraints)"
+    )
+
+    // Not Example: Exclude specific values
+    println("\n🚫 Not - Schema must NOT validate:")
+    val nonAdminSchema = NotChez(
+      Chez.Object(
+        properties = Map("role" -> Chez.String(const = Some("admin"))),
+        required = Set("role")
+      )
+    )
+
+    testValidationResult(
+      nonAdminSchema,
+      ujson.Obj("role" -> ujson.Str("user")),
+      "valid non-admin user"
+    )
+    testValidationResult(
+      nonAdminSchema,
+      ujson.Obj("role" -> ujson.Str("admin")),
+      "invalid admin user (not allowed)"
+    )
+
+    // IfThenElse Example: Role-based validation
+    println("\n🔀 IfThenElse - Conditional validation:")
+    val roleBasedSchema = IfThenElseChez(
+      condition = Chez.Object(
+        properties = Map("role" -> Chez.String(const = Some("admin")))
+      ),
+      thenSchema = Some(Chez.Object(
+        properties = Map(
+          "permissions" -> ArrayChez(Chez.String(), minItems = Some(1)),
+          "department" -> Chez.String()
+        ),
+        required = Set("permissions", "department")
+      )),
+      elseSchema = Some(Chez.Object(
+        properties = Map("supervisor" -> Chez.String()),
+        required = Set("supervisor")
+      ))
+    )
+
+    testValidationResult(
+      roleBasedSchema,
+      ujson.Obj(
+        "role" -> ujson.Str("admin"),
+        "permissions" -> ujson.Arr(ujson.Str("read"), ujson.Str("write")),
+        "department" -> ujson.Str("IT")
+      ),
+      "valid admin with required fields"
+    )
+    testValidationResult(
+      roleBasedSchema,
+      ujson.Obj(
+        "role" -> ujson.Str("user"),
+        "supervisor" -> ujson.Str("John Smith")
+      ),
+      "valid regular user with supervisor"
+    )
+
+    // Complex nested composition example
+    println("\n🎯 Complex Nested Composition:")
+    val complexUserSchema = AllOfChez(List(
+      // Base user schema
+      Chez.Object(
+        properties = Map(
+          "id" -> Chez.String(),
+          "email" -> Chez.String(format = Some("email"))
+        ),
+        required = Set("id", "email")
+      ),
+      // Not a test user
+      NotChez(
+        Chez.Object(
+          properties = Map("email" -> Chez.String(pattern = Some(".*@test\\.com$")))
+        )
+      ),
+      // Role-specific requirements
+      IfThenElseChez(
+        condition = Chez.Object(
+          properties = Map("role" -> Chez.String(const = Some("premium")))
+        ),
+        thenSchema = Some(Chez.Object(
+          properties = Map("subscription" -> Chez.String()),
+          required = Set("subscription")
+        ))
+      )
+    ))
+
+    testValidationResult(
+      complexUserSchema,
+      ujson.Obj(
+        "id" -> ujson.Str("user123"),
+        "email" -> ujson.Str("john@example.com"),
+        "role" -> ujson.Str("basic")
+      ),
+      "valid basic user (all constraints met)"
+    )
+    testValidationResult(
+      complexUserSchema,
+      ujson.Obj(
+        "id" -> ujson.Str("user123"),
+        "email" -> ujson.Str("test@test.com") // Test email not allowed
+      ),
+      "invalid test user (not schema fails)"
+    )
+
     println("\n🎯 Validation Examples Complete!")
     println("These examples demonstrate comprehensive validation capabilities:")
     println("\n📋 Core Features:")
