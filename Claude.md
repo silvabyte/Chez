@@ -2,4 +2,4 @@
 - use unit tests, see existing unit tests
 - examples should live in the Chez/src/main/scala/chez/examples directory
 - ensure Makefile is up to date
-- unsure tasks.json is updated with proper changes
+- ensure tasks.json is updated with proper changes
