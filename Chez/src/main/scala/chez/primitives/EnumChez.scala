@@ -123,12 +123,12 @@ case class EnumChez(
    */
   def getValueTypes: Set[String] = {
     enumValues.map {
-      case _: ujson.Str             => "string"
-      case _: ujson.Num             => "number"
+      case _: ujson.Str => "string"
+      case _: ujson.Num => "number"
       case ujson.True | ujson.False => "boolean"
-      case ujson.Null               => "null"
-      case _: ujson.Obj             => "object"
-      case _: ujson.Arr             => "array"
+      case ujson.Null => "null"
+      case _: ujson.Obj => "object"
+      case _: ujson.Arr => "array"
     }.toSet
   }
 
@@ -187,11 +187,11 @@ object EnumChez {
    */
   def mixed(values: (String | Int | Boolean | Double | Null)*): EnumChez = {
     val jsonValues = values.map {
-      case s: String  => ujson.Str(s)
-      case i: Int     => ujson.Num(i)
-      case d: Double  => ujson.Num(d)
+      case s: String => ujson.Str(s)
+      case i: Int => ujson.Num(i)
+      case d: Double => ujson.Num(d)
       case b: Boolean => if (b) ujson.True else ujson.False
-      case null       => ujson.Null
+      case null => ujson.Null
     }.toList
     EnumChez(jsonValues)
   }

@@ -8,18 +8,18 @@ import upickle.default.*
  * Null schema type with JSON Schema 2020-12 validation keywords
  */
 case class NullChez() extends Chez {
-  
+
   override def toJsonSchema: ujson.Value = {
     val schema = ujson.Obj("type" -> ujson.Str("null"))
-    
+
     title.foreach(t => schema("title") = ujson.Str(t))
     description.foreach(d => schema("description") = ujson.Str(d))
     default.foreach(d => schema("default") = d)
     examples.foreach(e => schema("examples") = ujson.Arr(e*))
-    
+
     schema
   }
-  
+
   /**
    * Validate a null value against this schema
    */
@@ -57,7 +57,7 @@ case class NullChez() extends Chez {
   private def getValueType(value: ujson.Value): String = {
     value match {
       case _: ujson.Str => "string"
-      case _: ujson.Num => "number"  
+      case _: ujson.Num => "number"
       case _: ujson.Bool => "boolean"
       case ujson.Null => "null"
       case _: ujson.Arr => "array"

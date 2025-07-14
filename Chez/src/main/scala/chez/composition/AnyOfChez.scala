@@ -41,7 +41,10 @@ case class AnyOfChez(
       List.empty
     } else {
       // If all schemas fail, return composition error
-      List(chez.ValidationError.CompositionError("Value does not match any of the schemas in anyOf", "/"))
+      List(chez.ValidationError.CompositionError(
+        "Value does not match any of the schemas in anyOf",
+        "/"
+      ))
     }
   }
 }

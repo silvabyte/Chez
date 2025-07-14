@@ -33,14 +33,15 @@ object ComponentsGenerator {
   /**
    * Extract and deduplicate schemas from all routes
    */
-  private def extractSchemas(allRoutes: Map[String, RouteSchema]): Option[Map[String, ujson.Value]] = {
+  private def extractSchemas(allRoutes: Map[String, RouteSchema])
+      : Option[Map[String, ujson.Value]] = {
     val allSchemas = collectAllChezSchemas(allRoutes)
     val deduplicatedSchemas = deduplicateSchemas(allSchemas)
     val namedSchemas = generateSchemaNames(deduplicatedSchemas)
 
     if (namedSchemas.nonEmpty) {
       Some(namedSchemas.map { case (name, chez) =>
-        name -> chez.toJsonSchema  // Direct JSON Schema, no wrapper
+        name -> chez.toJsonSchema // Direct JSON Schema, no wrapper
       })
     } else None
   }
@@ -94,7 +95,8 @@ object ComponentsGenerator {
   /**
    * Extract security schemes from routes
    */
-  private def extractSecuritySchemes(allRoutes: Map[String, RouteSchema]): Map[String, SecuritySchemeObject] = {
+  private def extractSecuritySchemes(allRoutes: Map[String, RouteSchema])
+      : Map[String, SecuritySchemeObject] = {
     val allSecurityRequirements = allRoutes.values.flatMap(_.security).toList
     SecurityGenerator.extractSecuritySchemes(allSecurityRequirements)
   }
@@ -102,7 +104,8 @@ object ComponentsGenerator {
   /**
    * Extract common response objects
    */
-  private def extractCommonResponses(allRoutes: Map[String, RouteSchema]): Option[Map[String, ResponseObject]] = {
+  private def extractCommonResponses(allRoutes: Map[String, RouteSchema])
+      : Option[Map[String, ResponseObject]] = {
     // Find commonly used responses across routes
     val allResponses = allRoutes.values.flatMap(_.responses.values).toList
     val responsesByDescription = allResponses.groupBy(_.description)
@@ -130,7 +133,8 @@ object ComponentsGenerator {
   /**
    * Extract common parameters
    */
-  private def extractCommonParameters(allRoutes: Map[String, RouteSchema]): Option[Map[String, ParameterObject]] = {
+  private def extractCommonParameters(allRoutes: Map[String, RouteSchema])
+      : Option[Map[String, ParameterObject]] = {
     // Could extract commonly used parameters across routes
     None
   }
@@ -138,7 +142,8 @@ object ComponentsGenerator {
   /**
    * Extract common request bodies
    */
-  private def extractCommonRequestBodies(allRoutes: Map[String, RouteSchema]): Option[Map[String, RequestBodyObject]] = {
+  private def extractCommonRequestBodies(allRoutes: Map[String, RouteSchema])
+      : Option[Map[String, RequestBodyObject]] = {
     // Could extract commonly used request bodies
     None
   }

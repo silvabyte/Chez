@@ -30,7 +30,10 @@ object TagGenerator {
   /**
    * Generate a description for a tag based on routes that use it
    */
-  private def generateTagDescription(tagName: String, allRoutes: Map[String, RouteSchema]): Option[String] = {
+  private def generateTagDescription(
+      tagName: String,
+      allRoutes: Map[String, RouteSchema]
+  ): Option[String] = {
     val routesWithTag = allRoutes.filter(_._2.tags.contains(tagName))
 
     if (routesWithTag.nonEmpty) {

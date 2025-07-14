@@ -1,17 +1,20 @@
 package build
 import mill._, scalalib._
 
-
 trait Shared extends ScalaModule {
   def scalaVersion = "3.6.2"
 
   def ivyDeps = Agg(
     ivy"com.lihaoyi::upickle:4.1.0",
-    ivy"com.lihaoyi::os-lib:0.11.3",
+    ivy"com.lihaoyi::os-lib:0.11.3"
   )
 
   object test extends ScalaTests {
-    def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.8.5", ivy"org.scalamock::scalamock:7.1.0", ivy"org.scalatest::scalatest:3.2.19")
+    def ivyDeps = Agg(
+      ivy"com.lihaoyi::utest:0.8.5",
+      ivy"org.scalamock::scalamock:7.1.0",
+      ivy"org.scalatest::scalatest:3.2.19"
+    )
     def testFramework = "utest.runner.Framework"
   }
 }

@@ -16,20 +16,20 @@ import scala.util.{Try, Success, Failure}
  */
 type ChezType[C <: Chez] = C match {
   // Primitive types - fully supported
-  case StringChez  => String
-  case NumberChez  => Double
+  case StringChez => String
+  case NumberChez => Double
   case IntegerChez => Int
   case BooleanChez => Boolean
-  case NullChez    => Null
+  case NullChez => Null
 
   // Complex types - use case classes with Mirror derivation instead
   case ArrayChez[t] => List[ChezType[t]]
 
   // Modifiers - fully supported
-  case OptionalChez[t]         => Option[ChezType[t]]
-  case NullableChez[t]         => Option[ChezType[t]]
+  case OptionalChez[t] => Option[ChezType[t]]
+  case NullableChez[t] => Option[ChezType[t]]
   case OptionalNullableChez[t] => Option[ChezType[t]]
-  case DefaultChez[t]          => ChezType[t]
+  case DefaultChez[t] => ChezType[t]
 }
 
 /**

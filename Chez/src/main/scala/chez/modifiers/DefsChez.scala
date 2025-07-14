@@ -5,17 +5,17 @@ import upickle.default.*
 
 /**
  * JSON Schema $defs keyword implementation
- * 
+ *
  * The $defs keyword provides a location for reusable schema definitions within a schema document.
  * These definitions can be referenced using $ref with a JSON Pointer to the definition.
- * 
+ *
  * According to JSON Schema 2020-12, $defs is the standardized way to define reusable schemas
  * (replacing the draft-07 "definitions" keyword).
- * 
+ *
  * This class supports two modes:
  * 1. Wrapper mode: Add $defs to an existing schema (underlying != null)
  * 2. Standalone mode: Create a schema containing only $defs (underlying == null)
- * 
+ *
  * Example:
  * {
  *   "$defs": {
@@ -33,12 +33,12 @@ import upickle.default.*
  * }
  */
 case class DefsChez[T <: Chez](
-  underlying: T,
-  defsValue: Map[String, Chez]
+    underlying: T,
+    defsValue: Map[String, Chez]
 ) extends Chez {
-  
+
   override def $defs: Option[Map[String, Chez]] = Some(defsValue)
-  
+
   // Delegate all other core vocabulary to underlying schema (if present)
   override def $schema: Option[String] = Option(underlying).flatMap(_.$schema)
   override def $id: Option[String] = Option(underlying).flatMap(_.$id)
@@ -47,7 +47,7 @@ case class DefsChez[T <: Chez](
   override def $dynamicAnchor: Option[String] = Option(underlying).flatMap(_.$dynamicAnchor)
   override def $vocabulary: Option[Map[String, Boolean]] = Option(underlying).flatMap(_.$vocabulary)
   override def $comment: Option[String] = Option(underlying).flatMap(_.$comment)
-  
+
   // Delegate all metadata to underlying schema (if present)
   override def title: Option[String] = Option(underlying).flatMap(_.title)
   override def description: Option[String] = Option(underlying).flatMap(_.description)
@@ -56,7 +56,7 @@ case class DefsChez[T <: Chez](
   override def readOnly: Option[Boolean] = Option(underlying).flatMap(_.readOnly)
   override def writeOnly: Option[Boolean] = Option(underlying).flatMap(_.writeOnly)
   override def deprecated: Option[Boolean] = Option(underlying).flatMap(_.deprecated)
-  
+
   override def toJsonSchema: ujson.Value = {
     val base = if (underlying != null) {
       underlying.toJsonSchema
@@ -68,7 +68,7 @@ case class DefsChez[T <: Chez](
       description.foreach(d => schema("description") = ujson.Str(d))
       schema
     }
-    
+
     if (defsValue.nonEmpty) {
       val defsObj = ujson.Obj()
       defsValue.foreach { case (name, chez) =>
@@ -78,21 +78,21 @@ case class DefsChez[T <: Chez](
     }
     base
   }
-  
+
   // Override modifier methods to maintain chaining
   override def optional: Chez = chez.OptionalChez(this)
   override def nullable: Chez = chez.NullableChez(this)
   override def withDefault(value: ujson.Value): Chez = chez.DefaultChez(this, value)
-  
+
   // Override with* methods to preserve $defs while adding other metadata
   override def withTitle(title: String): Chez = TitleChez(this, title)
   override def withDescription(desc: String): Chez = DescriptionChez(this, desc)
   override def withSchema(schema: String): Chez = SchemaChez(this, schema)
   override def withId(id: String): Chez = IdChez(this, id)
-  
+
   /**
    * Validate a value against this $defs schema
-   * 
+   *
    * Note: $defs by itself doesn't validate instances - it only provides definitions.
    * Validation happens when these definitions are referenced via $ref.
    * This method returns empty errors since $defs alone doesn't constrain values.
@@ -108,21 +108,21 @@ case class DefsChez[T <: Chez](
       List.empty
     }
   }
-  
+
   /**
    * Get a definition by name
    */
   def getDefinition(name: String): Option[Chez] = {
     defsValue.get(name)
   }
-  
+
   /**
    * Check if a definition exists
    */
   def hasDefinition(name: String): Boolean = {
     defsValue.contains(name)
   }
-  
+
   /**
    * Get all definition names
    */

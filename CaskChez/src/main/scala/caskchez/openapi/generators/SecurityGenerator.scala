@@ -12,7 +12,8 @@ object SecurityGenerator {
   /**
    * Extract security schemes from security requirements
    */
-  def extractSecuritySchemes(securityRequirements: List[SecurityRequirement]): Map[String, SecuritySchemeObject] = {
+  def extractSecuritySchemes(securityRequirements: List[SecurityRequirement])
+      : Map[String, SecuritySchemeObject] = {
     securityRequirements.flatMap(convertToSecurityScheme).toMap
   }
 
@@ -35,7 +36,8 @@ object SecurityGenerator {
   /**
    * Convert CaskChez SecurityRequirement to OpenAPI SecuritySchemeObject
    */
-  private def convertToSecurityScheme(requirement: SecurityRequirement): Option[(String, SecuritySchemeObject)] = {
+  private def convertToSecurityScheme(requirement: SecurityRequirement)
+      : Option[(String, SecuritySchemeObject)] = {
     requirement match {
       case SecurityRequirement.ApiKey(name, in) =>
         Some(

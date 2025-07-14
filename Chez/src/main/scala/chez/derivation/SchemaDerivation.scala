@@ -67,7 +67,7 @@ object Schema {
   inline def derived[T](using m: Mirror.Of[T]): Schema[T] =
     val chez = inline m match
       case p: Mirror.ProductOf[T] => deriveProductWithAnnotations[T](p)
-      case s: Mirror.SumOf[T]     => deriveSumWithAnnotations[T](s)
+      case s: Mirror.SumOf[T] => deriveSumWithAnnotations[T](s)
     instance[T](chez)
 
   /**
@@ -96,16 +96,18 @@ object Schema {
     val fieldAnnotations = AnnotationProcessor.extractAllFieldAnnotations[T]
 
     // Generate schemas for each element with annotations applied
-    val elemSchemasWithAnnotations = elemLabels.zip(getElemSchemas[T, p.MirroredElemTypes]).map { case (label, schema) =>
-      fieldAnnotations.get(label) match {
-        case Some(metadata) if metadata.nonEmpty =>
-          AnnotationProcessor.applyMetadata(schema, metadata)
-        case _ => schema
-      }
+    val elemSchemasWithAnnotations = elemLabels.zip(getElemSchemas[T, p.MirroredElemTypes]).map {
+      case (label, schema) =>
+        fieldAnnotations.get(label) match {
+          case Some(metadata) if metadata.nonEmpty =>
+            AnnotationProcessor.applyMetadata(schema, metadata)
+          case _ => schema
+        }
     }
 
     val properties = elemLabels.zip(elemSchemasWithAnnotations).toMap
-    val required = getRequiredFieldsWithDefaults[T, p.MirroredElemTypes](elemLabels, fieldAnnotations)
+    val required =
+      getRequiredFieldsWithDefaults[T, p.MirroredElemTypes](elemLabels, fieldAnnotations)
 
     // Create base object schema
     val baseObjectSchema = chez.Chez.Object(
@@ -124,7 +126,7 @@ object Schema {
    */
   inline def deriveSum[T](s: Mirror.SumOf[T]): Chez =
     val elemLabels = getElemLabels[s.MirroredElemLabels]
-    
+
     // For Scala 3 enums, we detect them by checking if all element types are singletons
     // If so, generate a string enum schema instead of trying to derive schemas for each case
     inline if (isSimpleEnum[s.MirroredElemTypes]) {
@@ -133,12 +135,12 @@ object Schema {
     } else {
       // For complex sum types, derive schemas and use OneOf
       val elemSchemas = getElemSchemas[T, s.MirroredElemTypes]
-      if elemSchemas.nonEmpty then 
+      if elemSchemas.nonEmpty then
         chez.Chez.OneOf(elemSchemas*)
-      else 
+      else
         chez.Chez.String()
     }
-  
+
   /**
    * Check if this is a simple enum by examining the element types at compile time
    * Simple enums have singleton cases with empty parameter lists
@@ -155,7 +157,7 @@ object Schema {
           false // Has fields, so not a simple enum
         }
       case _: EmptyTuple => true
-  
+
   /**
    * Check if a type is an empty product type (no constructor parameters)
    * This distinguishes enum cases from case classes with parameters
@@ -165,9 +167,9 @@ object Schema {
       case mirror: Mirror.ProductOf[T] =>
         // Check if the mirrored element types is EmptyTuple
         inline erasedValue[mirror.MirroredElemTypes] match
-          case _: EmptyTuple => true  // No parameters = enum case
-          case _ => false             // Has parameters = case class
-      case _ => 
+          case _: EmptyTuple => true // No parameters = enum case
+          case _ => false // Has parameters = case class
+      case _ =>
         // If no Mirror.ProductOf, treat as enum case (true singleton)
         true
     }
@@ -177,7 +179,7 @@ object Schema {
    */
   inline def deriveSumWithAnnotations[T](s: Mirror.SumOf[T]): Chez =
     val elemLabels = getElemLabels[s.MirroredElemLabels]
-    
+
     // For Scala 3 enums, we detect them by checking if all element types are singletons
     // If so, generate a string enum schema instead of trying to derive schemas for each case
     inline if (isSimpleEnum[s.MirroredElemTypes]) {
@@ -186,16 +188,16 @@ object Schema {
     } else {
       // For sealed traits, derive schemas with discriminator field injection
       val elemSchemas = getElemSchemas[T, s.MirroredElemTypes]
-      if elemSchemas.nonEmpty then 
+      if elemSchemas.nonEmpty then
         // Add type discriminator field to each schema variant
         val discriminatedSchemas = elemLabels.zip(elemSchemas).map { case (typeName, schema) =>
           addTypeDiscriminator(schema, typeName)
         }
         chez.Chez.OneOf(discriminatedSchemas*)
-      else 
+      else
         chez.Chez.String()
     }
-  
+
   /**
    * Add a type discriminator field to a schema for sealed trait variants
    */
@@ -206,7 +208,7 @@ object Schema {
         val typeField = chez.Chez.String(const = Some(typeName))
         val updatedProperties = obj.properties + ("type" -> typeField)
         val updatedRequired = obj.required + "type"
-        
+
         obj.copy(
           properties = updatedProperties,
           required = updatedRequired
@@ -242,15 +244,15 @@ object Schema {
    */
   inline def getElemSchema[T, Elem]: Chez =
     inline erasedValue[Elem] match
-      case _: String    => chez.Chez.String()
-      case _: Int       => chez.Chez.Integer()
-      case _: Long      => chez.Chez.Integer()
-      case _: Double    => chez.Chez.Number()
-      case _: Float     => chez.Chez.Number()
-      case _: Boolean   => chez.Chez.Boolean()
+      case _: String => chez.Chez.String()
+      case _: Int => chez.Chez.Integer()
+      case _: Long => chez.Chez.Integer()
+      case _: Double => chez.Chez.Number()
+      case _: Float => chez.Chez.Number()
+      case _: Boolean => chez.Chez.Boolean()
       case _: Option[t] => getElemSchema[T, t].optional
-      case _: List[t]   => chez.Chez.Array(getElemSchema[T, t])
-      case _            =>
+      case _: List[t] => chez.Chez.Array(getElemSchema[T, t])
+      case _ =>
         // For complex types, try to summon a Schema instance
         summonInline[Schema[Elem]].schema
 
@@ -263,7 +265,7 @@ object Schema {
         val requiredTail = getRequiredFields[tail](labels.tail)
         inline erasedValue[head] match
           case _: Option[_] => requiredTail
-          case _            => requiredTail + labels.head
+          case _ => requiredTail + labels.head
       case _: EmptyTuple => Set.empty
 
   /**
@@ -274,7 +276,7 @@ object Schema {
    * 3. Do not have Scala case class default parameters
    */
   inline def getRequiredFieldsWithDefaults[T, Elems <: Tuple](
-      labels: List[String], 
+      labels: List[String],
       fieldAnnotations: Map[String, AnnotationProcessor.AnnotationMetadata]
   ): Set[String] =
     getRequiredFieldsWithDefaultsHelper[T, Elems](labels, fieldAnnotations, Set.empty, 0)
@@ -283,7 +285,7 @@ object Schema {
    * Helper function to determine required fields recursively
    */
   inline def getRequiredFieldsWithDefaultsHelper[T, Elems <: Tuple](
-      labels: List[String], 
+      labels: List[String],
       fieldAnnotations: Map[String, AnnotationProcessor.AnnotationMetadata],
       acc: Set[String],
       fieldIndex: Int
@@ -292,30 +294,35 @@ object Schema {
       case _: (head *: tail) =>
         val fieldName = labels.head
         val newAcc = inline erasedValue[head] match
-          case _: Option[_] => 
+          case _: Option[_] =>
             // Optional fields are never required
             acc
-          case _ => 
+          case _ =>
             // Check if field has @Schema.default annotation
             val hasAnnotationDefault = fieldAnnotations.get(fieldName).exists(_.default.isDefined)
-            
+
             // Check if field has Scala case class default parameter
             val hasScalaDefault = hasScalaDefaultValue[T](fieldIndex)
-            
+
             if (hasAnnotationDefault || hasScalaDefault) {
               acc
             } else {
               acc + fieldName
             }
-        
-        getRequiredFieldsWithDefaultsHelper[T, tail](labels.tail, fieldAnnotations, newAcc, fieldIndex + 1)
+
+        getRequiredFieldsWithDefaultsHelper[T, tail](
+          labels.tail,
+          fieldAnnotations,
+          newAcc,
+          fieldIndex + 1
+        )
       case _: EmptyTuple => acc
 
   /**
    * Check if a field at the given index has a default value in the case class definition
    * Uses compile-time reflection to detect Scala default parameters
    */
-  inline def hasScalaDefaultValue[T](fieldIndex: Int): Boolean = 
+  inline def hasScalaDefaultValue[T](fieldIndex: Int): Boolean =
     ${ hasScalaDefaultValueImpl[T]('fieldIndex) }
 
   /**
@@ -323,10 +330,10 @@ object Schema {
    */
   def hasScalaDefaultValueImpl[T: Type](fieldIndexExpr: Expr[Int])(using Quotes): Expr[Boolean] = {
     import quotes.reflect.*
-    
+
     val fieldIndex = fieldIndexExpr.valueOrAbort
     val tpe = TypeRepr.of[T]
-    
+
     try {
       // Get the companion object
       val companionSym = tpe.typeSymbol.companionModule
@@ -335,15 +342,15 @@ object Schema {
       } else {
         // Default methods are named $lessinit$greater$default$N (1-indexed)
         val defaultMethodName = s"$$lessinit$$greater$$default$$${fieldIndex + 1}"
-        
+
         // Check if the companion object has the default method
         val companionType = companionSym.termRef
         val hasDefaultMethod = companionType.typeSymbol.declaredMethod(defaultMethodName).nonEmpty
-        
+
         Expr(hasDefaultMethod)
       }
     } catch {
-      case _ => 
+      case _ =>
         // If any reflection fails, assume no default
         Expr(false)
     }

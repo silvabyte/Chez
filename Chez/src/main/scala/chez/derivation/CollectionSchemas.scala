@@ -6,7 +6,7 @@ import chez.complex.*
 
 /**
  * Schema derivation for Scala collection types
- * 
+ *
  * Provides given instances for Map, Set, Vector and other collection types
  * to integrate with the Schema derivation system.
  */
@@ -14,7 +14,7 @@ object CollectionSchemas {
 
   /**
    * Schema derivation for Map[K, V] types
-   * 
+   *
    * Maps are represented as JSON objects in two ways:
    * - Map[String, V]: Uses additionalPropertiesSchema to allow any string key with V schema
    * - Map[K, V] where K != String: Uses patternProperties with ".*" pattern for any key
@@ -37,7 +37,7 @@ object CollectionSchemas {
           case _: Boolean => "boolean"
           case _ => "unknown"
         }
-        
+
         Schema.instance(ObjectChez(
           patternProperties = Map(".*" -> vSchema.schema)
         ).withDescription(s"Map with ${keyDescription} keys"))
@@ -46,7 +46,7 @@ object CollectionSchemas {
 
   /**
    * Schema derivation for Set[T] types
-   * 
+   *
    * Sets are represented as JSON arrays with uniqueItems=true to ensure
    * no duplicate values are allowed in the schema validation.
    */
@@ -59,7 +59,7 @@ object CollectionSchemas {
 
   /**
    * Schema derivation for Vector[T] types
-   * 
+   *
    * Vectors are represented as JSON arrays without uniqueItems constraint,
    * allowing duplicate values and preserving order.
    */
@@ -76,7 +76,7 @@ object CollectionSchemas {
   private inline def typeNameOf[T]: String = {
     inline erasedValue[T] match {
       case _: Int => "Int"
-      case _: Long => "Long" 
+      case _: Long => "Long"
       case _: Double => "Double"
       case _: Float => "Float"
       case _: Boolean => "Boolean"

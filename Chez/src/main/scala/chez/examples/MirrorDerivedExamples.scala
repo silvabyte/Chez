@@ -62,7 +62,8 @@ object MirrorDerivedExamples {
     println("-" * 33)
 
     case class Address(street: String, city: String, zipCode: String) derives Schema, ReadWriter
-    case class Person(name: String, address: Address, contacts: List[String]) derives Schema, ReadWriter
+    case class Person(name: String, address: Address, contacts: List[String]) derives Schema,
+          ReadWriter
 
     val addressSchema = Schema[Address]
     val personSchema = Schema[Person]

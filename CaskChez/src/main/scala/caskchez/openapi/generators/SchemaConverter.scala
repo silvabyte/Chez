@@ -5,18 +5,18 @@ import upickle.default.*
 
 /**
  * Schema utilities for OpenAPI 3.1.1 generation
- * 
+ *
  * OpenAPI 3.1.1 uses JSON Schema 2020-12 directly, which means
  * Chez schemas can be used without conversion!
  */
 object SchemaConverter {
-  
+
   /**
    * Generate a meaningful name for a schema component
    */
   def generateSchemaName(chez: Chez, fallback: String = "Schema"): String = {
     val jsonSchema = chez.toJsonSchema
-    
+
     // Try to extract title from schema
     jsonSchema.objOpt
       .flatMap(_.get("title"))
@@ -31,7 +31,7 @@ object SchemaConverter {
           .getOrElse(fallback)
       }
   }
-  
+
   /**
    * Sanitize schema name for use as component key
    */
@@ -41,14 +41,14 @@ object SchemaConverter {
       .map(_.capitalize)
       .mkString("")
   }
-  
+
   /**
    * Check if two Chez schemas are equivalent for deduplication
    */
   def schemasEqual(schema1: Chez, schema2: Chez): Boolean = {
     schema1.toJsonSchema == schema2.toJsonSchema
   }
-  
+
   /**
    * Calculate hash for schema deduplication
    */

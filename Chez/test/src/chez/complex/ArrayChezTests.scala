@@ -117,7 +117,8 @@ object ArrayChezTests extends TestSuite {
 
       test("max items validation") {
         val schema = ArrayChez(StringChez(), maxItems = Some(2))
-        val errors = schema.validate(List(ujson.Str("test1"), ujson.Str("test2"), ujson.Str("test3")))
+        val errors =
+          schema.validate(List(ujson.Str("test1"), ujson.Str("test2"), ujson.Str("test3")))
         assert(errors.length == 1)
         assert(errors.head.isInstanceOf[chez.ValidationError.MaxItemsViolation])
       }
@@ -130,7 +131,8 @@ object ArrayChezTests extends TestSuite {
       }
 
       test("multiple validation errors") {
-        val schema = ArrayChez(StringChez(), minItems = Some(3), maxItems = Some(2), uniqueItems = Some(true))
+        val schema =
+          ArrayChez(StringChez(), minItems = Some(3), maxItems = Some(2), uniqueItems = Some(true))
         val errors = schema.validate(List(ujson.Str("test1"), ujson.Str("test1")))
         assert(errors.length == 2) // min items + unique items violations
       }
@@ -164,11 +166,11 @@ object ArrayChezTests extends TestSuite {
         assert(json("examples").isInstanceOf[ujson.Arr])
         val examples = json("examples").arr
         assert(examples.length == 2)
-        
+
         // Verify each example is itself an array
         assert(examples(0).isInstanceOf[ujson.Arr])
         assert(examples(1).isInstanceOf[ujson.Arr])
-        
+
         // Verify content
         assert(examples(0).arr.map(_.num.toInt).toList == List(1, 2, 3))
         assert(examples(1).arr.map(_.num.toInt).toList == List(4, 5, 6))
@@ -179,7 +181,7 @@ object ArrayChezTests extends TestSuite {
         val schema1 = ArrayChez(StringChez()).withExamples(ujson.Arr("test"))
         val schema2 = ArrayChez(IntegerChez()).withExamples(ujson.Arr(1, 2), ujson.Arr(3, 4))
         val schema3 = ArrayChez(BooleanChez()).withExamples(ujson.Arr(true, false))
-        
+
         // If we get here without exceptions, the test passes
         assert(schema1.toJsonSchema("examples").arr.length == 1)
         assert(schema2.toJsonSchema("examples").arr.length == 2)

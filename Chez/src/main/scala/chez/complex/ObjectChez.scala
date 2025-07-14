@@ -1,7 +1,9 @@
 package chez.complex
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
+import scala.util.matching.Regex
 
 /**
  * Object schema type with JSON Schema 2020-12 validation keywords
@@ -39,7 +41,7 @@ case class ObjectChez(
     // Validation keywords
     minProperties.foreach(min => schema("minProperties") = ujson.Num(min))
     maxProperties.foreach(max => schema("maxProperties") = ujson.Num(max))
-    
+
     // Additional properties - can be boolean or schema
     additionalProperties.foreach(add => schema("additionalProperties") = ujson.Bool(add))
     additionalPropertiesSchema.foreach(aps => schema("additionalProperties") = aps.toJsonSchema)
@@ -71,7 +73,9 @@ case class ObjectChez(
     }
 
     // Unevaluated properties (2020-12 feature)
-    unevaluatedProperties.foreach(unevaluated => schema("unevaluatedProperties") = ujson.Bool(unevaluated))
+    unevaluatedProperties.foreach(unevaluated =>
+      schema("unevaluatedProperties") = ujson.Bool(unevaluated)
+    )
 
     title.foreach(t => schema("title") = ujson.Str(t))
     description.foreach(d => schema("description") = ujson.Str(d))
@@ -82,52 +86,153 @@ case class ObjectChez(
   }
 
   /**
-   * Validate an object value against this schema
+   * Validate a ujson.Value against this object schema
    */
-  def validate(value: ujson.Obj): List[chez.ValidationError] = {
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    value match {
+      case obj: ujson.Obj =>
+        // Delegate to existing validate(ujson.Obj) method but update error paths
+        val errors = validate(obj, context)
+        if (errors.isEmpty) {
+          ValidationResult.valid()
+        } else {
+          ValidationResult.invalid(errors)
+        }
+      case _ =>
+        // Non-object ujson.Value type - return TypeMismatch error
+        val error = chez.ValidationError.TypeMismatch("object", getValueType(value), context.path)
+        ValidationResult.invalid(error)
+    }
+  }
+
+  /**
+   * Validate an object value against this schema with proper context tracking
+   */
+  def validate(value: ujson.Obj, context: ValidationContext): List[chez.ValidationError] = {
     var errors = List.empty[chez.ValidationError]
 
     // Min properties validation
     minProperties.foreach { min =>
       if (value.value.size < min) {
-        errors = chez.ValidationError.MinPropertiesViolation(min, value.value.size, "/") :: errors
+        errors =
+          chez.ValidationError.MinPropertiesViolation(min, value.value.size, context.path) :: errors
       }
     }
 
     // Max properties validation
     maxProperties.foreach { max =>
       if (value.value.size > max) {
-        errors = chez.ValidationError.MaxPropertiesViolation(max, value.value.size, "/") :: errors
+        errors =
+          chez.ValidationError.MaxPropertiesViolation(max, value.value.size, context.path) :: errors
       }
     }
 
     // Required properties validation
     required.foreach { prop =>
       if (!value.value.contains(prop)) {
-        errors = chez.ValidationError.MissingField(prop, "/") :: errors
+        errors = chez.ValidationError.MissingField(prop, context.path) :: errors
       }
     }
 
-    // Additional properties validation
-    additionalProperties.foreach { additional =>
-      if (!additional) {
-        val unknownProps = value.value.keySet -- properties.keySet
-        unknownProps.foreach { prop =>
-          errors = chez.ValidationError.AdditionalProperty(prop, "/") :: errors
+    // Property validation - validate each property against its schema
+    properties.foreach { case (propName, propSchema) =>
+      value.value.get(propName).foreach { propValue =>
+        val propContext = context.withProperty(propName)
+        val validationResult = propSchema.validate(propValue, propContext)
+        if (!validationResult.isValid) {
+          errors = validationResult.errors ++ errors
         }
       }
     }
 
-    // Property validation (validate each property against its schema)
-    properties.foreach { case (propName, propSchema) =>
-      value.value.get(propName).foreach { propValue =>
-        // For now, we'll implement basic validation
-        // In practice, we'd need to validate each property against its schema
-        // This is a placeholder for proper property validation
-        // TODO: implement this
+    // Pattern properties validation
+    patternProperties.foreach { case (pattern, patternSchema) =>
+      val regex = new Regex(pattern)
+      value.value.foreach { case (propName, propValue) =>
+        if (regex.findFirstIn(propName).isDefined && !properties.contains(propName)) {
+          val propContext = context.withProperty(propName)
+          val validationResult = patternSchema.validate(propValue, propContext)
+          if (!validationResult.isValid) {
+            errors = validationResult.errors ++ errors
+          }
+        }
       }
     }
 
+    // Additional properties validation
+    val definedProperties = properties.keySet
+    val patternMatchedProperties = patternProperties.keys.flatMap { pattern =>
+      val regex = new Regex(pattern)
+      value.value.keys.filter(propName => regex.findFirstIn(propName).isDefined)
+    }.toSet
+
+    val additionalProps = value.value.keySet -- definedProperties -- patternMatchedProperties
+
+    additionalProperties match {
+      case Some(false) =>
+        // Additional properties not allowed
+        additionalProps.foreach { prop =>
+          errors = chez.ValidationError.AdditionalProperty(prop, context.path) :: errors
+        }
+      case _ =>
+        // Additional properties allowed or unspecified
+        additionalPropertiesSchema match {
+          case Some(additionalSchema) =>
+            // Validate additional properties against the additional properties schema
+            additionalProps.foreach { propName =>
+              value.value.get(propName).foreach { propValue =>
+                val propContext = context.withProperty(propName)
+                val validationResult = additionalSchema.validate(propValue, propContext)
+                if (!validationResult.isValid) {
+                  errors = validationResult.errors ++ errors
+                }
+              }
+            }
+          case None =>
+          // No additional properties schema - allow any additional properties
+        }
+    }
+
     errors.reverse
+  }
+
+  /**
+   * Legacy validate method for backward compatibility
+   */
+  def validate(value: ujson.Obj): List[chez.ValidationError] = {
+    validate(value, ValidationContext())
+  }
+
+  /**
+   * Update error path for ValidationError instances
+   */
+  private def updateErrorPath(error: chez.ValidationError, path: String): chez.ValidationError = {
+    error match {
+      case chez.ValidationError.MinPropertiesViolation(min, actual, _) =>
+        chez.ValidationError.MinPropertiesViolation(min, actual, path)
+      case chez.ValidationError.MaxPropertiesViolation(max, actual, _) =>
+        chez.ValidationError.MaxPropertiesViolation(max, actual, path)
+      case chez.ValidationError.MissingField(field, _) =>
+        chez.ValidationError.MissingField(field, path)
+      case chez.ValidationError.AdditionalProperty(prop, _) =>
+        chez.ValidationError.AdditionalProperty(prop, path)
+      case chez.ValidationError.TypeMismatch(expected, actual, _) =>
+        chez.ValidationError.TypeMismatch(expected, actual, path)
+      case other => other // For error types that don't need path updates
+    }
+  }
+
+  /**
+   * Get string representation of ujson.Value type for error messages
+   */
+  private def getValueType(value: ujson.Value): String = {
+    value match {
+      case _: ujson.Str => "string"
+      case _: ujson.Num => "number"
+      case _: ujson.Bool => "boolean"
+      case ujson.Null => "null"
+      case _: ujson.Arr => "array"
+      case _: ujson.Obj => "object"
+    }
   }
 }

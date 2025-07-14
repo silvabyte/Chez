@@ -2,6 +2,8 @@ package chez.examples
 
 import chez.*
 import chez.primitives.*
+import chez.complex.*
+import chez.validation.*
 import upickle.default.*
 import scala.util.{Try, Success, Failure}
 
@@ -37,6 +39,21 @@ object Validation {
     testIntegerValidation(ageSchema, 200, "age too high")
     testStringValidation(passwordSchema, "weak", "weak password")
 
+    // ValidationResult framework examples with primitive types
+    println("\n📋 ValidationResult Framework Examples:")
+    testValidationResult(
+      emailSchema,
+      ujson.Str("test@example.com"),
+      "valid email with ValidationResult"
+    )
+    testValidationResult(
+      emailSchema,
+      ujson.Str("invalid-email"),
+      "invalid email with ValidationResult"
+    )
+    testValidationResult(ageSchema, ujson.Num(25), "valid age with ValidationResult")
+    testValidationResult(ageSchema, ujson.Num(-5), "invalid age with ValidationResult")
+
     // 2. Object validation with required fields
     println("\n2. Object Validation with Required Fields:")
 
@@ -67,6 +84,87 @@ object Validation {
 
     testObjectValidation(userSchema, validUser, "valid user")
     testObjectValidation(userSchema, invalidUser, "user missing required field")
+
+    // ValidationResult framework with simple objects (avoiding arrays/complex types)
+    println("\n📋 ValidationResult Framework with Objects:")
+
+    val simpleUserSchema = Chez.Object(
+      properties = Map(
+        "id" -> Chez.String(),
+        "name" -> Chez.String(minLength = Some(1)),
+        "email" -> Chez.String(format = Some("email"))
+      ),
+      required = Set("id", "name", "email")
+    )
+
+    val validSimpleUser = ujson.Obj(
+      "id" -> ujson.Str("123"),
+      "name" -> ujson.Str("John Doe"),
+      "email" -> ujson.Str("john@example.com")
+    )
+
+    val invalidSimpleUser = ujson.Obj(
+      "id" -> ujson.Str("123"),
+      "name" -> ujson.Str(""), // violates minLength
+      "email" -> ujson.Str("invalid-email") // invalid format
+      // missing required field: email removed for this test
+    )
+
+    testValidationResultObject(
+      simpleUserSchema,
+      validSimpleUser,
+      "valid simple user with ValidationResult"
+    )
+    testValidationResultObject(
+      simpleUserSchema,
+      invalidSimpleUser,
+      "invalid simple user with ValidationResult"
+    )
+
+    // Nested validation with error path tracking (simple nesting without arrays)
+    println("\n🗺️ Error Path Tracking in Nested Objects:")
+
+    val addressSchema = Chez.Object(
+      properties = Map(
+        "street" -> Chez.String(minLength = Some(1)),
+        "city" -> Chez.String(minLength = Some(1)),
+        "zipCode" -> Chez.String(pattern = Some("^\\d{5}$"))
+      ),
+      required = Set("street", "city", "zipCode")
+    )
+
+    val personSchema = Chez.Object(
+      properties = Map(
+        "name" -> Chez.String(minLength = Some(1)),
+        "address" -> addressSchema
+      ),
+      required = Set("name", "address")
+    )
+
+    val validPerson = ujson.Obj(
+      "name" -> ujson.Str("John Doe"),
+      "address" -> ujson.Obj(
+        "street" -> ujson.Str("123 Main St"),
+        "city" -> ujson.Str("Springfield"),
+        "zipCode" -> ujson.Str("12345")
+      )
+    )
+
+    val invalidPerson = ujson.Obj(
+      "name" -> ujson.Str("Jane"),
+      "address" -> ujson.Obj(
+        "street" -> ujson.Str(""), // violates minLength at /address/street
+        "city" -> ujson.Str("Boston"),
+        "zipCode" -> ujson.Str("INVALID") // violates pattern at /address/zipCode
+      )
+    )
+
+    testValidationResultObject(personSchema, validPerson, "valid nested person")
+    testValidationResultObject(
+      personSchema,
+      invalidPerson,
+      "invalid nested person with path errors"
+    )
 
     // 3. Array validation
     println("\n3. Array Validation:")
@@ -130,7 +228,7 @@ object Validation {
     val prioritySchema = EnumChez.fromInts(1, 2, 3, 4, 5)
 
     testEnumValidation(statusSchema, "active", "valid status")
-    testEnumValidation(statusSchema, "unknown", "invalid status")  
+    testEnumValidation(statusSchema, "unknown", "invalid status")
     testEnumValidation(prioritySchema, 3, "valid priority")
     testEnumValidation(prioritySchema, 10, "invalid priority")
 
@@ -185,13 +283,13 @@ object Validation {
 
     val conditionalUserSchema = Chez.If(
       condition = Chez.Object("role" -> Chez.String(const = Some("admin"))),
-      thenSchema = Chez.Object("permissions" -> Chez.Array(Chez.String())),
+      thenSchema = Chez.Object("adminLevel" -> Chez.String()), // replaced array with simple string
       elseSchema = Chez.Object("department" -> Chez.String())
     )
 
     val adminUser = ujson.Obj(
       "role" -> ujson.Str("admin"),
-      "permissions" -> ujson.Arr(ujson.Str("read"), ujson.Str("write"))
+      "adminLevel" -> ujson.Str("full") // replaced array with simple string
     )
 
     val regularUser = ujson.Obj(
@@ -201,7 +299,7 @@ object Validation {
 
     println("Conditional validation:")
     println(s"- Schema: ${conditionalUserSchema.toJsonSchema}")
-    println("- Admin user validation would check for permissions")
+    println("- Admin user validation would check for adminLevel")
     println("- Regular user validation would check for department")
 
     // 10. Real-world API validation example
@@ -215,7 +313,7 @@ object Validation {
         "category" -> Chez.StringEnum("electronics", "clothing", "books", "food"),
         "sku" -> Chez.String(pattern = Some("^[A-Z]{3}-\\d{6}$")),
         "inStock" -> Chez.Boolean(),
-        "tags" -> Chez.Array(Chez.String(), maxItems = Some(10)).optional,
+        "brand" -> Chez.String().optional, // replaced tags array with simple brand string
         "metadata" -> Chez
           .Object(
             Map(),
@@ -235,9 +333,9 @@ object Validation {
       "category" -> ujson.Str("electronics"),
       "sku" -> ujson.Str("ELE-123456"),
       "inStock" -> ujson.Bool(true),
-      "tags" -> ujson.Arr(ujson.Str("wireless"), ujson.Str("bluetooth"), ujson.Str("headphones")),
+      "brand" -> ujson.Str("TechCorp"), // replaced tags array with simple brand
       "metadata" -> ujson.Obj(
-        "brand" -> ujson.Str("TechCorp"),
+        "manufacturer" -> ujson.Str("TechCorp"),
         "model" -> ujson.Str("WH-1000XM4")
       )
     )
@@ -253,8 +351,73 @@ object Validation {
     testObjectValidation(createProductSchema, validProduct, "valid product")
     testObjectValidation(createProductSchema, invalidProduct, "invalid product")
 
+    // Pattern properties example with ValidationResult (using only String/Boolean/Integer types)
+    println("\n🎯 Pattern Properties with ValidationResult:")
+
+    val dynamicConfigSchema = Chez.Object(
+      properties = Map(
+        "appName" -> Chez.String(minLength = Some(1))
+      ),
+      patternProperties = Map(
+        "^config_" -> Chez.String(minLength = Some(3)),
+        "^flag_" -> Chez.Boolean()
+      ),
+      required = Set("appName")
+    )
+
+    val validDynamicConfig = ujson.Obj(
+      "appName" -> ujson.Str("MyApp"),
+      "config_database" -> ujson.Str("postgres://localhost"),
+      "flag_enabled" -> ujson.Bool(true)
+    )
+
+    val invalidDynamicConfig = ujson.Obj(
+      "appName" -> ujson.Str("MyApp"),
+      "config_db" -> ujson.Str("hi"), // too short for minLength=3
+      "flag_enabled" -> ujson.Str("not_boolean") // wrong type
+    )
+
+    testValidationResultObject(dynamicConfigSchema, validDynamicConfig, "valid pattern properties")
+    testValidationResultObject(
+      dynamicConfigSchema,
+      invalidDynamicConfig,
+      "invalid pattern properties"
+    )
+
+    // Additional properties with schema validation
+    println("\n🔧 Additional Properties Schema Validation:")
+
+    val flexibleSchema = Chez.Object(
+      properties = Map("name" -> Chez.String()),
+      additionalPropertiesSchema = Some(Chez.String(minLength = Some(2)))
+    )
+
+    val validFlexible = ujson.Obj(
+      "name" -> ujson.Str("Test"),
+      "extra1" -> ujson.Str("hello"),
+      "extra2" -> ujson.Str("world")
+    )
+
+    val invalidFlexible = ujson.Obj(
+      "name" -> ujson.Str("Test"),
+      "extra1" -> ujson.Str("h"), // too short for minLength=2
+      "extra2" -> ujson.Str("ok")
+    )
+
+    testValidationResultObject(
+      flexibleSchema,
+      validFlexible,
+      "valid additional properties with schema"
+    )
+    testValidationResultObject(
+      flexibleSchema,
+      invalidFlexible,
+      "invalid additional properties with schema"
+    )
+
     println("\n🎯 Validation Examples Complete!")
     println("These examples demonstrate comprehensive validation capabilities:")
+    println("\n📋 Core Features:")
     println("- Primitive type validation (string, number, integer, boolean)")
     println("- Object validation with required fields")
     println("- Array validation with constraints")
@@ -262,9 +425,17 @@ object Validation {
     println("- String pattern and format validation")
     println("- Enum validation")
     println("- Nullable and optional field handling")
+    println("\n🔄 Advanced Features:")
     println("- Composition validation (anyOf, oneOf, allOf, not)")
     println("- Conditional validation (if/then/else)")
     println("- Real-world API validation scenarios")
+    println("\n📋 ValidationResult Framework (T4):")
+    println("- ValidationResult.valid() and ValidationResult.invalid() states")
+    println("- Error path tracking for nested objects (e.g., /address/street)")
+    println("- Pattern properties validation with regex matching")
+    println("- Additional properties schema validation")
+    println("- Type checking with TypeMismatch errors")
+    println("- Custom ValidationContext paths")
   }
 
   // Helper methods for testing validation
@@ -338,12 +509,74 @@ object Validation {
       case null => ujson.Null
       case _ => ujson.Str(value.toString)
     }
-    
+
     val errors = schema.validate(ujsonValue)
     if (errors.isEmpty) {
       println(s"✓ $description: '$value' - Valid")
     } else {
       println(s"✗ $description: '$value' - Errors: ${errors.mkString(", ")}")
+    }
+  }
+
+  // ValidationResult framework test methods
+  private def testValidationResult(schema: Chez, value: ujson.Value, description: String): Unit = {
+    // Only use new validation method for types that support it
+    schema match {
+      case stringSchema: chez.primitives.StringChez =>
+        val result = stringSchema.validate(value, ValidationContext())
+        if (result.isValid) {
+          println(s"✓ $description: Valid (${result.getClass.getSimpleName})")
+        } else {
+          println(s"✗ $description: Invalid (${result.errors.length} errors)")
+          result.errors.foreach { error =>
+            println(s"    - $error")
+          }
+        }
+      case intSchema: chez.primitives.IntegerChez =>
+        val result = intSchema.validate(value, ValidationContext())
+        if (result.isValid) {
+          println(s"✓ $description: Valid (${result.getClass.getSimpleName})")
+        } else {
+          println(s"✗ $description: Invalid (${result.errors.length} errors)")
+          result.errors.foreach { error =>
+            println(s"    - $error")
+          }
+        }
+      case _ =>
+        // Fall back to legacy validation for types that don't support ValidationResult yet
+        println(
+          s"? $description: ValidationResult not yet supported for ${schema.getClass.getSimpleName}"
+        )
+    }
+  }
+
+  private def testValidationResultObject(
+      schema: Chez,
+      value: ujson.Obj,
+      description: String
+  ): Unit = {
+    schema match {
+      case objSchema: chez.complex.ObjectChez =>
+        val result = objSchema.validate(value: ujson.Value, ValidationContext())
+        if (result.isValid) {
+          println(s"✓ $description: Valid (${result.getClass.getSimpleName})")
+        } else {
+          println(s"✗ $description: Invalid (${result.errors.length} errors)")
+          result.errors.foreach { error =>
+            val path = error match {
+              case chez.ValidationError.MinLengthViolation(_, _, path) => s"[$path]"
+              case chez.ValidationError.PatternMismatch(_, _, path) => s"[$path]"
+              case chez.ValidationError.MissingField(_, path) => s"[$path]"
+              case chez.ValidationError.InvalidFormat(_, _, path) => s"[$path]"
+              case chez.ValidationError.TypeMismatch(_, _, path) => s"[$path]"
+              case chez.ValidationError.OutOfRange(_, _, _, path) => s"[$path]"
+              case chez.ValidationError.AdditionalProperty(_, path) => s"[$path]"
+              case _ => ""
+            }
+            println(s"    $path $error")
+          }
+        }
+      case _ => println(s"? $description: Cannot validate (not an ObjectChez)")
     }
   }
 }

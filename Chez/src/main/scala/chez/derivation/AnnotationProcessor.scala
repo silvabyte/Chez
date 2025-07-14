@@ -8,7 +8,7 @@ import chez.complex.*
 
 /**
  * Production annotation processor with real macro-based annotation extraction
- * 
+ *
  * This provides complete Phase 4.1 functionality by reading actual @Schema annotations
  * at compile time and applying them to derived schemas.
  */
@@ -70,13 +70,13 @@ object AnnotationProcessor {
    */
   def extractClassAnnotationsImpl[T: Type](using Quotes): Expr[AnnotationMetadata] = {
     import quotes.reflect.*
-    
+
     val typeRepr = TypeRepr.of[T]
     val typeSymbol = typeRepr.typeSymbol
-    
+
     var titleOpt: Option[String] = None
     var descriptionOpt: Option[String] = None
-    
+
     // Extract annotations from the class
     for (annotation <- typeSymbol.annotations) {
       annotation.tpe.typeSymbol.name match {
@@ -95,7 +95,7 @@ object AnnotationProcessor {
         case _ =>
       }
     }
-    
+
     // Build AnnotationMetadata expression
     val titleExpr = titleOpt match {
       case Some(value) => '{ Some(${ Expr(value) }) }
@@ -105,19 +105,21 @@ object AnnotationProcessor {
       case Some(value) => '{ Some(${ Expr(value) }) }
       case None => '{ None }
     }
-    
+
     '{ AnnotationMetadata(title = $titleExpr, description = $descriptionExpr) }
   }
 
   /**
    * Macro implementation for extracting field-level annotations
    */
-  def extractFieldAnnotationsImpl[T: Type](fieldName: Expr[String])(using Quotes): Expr[AnnotationMetadata] = {
+  def extractFieldAnnotationsImpl[T: Type](fieldName: Expr[String])(using
+      Quotes
+  ): Expr[AnnotationMetadata] = {
     import quotes.reflect.*
-    
+
     val typeRepr = TypeRepr.of[T]
     val typeSymbol = typeRepr.typeSymbol
-    
+
     fieldName.value match {
       case Some(name) =>
         // Find the field by name
@@ -136,7 +138,7 @@ object AnnotationProcessor {
             var defaultOpt: Option[String | Int | Boolean | Double] = None
             var enumValuesOpt: Option[List[String | Int | Boolean | Double | Null]] = None
             var constOpt: Option[String | Int | Boolean | Double | Null] = None
-            
+
             // Extract annotations from the field
             for (annotation <- fieldSymbol.annotations) {
               annotation.tpe.typeSymbol.name match {
@@ -206,10 +208,14 @@ object AnnotationProcessor {
                   annotation match {
                     case Apply(_, args) =>
                       val values = args.collect {
-                        case Literal(StringConstant(value)) => value: String | Int | Boolean | Double | Null
-                        case Literal(IntConstant(value)) => value: String | Int | Boolean | Double | Null
-                        case Literal(BooleanConstant(value)) => value: String | Int | Boolean | Double | Null
-                        case Literal(DoubleConstant(value)) => value: String | Int | Boolean | Double | Null
+                        case Literal(StringConstant(value)) =>
+                          value: String | Int | Boolean | Double | Null
+                        case Literal(IntConstant(value)) =>
+                          value: String | Int | Boolean | Double | Null
+                        case Literal(BooleanConstant(value)) =>
+                          value: String | Int | Boolean | Double | Null
+                        case Literal(DoubleConstant(value)) =>
+                          value: String | Int | Boolean | Double | Null
                         case Literal(NullConstant()) => null: String | Int | Boolean | Double | Null
                       }
                       if (values.nonEmpty) enumValuesOpt = Some(values)
@@ -244,7 +250,7 @@ object AnnotationProcessor {
                 case _ =>
               }
             }
-            
+
             // Build expressions for all Option fields
             val descriptionExpr = descriptionOpt match {
               case Some(value) => '{ Some(${ Expr(value) }) }
@@ -287,7 +293,7 @@ object AnnotationProcessor {
               case None => '{ None }
             }
             val enumValuesExpr = enumValuesOpt match {
-              case Some(values) => 
+              case Some(values) =>
                 val valueExprs = values.map {
                   case s: String => '{ ${ Expr(s) }: String | Int | Boolean | Double | Null }
                   case i: Int => '{ ${ Expr(i) }: String | Int | Boolean | Double | Null }
@@ -299,22 +305,29 @@ object AnnotationProcessor {
               case None => '{ None }
             }
             val constExpr = constOpt match {
-              case Some(value: String) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
-              case Some(value: Int) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
-              case Some(value: Boolean) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
-              case Some(value: Double) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+              case Some(value: String) =>
+                '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+              case Some(value: Int) =>
+                '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+              case Some(value: Boolean) =>
+                '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+              case Some(value: Double) =>
+                '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
               case Some(null) => '{ Some(null: String | Int | Boolean | Double | Null) }
               case None => '{ None }
             }
             val defaultExpr = defaultOpt match {
-              case Some(value: String) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+              case Some(value: String) =>
+                '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
               case Some(value: Int) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
-              case Some(value: Boolean) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
-              case Some(value: Double) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+              case Some(value: Boolean) =>
+                '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
+              case Some(value: Double) =>
+                '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
               case None => '{ None }
             }
-            
-            '{ 
+
+            '{
               AnnotationMetadata(
                 description = $descriptionExpr,
                 format = $formatExpr,
@@ -342,35 +355,39 @@ object AnnotationProcessor {
   /**
    * Macro implementation for extracting all field annotations
    */
-  def extractAllFieldAnnotationsImpl[T: Type](using Quotes): Expr[Map[String, AnnotationMetadata]] = {
+  def extractAllFieldAnnotationsImpl[T: Type](using
+      Quotes
+  ): Expr[Map[String, AnnotationMetadata]] = {
     import quotes.reflect.*
-    
+
     val typeRepr = TypeRepr.of[T]
     val typeSymbol = typeRepr.typeSymbol
-    
+
     val fieldExprs = typeSymbol.primaryConstructor.paramSymss.flatten.map { fieldSymbol =>
       val fieldName = fieldSymbol.name
       val fieldNameExpr = Expr(fieldName)
       val fieldMetadataExpr = extractFieldAnnotationsForSymbol(fieldSymbol)
       '{ ($fieldNameExpr, $fieldMetadataExpr) }
     }
-    
+
     // Build map from field expressions
-    val pairs = fieldExprs.map { pairExpr => 
+    val pairs = fieldExprs.map { pairExpr =>
       '{ List($pairExpr) }
     }.reduceLeftOption { (acc, curr) =>
       '{ $acc ++ $curr }
     }.getOrElse('{ List.empty[(String, AnnotationMetadata)] })
-    
+
     '{ $pairs.toMap }
   }
-  
+
   /**
    * Helper method to extract annotations from a field symbol
    */
-  private def extractFieldAnnotationsForSymbol(using Quotes)(fieldSymbol: quotes.reflect.Symbol): Expr[AnnotationMetadata] = {
+  private def extractFieldAnnotationsForSymbol(using
+      Quotes
+  )(fieldSymbol: quotes.reflect.Symbol): Expr[AnnotationMetadata] = {
     import quotes.reflect.*
-    
+
     var descriptionOpt: Option[String] = None
     var formatOpt: Option[String] = None
     var minLengthOpt: Option[Int] = None
@@ -384,7 +401,7 @@ object AnnotationProcessor {
     var defaultOpt: Option[String | Int | Boolean | Double] = None
     var enumValuesOpt: Option[List[String | Int | Boolean | Double | Null]] = None
     var constOpt: Option[String | Int | Boolean | Double | Null] = None
-    
+
     // Extract annotations from the field
     for (annotation <- fieldSymbol.annotations) {
       annotation.tpe.typeSymbol.name match {
@@ -456,7 +473,8 @@ object AnnotationProcessor {
               val values = args.collect {
                 case Literal(StringConstant(value)) => value: String | Int | Boolean | Double | Null
                 case Literal(IntConstant(value)) => value: String | Int | Boolean | Double | Null
-                case Literal(BooleanConstant(value)) => value: String | Int | Boolean | Double | Null
+                case Literal(BooleanConstant(value)) =>
+                  value: String | Int | Boolean | Double | Null
                 case Literal(DoubleConstant(value)) => value: String | Int | Boolean | Double | Null
                 case Literal(NullConstant()) => null: String | Int | Boolean | Double | Null
               }
@@ -492,7 +510,7 @@ object AnnotationProcessor {
         case _ =>
       }
     }
-    
+
     // Build expressions for all Option fields
     val descriptionExpr = descriptionOpt match {
       case Some(value) => '{ Some(${ Expr(value) }) }
@@ -535,7 +553,7 @@ object AnnotationProcessor {
       case None => '{ None }
     }
     val enumValuesExpr = enumValuesOpt match {
-      case Some(values) => 
+      case Some(values) =>
         val valueExprs = values.map {
           case s: String => '{ ${ Expr(s) }: String | Int | Boolean | Double | Null }
           case i: Int => '{ ${ Expr(i) }: String | Int | Boolean | Double | Null }
@@ -547,10 +565,13 @@ object AnnotationProcessor {
       case None => '{ None }
     }
     val constExpr = constOpt match {
-      case Some(value: String) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+      case Some(value: String) =>
+        '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
       case Some(value: Int) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
-      case Some(value: Boolean) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
-      case Some(value: Double) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+      case Some(value: Boolean) =>
+        '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+      case Some(value: Double) =>
+        '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
       case Some(null) => '{ Some(null: String | Int | Boolean | Double | Null) }
       case None => '{ None }
     }
@@ -561,8 +582,8 @@ object AnnotationProcessor {
       case Some(value: Double) => '{ Some(${ Expr(value) }: String | Int | Boolean | Double) }
       case None => '{ None }
     }
-    
-    '{ 
+
+    '{
       AnnotationMetadata(
         description = $descriptionExpr,
         format = $formatExpr,
@@ -598,7 +619,7 @@ object AnnotationProcessor {
           case null => ujson.Null
         }
         var result: Chez = EnumChez(ujsonValues)
-        
+
         // Apply general metadata to the enum
         metadata.title.foreach(title => result = result.withTitle(title))
         metadata.description.foreach(desc => result = result.withDescription(desc))
@@ -611,7 +632,7 @@ object AnnotationProcessor {
           }
           result = result.withDefault(ujsonDefault)
         }
-        
+
         return result
       case None =>
     }
@@ -634,8 +655,12 @@ object AnnotationProcessor {
         var enhanced = nc
         metadata.minimum.foreach(min => enhanced = enhanced.copy(minimum = Some(min)))
         metadata.maximum.foreach(max => enhanced = enhanced.copy(maximum = Some(max)))
-        metadata.exclusiveMinimum.foreach(emin => enhanced = enhanced.copy(exclusiveMinimum = Some(emin)))
-        metadata.exclusiveMaximum.foreach(emax => enhanced = enhanced.copy(exclusiveMaximum = Some(emax)))
+        metadata.exclusiveMinimum.foreach(emin =>
+          enhanced = enhanced.copy(exclusiveMinimum = Some(emin))
+        )
+        metadata.exclusiveMaximum.foreach(emax =>
+          enhanced = enhanced.copy(exclusiveMaximum = Some(emax))
+        )
         metadata.multipleOf.foreach(mult => enhanced = enhanced.copy(multipleOf = Some(mult)))
         metadata.const.foreach {
           case d: Double => enhanced = enhanced.copy(const = Some(d))
@@ -648,8 +673,12 @@ object AnnotationProcessor {
         var enhanced = ic
         metadata.minimum.foreach(min => enhanced = enhanced.copy(minimum = Some(min.toInt)))
         metadata.maximum.foreach(max => enhanced = enhanced.copy(maximum = Some(max.toInt)))
-        metadata.exclusiveMinimum.foreach(emin => enhanced = enhanced.copy(exclusiveMinimum = Some(emin.toInt)))
-        metadata.exclusiveMaximum.foreach(emax => enhanced = enhanced.copy(exclusiveMaximum = Some(emax.toInt)))
+        metadata.exclusiveMinimum.foreach(emin =>
+          enhanced = enhanced.copy(exclusiveMinimum = Some(emin.toInt))
+        )
+        metadata.exclusiveMaximum.foreach(emax =>
+          enhanced = enhanced.copy(exclusiveMaximum = Some(emax.toInt))
+        )
         metadata.multipleOf.foreach(mult => enhanced = enhanced.copy(multipleOf = Some(mult.toInt)))
         metadata.const.foreach {
           case i: Int => enhanced = enhanced.copy(const = Some(i))

@@ -53,9 +53,9 @@ object SetDerivationTests extends TestSuite {
     test("Set integration with case classes") {
       test("case class with Set[T] fields") {
         case class UserPreferences(
-          name: String,
-          tags: Set[String],
-          favoriteNumbers: Set[Int]
+            name: String,
+            tags: Set[String],
+            favoriteNumbers: Set[Int]
         ) derives Schema
 
         val schema = Schema[UserPreferences]
@@ -64,22 +64,22 @@ object SetDerivationTests extends TestSuite {
         assert(json("type").str == "object")
         assert(json.obj.contains("properties"))
         assert(json.obj.contains("required"))
-        
+
         val props = json("properties")
-        
+
         // Check name field
         assert(props("name")("type").str == "string")
-        
+
         // Check tags field (Set[String])
         assert(props("tags")("type").str == "array")
         assert(props("tags")("uniqueItems").bool == true)
         assert(props("tags")("items")("type").str == "string")
-        
+
         // Check favoriteNumbers field (Set[Int])
         assert(props("favoriteNumbers")("type").str == "array")
         assert(props("favoriteNumbers")("uniqueItems").bool == true)
         assert(props("favoriteNumbers")("items")("type").str == "integer")
-        
+
         // Check required fields
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("name", "tags", "favoriteNumbers"))
@@ -87,15 +87,15 @@ object SetDerivationTests extends TestSuite {
 
       test("case class with nested Sets") {
         case class NestedSets(
-          groups: Set[Set[String]],
-          metadata: Map[String, Set[Int]]
+            groups: Set[Set[String]],
+            metadata: Map[String, Set[Int]]
         ) derives Schema
 
         val schema = Schema[NestedSets]
         val json = schema.toJsonSchema
 
         val props = json("properties")
-        
+
         // Check groups field (Set[Set[String]])
         assert(props("groups")("type").str == "array")
         assert(props("groups")("uniqueItems").bool == true)
@@ -103,7 +103,7 @@ object SetDerivationTests extends TestSuite {
         assert(groupsItems("type").str == "array")
         assert(groupsItems("uniqueItems").bool == true)
         assert(groupsItems("items")("type").str == "string")
-        
+
         // Check metadata field (Map[String, Set[Int]])
         assert(props("metadata")("type").str == "object")
         assert(props("metadata").obj.contains("additionalProperties"))
@@ -115,26 +115,26 @@ object SetDerivationTests extends TestSuite {
 
       test("case class with Optional Set fields") {
         case class OptionalSets(
-          name: String,
-          tags: Option[Set[String]],
-          categories: Set[String] = Set.empty
+            name: String,
+            tags: Option[Set[String]],
+            categories: Set[String] = Set.empty
         ) derives Schema
 
         val schema = Schema[OptionalSets]
         val json = schema.toJsonSchema
 
         val props = json("properties")
-        
+
         // Check optional tags field
         assert(props("tags")("type").str == "array")
         assert(props("tags")("uniqueItems").bool == true)
         assert(props("tags")("items")("type").str == "string")
-        
+
         // Check default categories field
         assert(props("categories")("type").str == "array")
         assert(props("categories")("uniqueItems").bool == true)
         assert(props("categories")("items")("type").str == "string")
-        
+
         // Check required fields (tags should be optional, categories has default)
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("name"))
@@ -144,13 +144,13 @@ object SetDerivationTests extends TestSuite {
     test("Set with complex value types") {
       test("Set[Case Class] works correctly") {
         case class Person(name: String, age: Int) derives Schema
-        
+
         val schema = Schema[Set[Person]]
         val json = schema.toJsonSchema
 
         assert(json("type").str == "array")
         assert(json("uniqueItems").bool == true)
-        
+
         val items = json("items")
         assert(items("type").str == "object")
         assert(items.obj.contains("properties"))
@@ -164,7 +164,7 @@ object SetDerivationTests extends TestSuite {
 
         assert(json("type").str == "array")
         assert(json("uniqueItems").bool == true)
-        
+
         val items = json("items")
         assert(items("type").str == "array")
         assert(items("items")("type").str == "string")
@@ -176,7 +176,7 @@ object SetDerivationTests extends TestSuite {
 
         assert(json("type").str == "array")
         assert(json("uniqueItems").bool == true)
-        
+
         val items = json("items")
         assert(items("type").str == "object")
         assert(items.obj.contains("additionalProperties"))
@@ -191,7 +191,7 @@ object SetDerivationTests extends TestSuite {
 
         assert(json("type").str == "array")
         assert(json("uniqueItems").bool == true)
-        
+
         val items = json("items")
         assert(items("type").str == "string")
         // Note: Option[T] schema doesn't add nullable in JSON Schema 2020-12

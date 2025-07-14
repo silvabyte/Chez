@@ -18,9 +18,9 @@ object DefaultAnnotationTests extends TestSuite {
       val schema = Schema[ComprehensiveDefaults]
       val json = schema.toJsonSchema
       val props = json("properties").obj
-      
+
       assert(json("type").str == "object")
-      
+
       // Verify all default values are correctly included in the JSON schema
       assert(props("count")("default").num == 42)
       assert(props("enabled")("default").bool == true)
@@ -39,9 +39,9 @@ object DefaultAnnotationTests extends TestSuite {
       val schema = Schema[OptionalDefaults]
       val json = schema.toJsonSchema
       val props = json("properties").obj
-      
+
       assert(json("type").str == "object")
-      
+
       // Verify default values work with Optional types
       assert(props("port")("default").num == 8080)
       assert(props("ssl")("default").bool == false)
@@ -94,9 +94,9 @@ object DefaultAnnotationTests extends TestSuite {
       val schema = Schema[EdgeCaseDefaults]
       val json = schema.toJsonSchema
       val props = json("properties").obj
-      
+
       assert(json("type").str == "object")
-      
+
       // Verify edge case default values are handled correctly
       assert(props("negative")("default").num == -1)
       assert(props("zero")("default").num == 0)
@@ -121,20 +121,20 @@ object DefaultAnnotationTests extends TestSuite {
 
       val appSchema = Schema[AppConfig]
       val dbSchema = Schema[DatabaseConfig]
-      
+
       val appJson = appSchema.toJsonSchema
       val dbJson = dbSchema.toJsonSchema
-      
+
       assert(appJson("type").str == "object")
       assert(dbJson("type").str == "object")
-      
+
       // Verify defaults work in nested structures
       val appProps = appJson("properties").obj
       val dbProps = dbJson("properties").obj
-      
+
       assert(appProps("name")("default").str == "MyApp")
       assert(appProps("version")("default").num == 1.0)
-      
+
       assert(dbProps("host")("default").str == "localhost")
       assert(dbProps("port")("default").num == 5432)
       assert(dbProps("ssl")("default").bool == true)

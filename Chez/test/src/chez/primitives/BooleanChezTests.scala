@@ -29,12 +29,12 @@ object BooleanChezTests extends TestSuite {
       val json = schema.toJsonSchema
       assert(json("type").str == "boolean")
     }
-    
+
     test("default value support") {
       val schema = BooleanChez().withDefault(ujson.Bool(true))
       val json = schema.toJsonSchema
       assert(json("default").bool == true)
-      
+
       val schemaFalse = BooleanChez().withDefault(ujson.Bool(false))
       val jsonFalse = schemaFalse.toJsonSchema
       assert(jsonFalse("default").bool == false)

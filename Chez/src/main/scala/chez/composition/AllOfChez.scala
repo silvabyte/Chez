@@ -41,7 +41,10 @@ case class AllOfChez(
     if (allErrors.isEmpty) {
       List.empty
     } else {
-      chez.ValidationError.CompositionError("Value does not match all schemas in allOf", "/") :: allErrors
+      chez.ValidationError.CompositionError(
+        "Value does not match all schemas in allOf",
+        "/"
+      ) :: allErrors
     }
   }
 }

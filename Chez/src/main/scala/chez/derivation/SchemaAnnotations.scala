@@ -2,7 +2,7 @@ package chez.derivation
 
 /**
  * Schema annotation classes for JSON Schema 2020-12 metadata
- * 
+ *
  * These annotations can be applied to case classes and fields to provide
  * rich metadata that gets included in the generated JSON schema.
  */
@@ -81,17 +81,20 @@ object SchemaAnnotations {
   /**
    * Annotation for enumeration values - supports strings, numbers, and booleans
    */
-  class enumValues(val values: (String | Int | Boolean | Double | Null)*) extends scala.annotation.StaticAnnotation
+  class enumValues(val values: (String | Int | Boolean | Double | Null)*)
+      extends scala.annotation.StaticAnnotation
 
   /**
    * Annotation for constant value - supports strings, numbers, and booleans
    */
-  class const(val value: String | Int | Boolean | Double | Null) extends scala.annotation.StaticAnnotation
+  class const(val value: String | Int | Boolean | Double | Null)
+      extends scala.annotation.StaticAnnotation
 
   /**
    * Annotation for default values - supports all types via union type
    */
-  class default(val value: String | Int | Boolean | Double) extends scala.annotation.StaticAnnotation
+  class default(val value: String | Int | Boolean | Double)
+      extends scala.annotation.StaticAnnotation
 
   /**
    * Annotation for example values (as JSON strings)

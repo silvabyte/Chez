@@ -108,14 +108,20 @@ object AnnotationExample {
       id = "prod-123",
       name = "Wireless Headphones",
       price = 99.99,
-      tags = List(ProductTag("electronics", "electronics"), ProductTag("audio", "audio"), ProductTag("wireless", "wireless")),
+      tags = List(
+        ProductTag("electronics", "electronics"),
+        ProductTag("audio", "audio"),
+        ProductTag("wireless", "wireless")
+      ),
       category = "Electronics"
     )
 
     println(s"\n🛍️ Product instance: $product")
     println(s"📄 JSON: ${write(product)}")
 
-    println("\n✨ All annotation types working: title, description, format, min/maxLength, min/max, pattern, min/maxItems!")
+    println(
+      "\n✨ All annotation types working: title, description, format, min/maxLength, min/max, pattern, min/maxItems!"
+    )
   }
 
   /**

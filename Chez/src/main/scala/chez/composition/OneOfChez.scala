@@ -41,9 +41,15 @@ case class OneOfChez(
     if (successCount == 1) {
       List.empty
     } else if (successCount == 0) {
-      List(chez.ValidationError.CompositionError("Value does not match any of the schemas in oneOf", "/"))
+      List(chez.ValidationError.CompositionError(
+        "Value does not match any of the schemas in oneOf",
+        "/"
+      ))
     } else {
-      List(chez.ValidationError.CompositionError("Value matches more than one schema in oneOf", "/"))
+      List(chez.ValidationError.CompositionError(
+        "Value matches more than one schema in oneOf",
+        "/"
+      ))
     }
   }
 }

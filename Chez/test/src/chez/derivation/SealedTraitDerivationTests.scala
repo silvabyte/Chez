@@ -27,7 +27,8 @@ object SealedTraitDerivationTests extends TestSuite {
 
   // Sealed trait with optional fields
   sealed trait OptionalFields derives Schema
-  case class WithOptional(required: String, optional: Option[Int]) extends OptionalFields derives Schema
+  case class WithOptional(required: String, optional: Option[Int]) extends OptionalFields
+      derives Schema
   case class AllRequired(name: String, age: Int) extends OptionalFields derives Schema
 
   // Nested sealed traits
@@ -90,12 +91,12 @@ object SealedTraitDerivationTests extends TestSuite {
         val variants = json("oneOf").arr
 
         // Find Circle variant (should have radius property)
-        val circleVariant = variants.find(_.obj.contains("properties") && 
+        val circleVariant = variants.find(_.obj.contains("properties") &&
           variants.find(v => v("properties").obj.contains("radius")).isDefined).get
-        
+
         val props = circleVariant("properties")
         assert(props.obj.contains("type"))
-        
+
         val typeField = props("type")
         assert(typeField("type").str == "string")
         assert(typeField.obj.contains("const"))
@@ -114,7 +115,7 @@ object SealedTraitDerivationTests extends TestSuite {
             props.contains("width") && props.contains("height")
           }
         }.get
-        
+
         val props = rectangleVariant("properties")
         val typeField = props("type")
         assert(typeField("type").str == "string")
@@ -200,7 +201,9 @@ object SealedTraitDerivationTests extends TestSuite {
         // Find NumberData variant
         val numberVariant = variants.find { v =>
           val props = v("properties").obj
-          props.contains("value") && props.contains("count") && props("type")("const").str == "NumberData"
+          props.contains("value") && props.contains("count") && props("type")(
+            "const"
+          ).str == "NumberData"
         }.get
 
         val numberProps = numberVariant("properties")
@@ -260,13 +263,13 @@ object SealedTraitDerivationTests extends TestSuite {
 
         variants.foreach { variant =>
           val props = variant("properties")
-          
+
           // All should have type discriminator
           assert(props.obj.contains("type"))
           val typeField = props("type")
           assert(typeField("type").str == "string")
           assert(typeField.obj.contains("const"))
-          
+
           // Check specific variant properties
           if (props.obj.contains("radius")) {
             // Circle
@@ -294,10 +297,10 @@ object SealedTraitDerivationTests extends TestSuite {
         variants.foreach { variant =>
           val required = variant("required").arr.map(_.str).toSet
           val props = variant("properties").obj.keys.toSet
-          
+
           // Type field should always be required
           assert(required.contains("type"))
-          
+
           // All non-type properties should be required (for this test case)
           val nonTypeProps = props - "type"
           nonTypeProps.foreach { prop =>
@@ -316,14 +319,14 @@ object SealedTraitDerivationTests extends TestSuite {
 
         assert(json("type").str == "object")
         val props = json("properties")
-        
+
         assert(props("name")("type").str == "string")
         assert(props.obj.contains("shape"))
-        
+
         // Shape field should use the sealed trait schema
         val shapeField = props("shape")
         assert(shapeField.obj.contains("oneOf"))
-        
+
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("name", "shape"))
       }
@@ -336,11 +339,11 @@ object SealedTraitDerivationTests extends TestSuite {
 
         val props = json("properties")
         assert(props.obj.contains("shape"))
-        
+
         // Shape field should still use sealed trait schema
         val shapeField = props("shape")
         assert(shapeField.obj.contains("oneOf"))
-        
+
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("name")) // shape is optional
       }
@@ -355,7 +358,7 @@ object SealedTraitDerivationTests extends TestSuite {
         assert(json.obj.contains("oneOf"))
         val variants = json("oneOf").arr
         assert(variants.length == 1)
-        
+
         val variant = variants(0)
         assert(variant("properties")("type")("const").str == "OnlyOne")
       }
@@ -374,7 +377,7 @@ object SealedTraitDerivationTests extends TestSuite {
         val props = emptyVariant("properties").obj
         assert(props.size == 1)
         assert(props.contains("type"))
-        
+
         val required = emptyVariant("required").arr.map(_.str).toSet
         assert(required == Set("type"))
       }
@@ -465,7 +468,7 @@ object SealedTraitDerivationTests extends TestSuite {
 
         // Should be an object schema
         assert(json("type").str == "object")
-        
+
         // Check properties
         val props = json("properties")
         assert(props.obj.contains("base"))
@@ -485,7 +488,7 @@ object SealedTraitDerivationTests extends TestSuite {
         assert(json("type").str == "object")
         val props = json("properties")
         assert(props("content")("type").str == "string")
-        
+
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("content"))
       }
@@ -498,7 +501,7 @@ object SealedTraitDerivationTests extends TestSuite {
         val props = json("properties")
         assert(props("value")("type").str == "number")
         assert(props("count")("type").str == "integer")
-        
+
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("value", "count"))
       }
@@ -510,7 +513,7 @@ object SealedTraitDerivationTests extends TestSuite {
         assert(json("type").str == "object")
         val props = json("properties")
         assert(props("flag")("type").str == "boolean")
-        
+
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("flag"))
       }
@@ -523,7 +526,7 @@ object SealedTraitDerivationTests extends TestSuite {
         val props = json("properties")
         assert(props("required")("type").str == "string")
         assert(props("optional")("type").str == "integer")
-        
+
         // Only required field should be in required array
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("required"))
@@ -538,7 +541,7 @@ object SealedTraitDerivationTests extends TestSuite {
         val props = json("properties")
         assert(props("name")("type").str == "string")
         assert(props("age")("type").str == "integer")
-        
+
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("name", "age"))
       }
@@ -548,12 +551,12 @@ object SealedTraitDerivationTests extends TestSuite {
         val json = schema.toJsonSchema
 
         assert(json("type").str == "object")
-        
+
         // EmptyCase should not have properties or required fields
         // since it has no fields
         assert(!json.obj.contains("properties"))
         assert(!json.obj.contains("required"))
-        
+
         // Should be a minimal object schema
         assert(json.obj.size == 1) // Only "type" field
       }
@@ -565,7 +568,7 @@ object SealedTraitDerivationTests extends TestSuite {
         assert(json("type").str == "object")
         val props = json("properties")
         assert(props("value")("type").str == "string")
-        
+
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("value"))
       }
@@ -604,12 +607,12 @@ object SealedTraitDerivationTests extends TestSuite {
         val circle = Circle(5.0)
         val rectangle = Rectangle(10.0, 20.0)
         val triangle = Triangle(8.0, 12.0)
-        
+
         // Verify schemas can be summoned
         val circleSchema = summon[Schema[Circle]]
         val rectangleSchema = summon[Schema[Rectangle]]
         val triangleSchema = summon[Schema[Triangle]]
-        
+
         // Verify they generate valid JSON schemas
         assert(circleSchema.schema.toJsonSchema("type").str == "object")
         assert(rectangleSchema.schema.toJsonSchema("type").str == "object")

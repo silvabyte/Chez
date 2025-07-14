@@ -38,131 +38,112 @@ object UserCrudAPI extends cask.MainRoutes {
   @Schema.title("User")
   @Schema.description("A user in the system")
   case class User(
-    @Schema.description("Unique identifier for the user")
-    @Schema.pattern("^[0-9]+$")
-    id: String,
-
-    @Schema.description("Full name of the user")
-    @Schema.minLength(1)
-    @Schema.maxLength(100)
-    name: String,
-
-    @Schema.description("Email address")
-    @Schema.format("email")
-    email: String,
-
-    @Schema.description("Age in years")
-    @Schema.minimum(0)
-    @Schema.maximum(150)
-    age: Int,
-
-    @Schema.description("Whether the user account is active")
-    @Schema.default(true)
-    isActive: Boolean
+      @Schema.description("Unique identifier for the user")
+      @Schema.pattern("^[0-9]+$")
+      id: String,
+      @Schema.description("Full name of the user")
+      @Schema.minLength(1)
+      @Schema.maxLength(100)
+      name: String,
+      @Schema.description("Email address")
+      @Schema.format("email")
+      email: String,
+      @Schema.description("Age in years")
+      @Schema.minimum(0)
+      @Schema.maximum(150)
+      age: Int,
+      @Schema.description("Whether the user account is active")
+      @Schema.default(true)
+      isActive: Boolean
   ) derives Schema, ReadWriter
 
   @Schema.title("CreateUserRequest")
   @Schema.description("Request payload for creating a new user")
   case class CreateUserRequest(
-    @Schema.description("Full name of the user")
-    @Schema.minLength(1)
-    @Schema.maxLength(100)
-    name: String,
-
-    @Schema.description("Email address")
-    @Schema.format("email")
-    email: String,
-
-    @Schema.description("Age in years")
-    @Schema.minimum(0)
-    @Schema.maximum(150)
-    age: Int,
-
-    @Schema.description("Whether the user account should be active")
-    @Schema.default(true)
-    isActive: Boolean = true
+      @Schema.description("Full name of the user")
+      @Schema.minLength(1)
+      @Schema.maxLength(100)
+      name: String,
+      @Schema.description("Email address")
+      @Schema.format("email")
+      email: String,
+      @Schema.description("Age in years")
+      @Schema.minimum(0)
+      @Schema.maximum(150)
+      age: Int,
+      @Schema.description("Whether the user account should be active")
+      @Schema.default(true)
+      isActive: Boolean = true
   ) derives Schema, ReadWriter
 
   @Schema.title("UpdateUserRequest")
   @Schema.description("Request payload for updating an existing user")
   case class UpdateUserRequest(
-    @Schema.description("Full name of the user")
-    @Schema.minLength(1)
-    @Schema.maxLength(100)
-    name: Option[String] = None,
-
-    @Schema.description("Email address")
-    @Schema.format("email")
-    email: Option[String] = None,
-
-    @Schema.description("Age in years")
-    @Schema.minimum(0)
-    @Schema.maximum(150)
-    age: Option[Int] = None,
-
-    @Schema.description("Whether the user account is active")
-    isActive: Option[Boolean] = None
+      @Schema.description("Full name of the user")
+      @Schema.minLength(1)
+      @Schema.maxLength(100)
+      name: Option[String] = None,
+      @Schema.description("Email address")
+      @Schema.format("email")
+      email: Option[String] = None,
+      @Schema.description("Age in years")
+      @Schema.minimum(0)
+      @Schema.maximum(150)
+      age: Option[Int] = None,
+      @Schema.description("Whether the user account is active")
+      isActive: Option[Boolean] = None
   ) derives Schema, ReadWriter
 
   @Schema.title("UserListQuery")
   @Schema.description("Query parameters for filtering and paginating users")
   case class UserListQuery(
-    @Schema.description("Page number (1-based)")
-    @Schema.minimum(1)
-    @Schema.default(1)
-    page: Option[Int] = Some(1),
-
-    @Schema.description("Number of users per page")
-    @Schema.minimum(1)
-    @Schema.maximum(100)
-    @Schema.default(10)
-    limit: Option[Int] = Some(10),
-
-    @Schema.description("Filter by name (case-insensitive partial match)")
-    @Schema.minLength(1)
-    search: Option[String] = None,
-
-    @Schema.description("Filter by active status")
-    active: Option[Boolean] = None
+      @Schema.description("Page number (1-based)")
+      @Schema.minimum(1)
+      @Schema.default(1)
+      page: Option[Int] = Some(1),
+      @Schema.description("Number of users per page")
+      @Schema.minimum(1)
+      @Schema.maximum(100)
+      @Schema.default(10)
+      limit: Option[Int] = Some(10),
+      @Schema.description("Filter by name (case-insensitive partial match)")
+      @Schema.minLength(1)
+      search: Option[String] = None,
+      @Schema.description("Filter by active status")
+      active: Option[Boolean] = None
   ) derives Schema, ReadWriter
 
   @Schema.title("UserListResponse")
   @Schema.description("Paginated list of users with metadata")
   case class UserListResponse(
-    @Schema.description("List of users for this page")
-    users: List[User],
-
-    @Schema.description("Total number of users matching filters")
-    total: Int,
-
-    @Schema.description("Current page number")
-    page: Int,
-
-    @Schema.description("Number of users per page")
-    limit: Int,
-
-    @Schema.description("Total number of pages")
-    totalPages: Int
+      @Schema.description("List of users for this page")
+      users: List[User],
+      @Schema.description("Total number of users matching filters")
+      total: Int,
+      @Schema.description("Current page number")
+      page: Int,
+      @Schema.description("Number of users per page")
+      limit: Int,
+      @Schema.description("Total number of pages")
+      totalPages: Int
   ) derives Schema, ReadWriter
 
   @Schema.title("ErrorResponse")
   @Schema.description("Error response with details")
   case class ErrorResponse(
-    @Schema.description("Error type identifier")
-    error: String,
-
-    @Schema.description("Human-readable error message")
-    message: String,
-
-    @Schema.description("Additional error details")
-    details: List[String] = List.empty
+      @Schema.description("Error type identifier")
+      error: String,
+      @Schema.description("Human-readable error message")
+      message: String,
+      @Schema.description("Additional error details")
+      details: List[String] = List.empty
   ) derives Schema, ReadWriter
 
   @Schema.title("SuccessResponse")
   @Schema.description("Generic success response")
   case class SuccessResponse(
-    @Schema.description("Success message")
-    message: String
+      @Schema.description("Success message")
+      message: String
   ) derives Schema, ReadWriter
 
   // === CRUD ENDPOINTS ===
@@ -171,7 +152,8 @@ object UserCrudAPI extends cask.MainRoutes {
     "/users",
     RouteSchema(
       summary = Some("Create a new user"),
-      description = Some("Creates a new user with automatic validation and returns the created user"),
+      description =
+        Some("Creates a new user with automatic validation and returns the created user"),
       tags = List("users"),
       body = Some(Schema[CreateUserRequest]),
       responses = Map(
@@ -247,7 +229,8 @@ object UserCrudAPI extends cask.MainRoutes {
         val totalPages = Math.max(1, Math.ceil(total.toDouble / limit).toInt)
         val startIndex = (page - 1) * limit
         val endIndex = Math.min(startIndex + limit, total)
-        val paginatedUsers = if (startIndex < total) filteredUsers.slice(startIndex, endIndex) else List.empty
+        val paginatedUsers =
+          if (startIndex < total) filteredUsers.slice(startIndex, endIndex) else List.empty
 
         val response = UserListResponse(
           users = paginatedUsers,
@@ -402,7 +385,8 @@ object UserCrudAPI extends cask.MainRoutes {
     OpenAPIConfig(
       title = "User CRUD API",
       summary = Some("Complete user management API with validation"),
-      description = "RESTful API for user management built with CaskChez, featuring automatic validation, comprehensive error handling, and OpenAPI documentation",
+      description =
+        "RESTful API for user management built with CaskChez, featuring automatic validation, comprehensive error handling, and OpenAPI documentation",
       version = "1.0.0"
     )
   )

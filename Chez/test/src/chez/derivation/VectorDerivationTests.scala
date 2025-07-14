@@ -80,11 +80,11 @@ object VectorDerivationTests extends TestSuite {
 
         // Vector: no uniqueItems constraint (allows duplicates)
         assert(!vectorJson.obj.contains("uniqueItems"))
-        
+
         // Set: uniqueItems=true (no duplicates)
         assert(setJson.obj.contains("uniqueItems"))
         assert(setJson("uniqueItems").bool == true)
-        
+
         // List: no uniqueItems constraint (allows duplicates)
         assert(!listJson.obj.contains("uniqueItems"))
 
@@ -92,7 +92,7 @@ object VectorDerivationTests extends TestSuite {
         assert(vectorJson("type").str == "array")
         assert(setJson("type").str == "array")
         assert(listJson("type").str == "array")
-        
+
         assert(vectorJson("items")("type").str == "string")
         assert(setJson("items")("type").str == "string")
         assert(listJson("items")("type").str == "string")
@@ -102,10 +102,10 @@ object VectorDerivationTests extends TestSuite {
     test("Vector integration with case classes") {
       test("case class with Vector[T] fields") {
         case class DataCollection(
-          name: String,
-          measurements: Vector[Double],
-          labels: Vector[String],
-          flags: Vector[Boolean]
+            name: String,
+            measurements: Vector[Double],
+            labels: Vector[String],
+            flags: Vector[Boolean]
         ) derives Schema
 
         val schema = Schema[DataCollection]
@@ -114,27 +114,27 @@ object VectorDerivationTests extends TestSuite {
         assert(json("type").str == "object")
         assert(json.obj.contains("properties"))
         assert(json.obj.contains("required"))
-        
+
         val props = json("properties")
-        
+
         // Check name field
         assert(props("name")("type").str == "string")
-        
+
         // Check measurements field (Vector[Double])
         assert(props("measurements")("type").str == "array")
         assert(!props("measurements").obj.contains("uniqueItems"))
         assert(props("measurements")("items")("type").str == "number")
-        
+
         // Check labels field (Vector[String])
         assert(props("labels")("type").str == "array")
         assert(!props("labels").obj.contains("uniqueItems"))
         assert(props("labels")("items")("type").str == "string")
-        
+
         // Check flags field (Vector[Boolean])
         assert(props("flags")("type").str == "array")
         assert(!props("flags").obj.contains("uniqueItems"))
         assert(props("flags")("items")("type").str == "boolean")
-        
+
         // Check required fields
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("name", "measurements", "labels", "flags"))
@@ -142,15 +142,15 @@ object VectorDerivationTests extends TestSuite {
 
       test("case class with nested Vectors") {
         case class NestedVectors(
-          matrix: Vector[Vector[Int]],
-          metadata: Map[String, Vector[String]]
+            matrix: Vector[Vector[Int]],
+            metadata: Map[String, Vector[String]]
         ) derives Schema
 
         val schema = Schema[NestedVectors]
         val json = schema.toJsonSchema
 
         val props = json("properties")
-        
+
         // Check matrix field (Vector[Vector[Int]])
         assert(props("matrix")("type").str == "array")
         assert(!props("matrix").obj.contains("uniqueItems"))
@@ -158,7 +158,7 @@ object VectorDerivationTests extends TestSuite {
         assert(matrixItems("type").str == "array")
         assert(!matrixItems.obj.contains("uniqueItems"))
         assert(matrixItems("items")("type").str == "integer")
-        
+
         // Check metadata field (Map[String, Vector[String]])
         assert(props("metadata")("type").str == "object")
         assert(props("metadata").obj.contains("additionalProperties"))
@@ -170,26 +170,26 @@ object VectorDerivationTests extends TestSuite {
 
       test("case class with Optional Vector fields") {
         case class OptionalVectors(
-          name: String,
-          tags: Option[Vector[String]],
-          scores: Vector[Int] = Vector.empty
+            name: String,
+            tags: Option[Vector[String]],
+            scores: Vector[Int] = Vector.empty
         ) derives Schema
 
         val schema = Schema[OptionalVectors]
         val json = schema.toJsonSchema
 
         val props = json("properties")
-        
+
         // Check optional tags field
         assert(props("tags")("type").str == "array")
         assert(!props("tags").obj.contains("uniqueItems"))
         assert(props("tags")("items")("type").str == "string")
-        
+
         // Check default scores field
         assert(props("scores")("type").str == "array")
         assert(!props("scores").obj.contains("uniqueItems"))
         assert(props("scores")("items")("type").str == "integer")
-        
+
         // Check required fields (tags should be optional, scores has default)
         val required = json("required").arr.map(_.str).toSet
         assert(required == Set("name"))
@@ -197,25 +197,25 @@ object VectorDerivationTests extends TestSuite {
 
       test("case class with mixed collection types") {
         case class MixedCollections(
-          items: Vector[String],
-          uniqueItems: Set[String],
-          dynamicItems: List[String]
+            items: Vector[String],
+            uniqueItems: Set[String],
+            dynamicItems: List[String]
         ) derives Schema
 
         val schema = Schema[MixedCollections]
         val json = schema.toJsonSchema
 
         val props = json("properties")
-        
+
         // Vector: no uniqueItems constraint
         assert(props("items")("type").str == "array")
         assert(!props("items").obj.contains("uniqueItems"))
-        
+
         // Set: uniqueItems=true
         assert(props("uniqueItems")("type").str == "array")
         assert(props("uniqueItems").obj.contains("uniqueItems"))
         assert(props("uniqueItems")("uniqueItems").bool == true)
-        
+
         // List: no uniqueItems constraint
         assert(props("dynamicItems")("type").str == "array")
         assert(!props("dynamicItems").obj.contains("uniqueItems"))
@@ -225,13 +225,13 @@ object VectorDerivationTests extends TestSuite {
     test("Vector with complex value types") {
       test("Vector[Case Class] works correctly") {
         case class Person(name: String, age: Int) derives Schema
-        
+
         val schema = Schema[Vector[Person]]
         val json = schema.toJsonSchema
 
         assert(json("type").str == "array")
         assert(!json.obj.contains("uniqueItems"))
-        
+
         val items = json("items")
         assert(items("type").str == "object")
         assert(items.obj.contains("properties"))
@@ -245,7 +245,7 @@ object VectorDerivationTests extends TestSuite {
 
         assert(json("type").str == "array")
         assert(!json.obj.contains("uniqueItems"))
-        
+
         val items = json("items")
         assert(items("type").str == "array")
         assert(!items.obj.contains("uniqueItems"))
@@ -258,7 +258,7 @@ object VectorDerivationTests extends TestSuite {
 
         assert(json("type").str == "array")
         assert(!json.obj.contains("uniqueItems")) // Vector allows duplicates
-        
+
         val items = json("items")
         assert(items("type").str == "array")
         assert(items.obj.contains("uniqueItems")) // Set requires uniqueness
@@ -272,7 +272,7 @@ object VectorDerivationTests extends TestSuite {
 
         assert(json("type").str == "array")
         assert(!json.obj.contains("uniqueItems"))
-        
+
         val items = json("items")
         assert(items("type").str == "object")
         assert(items.obj.contains("additionalProperties"))
@@ -287,7 +287,7 @@ object VectorDerivationTests extends TestSuite {
 
         assert(json("type").str == "array")
         assert(!json.obj.contains("uniqueItems"))
-        
+
         val items = json("items")
         assert(items("type").str == "string")
         // Note: Option[T] schema doesn't add nullable in JSON Schema 2020-12

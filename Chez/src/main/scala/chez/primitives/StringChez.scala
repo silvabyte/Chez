@@ -66,15 +66,15 @@ case class StringChez(
       }
     }
 
-
     // Format validation - this is a basic implementation...
     format.foreach { f =>
       val isValid = f match {
-        case "email"     => value.matches("""^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$""")
-        case "uri"       => Try(java.net.URI(value)).isSuccess
-        case "uuid"      => value.matches("""^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$""")
-        case "date"      => value.matches("""^\d{4}-\d{2}-\d{2}$""")
-        case "time"      => value.matches("""^\d{2}:\d{2}:\d{2}$""")
+        case "email" => value.matches("""^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$""")
+        case "uri" => Try(java.net.URI(value)).isSuccess
+        case "uuid" =>
+          value.matches("""^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$""")
+        case "date" => value.matches("""^\d{4}-\d{2}-\d{2}$""")
+        case "time" => value.matches("""^\d{2}:\d{2}:\d{2}$""")
         case "date-time" => value.matches("""^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}""")
         // TODO: add support for more formats, enable custom format registration as well
         // TODO: maybe change format to enum to provide type safety and expected behavior
@@ -143,7 +143,7 @@ case class StringChez(
   private def getValueType(value: ujson.Value): String = {
     value match {
       case _: ujson.Str => "string"
-      case _: ujson.Num => "number"  
+      case _: ujson.Num => "number"
       case _: ujson.Bool => "boolean"
       case ujson.Null => "null"
       case _: ujson.Arr => "array"

@@ -37,7 +37,7 @@ trait Chez {
 
   // Generate JSON Schema representation
   def toJsonSchema: ujson.Value
-  
+
   // Validation framework interface
   /**
    * Validate a ujson.Value against this schema using ValidationContext
@@ -157,7 +157,8 @@ object Chez {
       exclusiveMaximum: Option[Int] = None,
       multipleOf: Option[Int] = None,
       const: Option[Int] = None
-  ): IntegerChez = IntegerChez(minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, const)
+  ): IntegerChez =
+    IntegerChez(minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, const)
 
   def Boolean(const: Option[Boolean] = None): BooleanChez = BooleanChez(const)
 
@@ -185,7 +186,16 @@ object Chez {
       patternProperties: Map[String, Chez] = Map.empty,
       propertyNames: Option[Chez] = None
   ): ObjectChez =
-    ObjectChez(properties, required, minProperties, maxProperties, additionalProperties, additionalPropertiesSchema, patternProperties, propertyNames)
+    ObjectChez(
+      properties,
+      required,
+      minProperties,
+      maxProperties,
+      additionalProperties,
+      additionalPropertiesSchema,
+      patternProperties,
+      propertyNames
+    )
 
   // Composition keywords
   def AnyOf(schemas: Chez*): AnyOfChez = AnyOfChez(schemas.toList)
@@ -196,7 +206,8 @@ object Chez {
   // Conditional schemas
   def If(condition: Chez, thenSchema: Chez, elseSchema: Chez): IfThenElseChez =
     IfThenElseChez(condition, Some(thenSchema), Some(elseSchema))
-  def If(condition: Chez, thenSchema: Chez): IfThenElseChez = IfThenElseChez(condition, Some(thenSchema), None)
+  def If(condition: Chez, thenSchema: Chez): IfThenElseChez =
+    IfThenElseChez(condition, Some(thenSchema), None)
 
   // References
   def Ref(ref: String): RefChez = RefChez(ref)

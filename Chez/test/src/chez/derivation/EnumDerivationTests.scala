@@ -213,7 +213,8 @@ object EnumDerivationTests extends TestSuite {
       }
 
       test("Case class with enum default value") {
-        case class Settings(theme: Color = Color.Blue, priority: Priority = Priority.Low) derives Schema
+        case class Settings(theme: Color = Color.Blue, priority: Priority = Priority.Low)
+            derives Schema
 
         val schema = Schema[Settings]
         val json = schema.toJsonSchema
@@ -352,7 +353,8 @@ object EnumDerivationTests extends TestSuite {
       }
 
       test("Option of case class with enum") {
-        case class MaybeSettings(name: String, settings: Option[UserSettingsWithEnum]) derives Schema
+        case class MaybeSettings(name: String, settings: Option[UserSettingsWithEnum])
+            derives Schema
         case class UserSettingsWithEnum(theme: Color) derives Schema
 
         val schema = Schema[MaybeSettings]
@@ -401,22 +403,22 @@ object EnumDerivationTests extends TestSuite {
         // CURRENT BEHAVIOR: EnumChez supports proper enum handling
         val stringEnumSchema = Chez.StringEnum("red", "amber", "green")
         val json = stringEnumSchema.toJsonSchema
-        
+
         assert(json("type").str == "string")
         assert(json.obj.contains("enum"))
-        
+
         // EnumChez properly supports string values in String enum
         val enumValues = json("enum").arr
         assert(enumValues.forall(_.isInstanceOf[ujson.Str]))
         assert(enumValues.map(_.str).toSet == Set("red", "amber", "green"))
-        
+
         // LIMITATION: Cannot currently create: {"enum": ["red", "amber", "green", null, 42]}
         // This would require a new MixedEnumChez type that accepts List[ujson.Value]
       }
 
       test("TODO: MixedEnumChez for heterogeneous enum values") {
         // PLACEHOLDER: Future implementation would look like this:
-        // 
+        //
         // case class MixedEnumChez(enumValues: List[ujson.Value]) extends Chez {
         //   override def toJsonSchema: ujson.Value = {
         //     ujson.Obj("enum" -> ujson.Arr(enumValues*))
@@ -433,7 +435,7 @@ object EnumDerivationTests extends TestSuite {
         // ))
         //
         // Would generate: {"enum": ["red", "amber", "green", null, 42]}
-        
+
         // For now, just validate that the JSON structure is possible
         val expectedJson = ujson.Obj(
           "enum" -> ujson.Arr(
@@ -444,7 +446,7 @@ object EnumDerivationTests extends TestSuite {
             ujson.Num(42)
           )
         )
-        
+
         assert(expectedJson.obj.contains("enum"))
         val enumArr = expectedJson("enum").arr
         assert(enumArr.length == 5)
@@ -471,7 +473,7 @@ object EnumDerivationTests extends TestSuite {
         //     ))
         //   )
         // )
-        
+
         // Current workaround: Manual JSON construction
         val manualJson = ujson.Obj(
           "type" -> ujson.Str("object"),
@@ -487,7 +489,7 @@ object EnumDerivationTests extends TestSuite {
             )
           )
         )
-        
+
         // Verify the structure is valid
         assert(manualJson("type").str == "object")
         val colorEnum = manualJson("properties")("color")("enum").arr
@@ -498,10 +500,10 @@ object EnumDerivationTests extends TestSuite {
         // PLACEHOLDER: Future enhancement for automatic derivation
         //
         // Ideally, we'd want to support Scala types like:
-        // 
+        //
         // sealed trait TrafficLightState
         // case object Red extends TrafficLightState
-        // case object Amber extends TrafficLightState  
+        // case object Amber extends TrafficLightState
         // case object Green extends TrafficLightState
         // case object Maintenance extends TrafficLightState // null in JSON
         // case class FlashingYellow(frequency: Int) extends TrafficLightState // 42 in JSON
@@ -513,16 +515,16 @@ object EnumDerivationTests extends TestSuite {
         // 1. Enhanced sum type derivation
         // 2. Custom mapping for case objects to different JSON types
         // 3. Configuration for which case objects map to null/numbers
-        
+
         // For now, document that this is not supported
         case class TrafficLight(
-          id: String,
-          state: String  // Limited to string type currently
+            id: String,
+            state: String // Limited to string type currently
         ) derives Schema
 
         val schema = Schema[TrafficLight]
         val json = schema.toJsonSchema
-        
+
         val props = json("properties")
         assert(props("state")("type").str == "string")
         // Cannot currently generate enum with mixed types
@@ -551,7 +553,7 @@ object EnumDerivationTests extends TestSuite {
         // 5. Update documentation and examples
         //    - Show mixed enum patterns
         //    - Migration guide from string-only enums
-        
+
         // This test serves as documentation - no actual testing needed
         assert(true) // Placeholder assertion
       }
