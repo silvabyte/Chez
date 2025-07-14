@@ -562,8 +562,7 @@ object Validation {
       "invalid additional properties with schema"
     )
 
-    // T7: Advanced Composition Validation Examples
-    println("\n🔀 T7: Advanced Composition Validation (AllOf, Not, IfThenElse):")
+    println("\nAdvanced Composition Validation (AllOf, Not, IfThenElse):")
 
     // AllOf Example: String with multiple constraints
     println("\n📋 AllOf - All schemas must validate:")
