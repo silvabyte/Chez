@@ -1,6 +1,7 @@
 package chez.composition
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -24,27 +25,24 @@ case class AllOfChez(
   }
 
   /**
-   * Validate a value against this allOf schema
+   * Validate a ujson.Value against this allOf schema
    */
-  def validate(value: ujson.Value): List[chez.ValidationError] = {
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
     // For allOf, all schemas must validate successfully
-    val results = schemas.map { schema =>
-      // For now, we'll implement basic validation
-      // In practice, we'd need to validate the value against each schema
-      // This is a placeholder for proper allOf validation
-      // TODO: implement this
-      List.empty[chez.ValidationError]
+    var allErrors = List.empty[chez.ValidationError]
+    
+    schemas.foreach { schema =>
+      val result = schema.validate(value, context)
+      if (!result.isValid) {
+        allErrors = result.errors ++ allErrors
+      }
     }
-
-    val allErrors = results.flatten
 
     if (allErrors.isEmpty) {
-      List.empty
+      ValidationResult.valid()
     } else {
-      chez.ValidationError.CompositionError(
-        "Value does not match all schemas in allOf",
-        "/"
-      ) :: allErrors
+      ValidationResult.invalid(allErrors)
     }
   }
+
 }

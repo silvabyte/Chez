@@ -1,6 +1,7 @@
 package chez.modifiers
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -90,24 +91,17 @@ case class DefsChez[T <: Chez](
   override def withSchema(schema: String): Chez = SchemaChez(this, schema)
   override def withId(id: String): Chez = IdChez(this, id)
 
-  /**
-   * Validate a value against this $defs schema
-   *
-   * Note: $defs by itself doesn't validate instances - it only provides definitions.
-   * Validation happens when these definitions are referenced via $ref.
-   * This method returns empty errors since $defs alone doesn't constrain values.
-   */
-  def validate(value: ujson.Value): List[chez.ValidationError] = {
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
     if (underlying != null) {
       // If there's an underlying schema, delegate validation to it
-      // Note: underlying schemas don't have validate method in current design
-      List.empty
+      underlying.validate(value, context)
     } else {
       // $defs itself doesn't validate anything - it just provides definitions
       // The actual validation happens when the definitions are referenced
-      List.empty
+      ValidationResult.valid()
     }
   }
+
 
   /**
    * Get a definition by name

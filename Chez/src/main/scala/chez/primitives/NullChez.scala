@@ -20,13 +20,6 @@ case class NullChez() extends Chez {
     schema
   }
 
-  /**
-   * Validate a null value against this schema
-   */
-  def validate(value: Null): List[chez.ValidationError] = {
-    // Null values are always valid for null schema
-    List.empty[chez.ValidationError]
-  }
 
   /**
    * Validate a ujson.Value against this null schema

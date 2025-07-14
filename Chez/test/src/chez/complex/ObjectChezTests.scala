@@ -152,8 +152,8 @@ object ObjectChezTests extends TestSuite {
           maxProperties = Some(3)
         )
         val obj = ujson.Obj("name" -> "test", "optional" -> "value")
-        val errors = schema.validate(obj)
-        assert(errors.isEmpty)
+        val result = schema.validate(obj, ValidationContext())
+        assert(result.isValid)
       }
 
       test("missing required field validation") {
@@ -162,25 +162,25 @@ object ObjectChezTests extends TestSuite {
           required = Set("name")
         )
         val obj = ujson.Obj("age" -> 25)
-        val errors = schema.validate(obj)
-        assert(errors.length == 1)
-        assert(errors.head.isInstanceOf[chez.ValidationError.MissingField])
+        val result = schema.validate(obj, ValidationContext())
+        assert(result.errors.length == 1)
+        assert(result.errors.head.isInstanceOf[chez.ValidationError.MissingField])
       }
 
       test("min properties validation") {
         val schema = ObjectChez(minProperties = Some(2))
         val obj = ujson.Obj("name" -> "test")
-        val errors = schema.validate(obj)
-        assert(errors.length == 1)
-        assert(errors.head.isInstanceOf[chez.ValidationError.MinPropertiesViolation])
+        val result = schema.validate(obj, ValidationContext())
+        assert(result.errors.length == 1)
+        assert(result.errors.head.isInstanceOf[chez.ValidationError.MinPropertiesViolation])
       }
 
       test("max properties validation") {
         val schema = ObjectChez(maxProperties = Some(1))
         val obj = ujson.Obj("name" -> "test", "age" -> 25)
-        val errors = schema.validate(obj)
-        assert(errors.length == 1)
-        assert(errors.head.isInstanceOf[chez.ValidationError.MaxPropertiesViolation])
+        val result = schema.validate(obj, ValidationContext())
+        assert(result.errors.length == 1)
+        assert(result.errors.head.isInstanceOf[chez.ValidationError.MaxPropertiesViolation])
       }
 
       test("additional properties validation") {
@@ -189,9 +189,9 @@ object ObjectChezTests extends TestSuite {
           additionalProperties = Some(false)
         )
         val obj = ujson.Obj("name" -> "test", "unknown" -> "value")
-        val errors = schema.validate(obj)
-        assert(errors.length == 1)
-        assert(errors.head.isInstanceOf[chez.ValidationError.AdditionalProperty])
+        val result = schema.validate(obj, ValidationContext())
+        assert(result.errors.length == 1)
+        assert(result.errors.head.isInstanceOf[chez.ValidationError.AdditionalProperty])
       }
 
       test("multiple validation errors") {
@@ -202,8 +202,8 @@ object ObjectChezTests extends TestSuite {
           additionalProperties = Some(false)
         )
         val obj = ujson.Obj("unknown" -> "value")
-        val errors = schema.validate(obj)
-        assert(errors.length >= 3) // missing fields + min properties + additional property
+        val result = schema.validate(obj, ValidationContext())
+        assert(result.errors.length >= 3) // missing fields + min properties + additional property
       }
     }
 

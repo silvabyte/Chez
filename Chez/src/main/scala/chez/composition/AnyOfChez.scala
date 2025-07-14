@@ -1,6 +1,7 @@
 package chez.composition
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -24,27 +25,27 @@ case class AnyOfChez(
   }
 
   /**
-   * Validate a value against this anyOf schema
+   * Validate a ujson.Value against this anyOf schema
    */
-  def validate(value: ujson.Value): List[chez.ValidationError] = {
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
     // For anyOf, at least one schema must validate successfully
-    val results = schemas.map { schema =>
-      // For now, we'll implement basic validation
-      // In practice, we'd need to validate the value against each schema
-      // This is a placeholder for proper anyOf validation
-      // TODO: implement this
-      List.empty[chez.ValidationError]
+    var hasSuccess = false
+    var allErrors = List.empty[chez.ValidationError]
+    
+    schemas.foreach { schema =>
+      val result = schema.validate(value, context)
+      if (result.isValid) {
+        hasSuccess = true
+      } else {
+        allErrors = result.errors ++ allErrors
+      }
     }
 
-    // If at least one schema validates successfully, return no errors
-    if (results.exists(_.isEmpty)) {
-      List.empty
+    if (hasSuccess) {
+      ValidationResult.valid()
     } else {
-      // If all schemas fail, return composition error
-      List(chez.ValidationError.CompositionError(
-        "Value does not match any of the schemas in anyOf",
-        "/"
-      ))
+      // If all schemas fail, return all collected errors
+      ValidationResult.invalid(allErrors)
     }
   }
 }

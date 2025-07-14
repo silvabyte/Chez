@@ -3,6 +3,8 @@ package chez.primitives
 import utest.*
 import upickle.default.*
 import chez.primitives.EnumChez
+import chez.validation.ValidationContext
+import chez.*
 
 object EnumChezTests extends TestSuite {
 
@@ -15,13 +17,18 @@ object EnumChezTests extends TestSuite {
         assert(enumSchema.getStringValues.contains(List("red", "green", "blue")))
 
         // Valid string validation
-        assert(enumSchema.validateString("red").isEmpty)
-        assert(enumSchema.validateString("green").isEmpty)
-        assert(enumSchema.validateString("blue").isEmpty)
+        val result1 = enumSchema.validate(ujson.Str("red"), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Str("green"), ValidationContext())
+        assert(result2.isValid)
+        val result3 = enumSchema.validate(ujson.Str("blue"), ValidationContext())
+        assert(result3.isValid)
 
         // Invalid string validation
-        assert(enumSchema.validateString("yellow").nonEmpty)
-        assert(enumSchema.validateString("").nonEmpty)
+        val result4 = enumSchema.validate(ujson.Str("yellow"), ValidationContext())
+        assert(!result4.isValid)
+        val result5 = enumSchema.validate(ujson.Str(""), ValidationContext())
+        assert(!result5.isValid)
       }
 
       test("fromStrings with List") {
@@ -41,15 +48,22 @@ object EnumChezTests extends TestSuite {
         assert(enumSchema.getStringValues.isEmpty)
 
         // Valid mixed validation
-        assert(enumSchema.validateString("active").isEmpty)
-        assert(enumSchema.validateInt(1).isEmpty)
-        assert(enumSchema.validateBoolean(true).isEmpty)
-        assert(enumSchema.validateNull().isEmpty)
+        val result1 = enumSchema.validate(ujson.Str("active"), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Num(1), ValidationContext())
+        assert(result2.isValid)
+        val result3 = enumSchema.validate(ujson.Bool(true), ValidationContext())
+        assert(result3.isValid)
+        val result4 = enumSchema.validate(ujson.Null, ValidationContext())
+        assert(result4.isValid)
 
         // Invalid validation
-        assert(enumSchema.validateString("inactive").nonEmpty)
-        assert(enumSchema.validateInt(2).nonEmpty)
-        assert(enumSchema.validateBoolean(false).nonEmpty)
+        val result5 = enumSchema.validate(ujson.Str("inactive"), ValidationContext())
+        assert(!result5.isValid)
+        val result6 = enumSchema.validate(ujson.Num(2), ValidationContext())
+        assert(!result6.isValid)
+        val result7 = enumSchema.validate(ujson.Bool(false), ValidationContext())
+        assert(!result7.isValid)
       }
 
       test("fromValues with ujson.Value") {
@@ -63,15 +77,22 @@ object EnumChezTests extends TestSuite {
         assert(!enumSchema.isStringEnum)
 
         // Validate using ujson values directly
-        assert(enumSchema.validate(ujson.Str("hello")).isEmpty)
-        assert(enumSchema.validate(ujson.Num(42)).isEmpty)
-        assert(enumSchema.validate(ujson.True).isEmpty)
-        assert(enumSchema.validate(ujson.Null).isEmpty)
+        val result1 = enumSchema.validate(ujson.Str("hello"), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Num(42), ValidationContext())
+        assert(result2.isValid)
+        val result3 = enumSchema.validate(ujson.True, ValidationContext())
+        assert(result3.isValid)
+        val result4 = enumSchema.validate(ujson.Null, ValidationContext())
+        assert(result4.isValid)
 
         // Invalid values
-        assert(enumSchema.validate(ujson.Str("world")).nonEmpty)
-        assert(enumSchema.validate(ujson.Num(43)).nonEmpty)
-        assert(enumSchema.validate(ujson.False).nonEmpty)
+        val result5 = enumSchema.validate(ujson.Str("world"), ValidationContext())
+        assert(!result5.isValid)
+        val result6 = enumSchema.validate(ujson.Num(43), ValidationContext())
+        assert(!result6.isValid)
+        val result7 = enumSchema.validate(ujson.False, ValidationContext())
+        assert(!result7.isValid)
       }
     }
 
@@ -82,13 +103,18 @@ object EnumChezTests extends TestSuite {
         assert(!enumSchema.isStringEnum)
 
         // Valid numeric validation
-        assert(enumSchema.validateNumber(1.0).isEmpty)
-        assert(enumSchema.validateNumber(2.5).isEmpty)
-        assert(enumSchema.validateNumber(3.14).isEmpty)
+        val result1 = enumSchema.validate(ujson.Num(1.0), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Num(2.5), ValidationContext())
+        assert(result2.isValid)
+        val result3 = enumSchema.validate(ujson.Num(3.14), ValidationContext())
+        assert(result3.isValid)
 
         // Invalid validation
-        assert(enumSchema.validateNumber(4.0).nonEmpty)
-        assert(enumSchema.validateString("1.0").nonEmpty)
+        val result4 = enumSchema.validate(ujson.Num(4.0), ValidationContext())
+        assert(!result4.isValid)
+        val result5 = enumSchema.validate(ujson.Str("1.0"), ValidationContext())
+        assert(!result5.isValid)
       }
 
       test("fromInts factory method") {
@@ -97,12 +123,16 @@ object EnumChezTests extends TestSuite {
         assert(!enumSchema.isStringEnum)
 
         // Valid integer validation (converted to double in ujson)
-        assert(enumSchema.validateInt(1).isEmpty)
-        assert(enumSchema.validateInt(2).isEmpty)
-        assert(enumSchema.validateInt(3).isEmpty)
+        val result1 = enumSchema.validate(ujson.Num(1), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Num(2), ValidationContext())
+        assert(result2.isValid)
+        val result3 = enumSchema.validate(ujson.Num(3), ValidationContext())
+        assert(result3.isValid)
 
         // Invalid validation
-        assert(enumSchema.validateInt(4).nonEmpty)
+        val result4 = enumSchema.validate(ujson.Num(4), ValidationContext())
+        assert(!result4.isValid)
       }
     }
 
@@ -113,8 +143,10 @@ object EnumChezTests extends TestSuite {
         assert(!enumSchema.isStringEnum)
 
         // Valid boolean validation
-        assert(enumSchema.validateBoolean(true).isEmpty)
-        assert(enumSchema.validateBoolean(false).isEmpty)
+        val result1 = enumSchema.validate(ujson.Bool(true), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Bool(false), ValidationContext())
+        assert(result2.isValid)
 
         // Type checking
         val types = enumSchema.getValueTypes
@@ -125,8 +157,10 @@ object EnumChezTests extends TestSuite {
       test("single boolean value") {
         val enumSchema = EnumChez.fromBooleans(true)
 
-        assert(enumSchema.validateBoolean(true).isEmpty)
-        assert(enumSchema.validateBoolean(false).nonEmpty)
+        val result1 = enumSchema.validate(ujson.Bool(true), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Bool(false), ValidationContext())
+        assert(!result2.isValid)
       }
     }
 
@@ -173,13 +207,13 @@ object EnumChezTests extends TestSuite {
     }
 
     test("Validation with context paths") {
-      test("validateAtPath provides correct error paths") {
+      test("validate with context provides correct error paths") {
         val enumSchema = EnumChez.fromStrings("red", "green", "blue")
 
-        val errors = enumSchema.validateAtPath(ujson.Str("yellow"), "/properties/color")
-        assert(errors.nonEmpty)
+        val result = enumSchema.validate(ujson.Str("yellow"), ValidationContext("/properties/color"))
+        assert(!result.isValid)
 
-        val error = errors.head
+        val error = result.errors.head
         assert(error.isInstanceOf[chez.ValidationError.TypeMismatch])
 
         val typeMismatch = error.asInstanceOf[chez.ValidationError.TypeMismatch]
@@ -224,22 +258,23 @@ object EnumChezTests extends TestSuite {
       }
     }
 
-    test("Validator helper function") {
+    test("Enum schema as validator function") {
       test("creates reusable validator") {
-        val validator = EnumChez.validator(
-          ujson.Str("active"),
-          ujson.Str("inactive"),
-          ujson.Str("pending")
-        )
+        val enumSchema = EnumChez.fromStrings("active", "inactive", "pending")
 
         // Valid values
-        assert(validator(ujson.Str("active")).isEmpty)
-        assert(validator(ujson.Str("inactive")).isEmpty)
-        assert(validator(ujson.Str("pending")).isEmpty)
+        val result1 = enumSchema.validate(ujson.Str("active"), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Str("inactive"), ValidationContext())
+        assert(result2.isValid)
+        val result3 = enumSchema.validate(ujson.Str("pending"), ValidationContext())
+        assert(result3.isValid)
 
         // Invalid values
-        assert(validator(ujson.Str("unknown")).nonEmpty)
-        assert(validator(ujson.Num(1)).nonEmpty)
+        val result4 = enumSchema.validate(ujson.Str("unknown"), ValidationContext())
+        assert(!result4.isValid)
+        val result5 = enumSchema.validate(ujson.Num(1), ValidationContext())
+        assert(!result5.isValid)
       }
     }
 
@@ -248,16 +283,21 @@ object EnumChezTests extends TestSuite {
         val enumSchema = EnumChez(List.empty)
 
         // Any value should be invalid
-        assert(enumSchema.validateString("test").nonEmpty)
-        assert(enumSchema.validate(ujson.Str("test")).nonEmpty)
-        assert(enumSchema.validate(ujson.Null).nonEmpty)
+        val result1 = enumSchema.validate(ujson.Str("test"), ValidationContext())
+        assert(!result1.isValid)
+        val result2 = enumSchema.validate(ujson.Str("test"), ValidationContext())
+        assert(!result2.isValid)
+        val result3 = enumSchema.validate(ujson.Null, ValidationContext())
+        assert(!result3.isValid)
       }
 
       test("single value enum") {
         val enumSchema = EnumChez.fromStrings("only")
 
-        assert(enumSchema.validateString("only").isEmpty)
-        assert(enumSchema.validateString("other").nonEmpty)
+        val result1 = enumSchema.validate(ujson.Str("only"), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Str("other"), ValidationContext())
+        assert(!result2.isValid)
 
         assert(enumSchema.isStringEnum)
         assert(enumSchema.getStringValues.contains(List("only")))
@@ -267,19 +307,27 @@ object EnumChezTests extends TestSuite {
         val enumSchema = EnumChez.fromStrings("red", "red", "blue")
 
         // Should still work (duplicates are allowed in JSON Schema)
-        assert(enumSchema.validateString("red").isEmpty)
-        assert(enumSchema.validateString("blue").isEmpty)
-        assert(enumSchema.validateString("green").nonEmpty)
+        val result1 = enumSchema.validate(ujson.Str("red"), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Str("blue"), ValidationContext())
+        assert(result2.isValid)
+        val result3 = enumSchema.validate(ujson.Str("green"), ValidationContext())
+        assert(!result3.isValid)
       }
 
       test("mixed factory with union type safety") {
         val enumSchema = EnumChez.mixed("string", 42, true, 3.14)
         assert(enumSchema.enumValues.length == 4)
-        assert(enumSchema.validateString("string").isEmpty)
-        assert(enumSchema.validateInt(42).isEmpty)
-        assert(enumSchema.validateBoolean(true).isEmpty)
-        assert(enumSchema.validateNumber(3.14).isEmpty)
-        assert(enumSchema.validateString("unsupported").nonEmpty)
+        val result1 = enumSchema.validate(ujson.Str("string"), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Num(42), ValidationContext())
+        assert(result2.isValid)
+        val result3 = enumSchema.validate(ujson.Bool(true), ValidationContext())
+        assert(result3.isValid)
+        val result4 = enumSchema.validate(ujson.Num(3.14), ValidationContext())
+        assert(result4.isValid)
+        val result5 = enumSchema.validate(ujson.Str("unsupported"), ValidationContext())
+        assert(!result5.isValid)
       }
     }
 
@@ -289,8 +337,10 @@ object EnumChezTests extends TestSuite {
 
         assert(enumSchema.isInstanceOf[EnumChez])
         assert(enumSchema.isStringEnum)
-        assert(enumSchema.validateString("red").isEmpty)
-        assert(enumSchema.validateString("yellow").nonEmpty)
+        val result1 = enumSchema.validate(ujson.Str("red"), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Str("yellow"), ValidationContext())
+        assert(!result2.isValid)
       }
 
       test("Chez.StringEnum with List") {
@@ -310,9 +360,12 @@ object EnumChezTests extends TestSuite {
 
         assert(enumSchema.isInstanceOf[EnumChez])
         assert(!enumSchema.isStringEnum)
-        assert(enumSchema.validate(ujson.Str("active")).isEmpty)
-        assert(enumSchema.validate(ujson.Num(1)).isEmpty)
-        assert(enumSchema.validate(ujson.True).isEmpty)
+        val result1 = enumSchema.validate(ujson.Str("active"), ValidationContext())
+        assert(result1.isValid)
+        val result2 = enumSchema.validate(ujson.Num(1), ValidationContext())
+        assert(result2.isValid)
+        val result3 = enumSchema.validate(ujson.True, ValidationContext())
+        assert(result3.isValid)
       }
     }
 
@@ -320,9 +373,12 @@ object EnumChezTests extends TestSuite {
       test("HTTP status codes") {
         val statusEnum = EnumChez.fromInts(200, 201, 400, 401, 404, 500)
 
-        assert(statusEnum.validateInt(200).isEmpty)
-        assert(statusEnum.validateInt(404).isEmpty)
-        assert(statusEnum.validateInt(999).nonEmpty)
+        val result1 = statusEnum.validate(ujson.Num(200), ValidationContext())
+        assert(result1.isValid)
+        val result2 = statusEnum.validate(ujson.Num(404), ValidationContext())
+        assert(result2.isValid)
+        val result3 = statusEnum.validate(ujson.Num(999), ValidationContext())
+        assert(!result3.isValid)
 
         val types = statusEnum.getValueTypes
         assert(types.contains("number"))
@@ -333,16 +389,22 @@ object EnumChezTests extends TestSuite {
         val logLevelEnum = EnumChez.mixed("DEBUG", "INFO", "WARN", "ERROR", 0, 1, 2, 3)
 
         // String log levels
-        assert(logLevelEnum.validateString("DEBUG").isEmpty)
-        assert(logLevelEnum.validateString("INFO").isEmpty)
+        val result1 = logLevelEnum.validate(ujson.Str("DEBUG"), ValidationContext())
+        assert(result1.isValid)
+        val result2 = logLevelEnum.validate(ujson.Str("INFO"), ValidationContext())
+        assert(result2.isValid)
 
         // Numeric log levels
-        assert(logLevelEnum.validateInt(0).isEmpty)
-        assert(logLevelEnum.validateInt(3).isEmpty)
+        val result3 = logLevelEnum.validate(ujson.Num(0), ValidationContext())
+        assert(result3.isValid)
+        val result4 = logLevelEnum.validate(ujson.Num(3), ValidationContext())
+        assert(result4.isValid)
 
         // Invalid values
-        assert(logLevelEnum.validateString("TRACE").nonEmpty)
-        assert(logLevelEnum.validateInt(5).nonEmpty)
+        val result5 = logLevelEnum.validate(ujson.Str("TRACE"), ValidationContext())
+        assert(!result5.isValid)
+        val result6 = logLevelEnum.validate(ujson.Num(5), ValidationContext())
+        assert(!result6.isValid)
 
         val types = logLevelEnum.getValueTypes
         assert(types.contains("string"))
@@ -353,12 +415,16 @@ object EnumChezTests extends TestSuite {
       test("Feature flags") {
         val featureFlagEnum = EnumChez.fromBooleans(true, false)
 
-        assert(featureFlagEnum.validateBoolean(true).isEmpty)
-        assert(featureFlagEnum.validateBoolean(false).isEmpty)
+        val result1 = featureFlagEnum.validate(ujson.Bool(true), ValidationContext())
+        assert(result1.isValid)
+        val result2 = featureFlagEnum.validate(ujson.Bool(false), ValidationContext())
+        assert(result2.isValid)
 
         // Should reject other types
-        assert(featureFlagEnum.validateString("true").nonEmpty)
-        assert(featureFlagEnum.validateInt(1).nonEmpty)
+        val result3 = featureFlagEnum.validate(ujson.Str("true"), ValidationContext())
+        assert(!result3.isValid)
+        val result4 = featureFlagEnum.validate(ujson.Num(1), ValidationContext())
+        assert(!result4.isValid)
       }
     }
   }

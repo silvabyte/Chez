@@ -2,13 +2,16 @@ package chez.primitives
 
 import utest.*
 import chez.primitives.*
+import chez.validation.ValidationContext
+import chez.*
 
 object NullChezTests extends TestSuite {
 
   val tests = Tests {
     test("basic null schema") {
       val schema = NullChez()
-      assert(schema.validate(null) == Nil)
+      val result = schema.validate(ujson.Null, ValidationContext())
+      assert(result.isValid)
     }
 
     test("json schema generation") {

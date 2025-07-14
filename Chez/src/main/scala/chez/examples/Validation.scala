@@ -440,22 +440,22 @@ object Validation {
 
   // Helper methods for testing validation
   private def testStringValidation(schema: StringChez, value: String, description: String): Unit = {
-    val errors = schema.validate(value)
-    if (errors.isEmpty) {
+    val result = schema.validate(ujson.Str(value), ValidationContext())
+    if (result.isValid) {
       println(s"✓ $description: '$value' - Valid")
     } else {
-      println(s"✗ $description: '$value' - Errors: ${errors.mkString(", ")}")
+      println(s"✗ $description: '$value' - Errors: ${result.errors.mkString(", ")}")
     }
   }
 
   private def testIntegerValidation(schema: Chez, value: Int, description: String): Unit = {
     schema match {
       case intSchema: chez.primitives.IntegerChez =>
-        val errors = intSchema.validate(value)
-        if (errors.isEmpty) {
+        val result = intSchema.validate(ujson.Num(value), ValidationContext())
+        if (result.isValid) {
           println(s"✓ $description: $value - Valid")
         } else {
-          println(s"✗ $description: $value - Errors: ${errors.mkString(", ")}")
+          println(s"✗ $description: $value - Errors: ${result.errors.mkString(", ")}")
         }
       case _ => println(s"? $description: $value - Cannot validate (not an IntegerChez)")
     }
@@ -464,11 +464,11 @@ object Validation {
   private def testNumberValidation(schema: Chez, value: Double, description: String): Unit = {
     schema match {
       case numSchema: chez.primitives.NumberChez =>
-        val errors = numSchema.validate(value)
-        if (errors.isEmpty) {
+        val result = numSchema.validate(ujson.Num(value), ValidationContext())
+        if (result.isValid) {
           println(s"✓ $description: $value - Valid")
         } else {
-          println(s"✗ $description: $value - Errors: ${errors.mkString(", ")}")
+          println(s"✗ $description: $value - Errors: ${result.errors.mkString(", ")}")
         }
       case _ => println(s"? $description: $value - Cannot validate (not a NumberChez)")
     }
@@ -477,11 +477,11 @@ object Validation {
   private def testObjectValidation(schema: Chez, value: ujson.Obj, description: String): Unit = {
     schema match {
       case objSchema: chez.complex.ObjectChez =>
-        val errors = objSchema.validate(value)
-        if (errors.isEmpty) {
+        val result = objSchema.validate(value, ValidationContext())
+        if (result.isValid) {
           println(s"✓ $description: Valid")
         } else {
-          println(s"✗ $description: Errors: ${errors.mkString(", ")}")
+          println(s"✗ $description: Errors: ${result.errors.mkString(", ")}")
         }
       case _ => println(s"? $description: Cannot validate (not an ObjectChez)")
     }
@@ -490,11 +490,11 @@ object Validation {
   private def testArrayValidation(schema: Chez, value: ujson.Arr, description: String): Unit = {
     schema match {
       case arrSchema: chez.complex.ArrayChez[_] =>
-        val errors = arrSchema.validate(value.arr.toList)
-        if (errors.isEmpty) {
+        val result = arrSchema.validate(value, ValidationContext())
+        if (result.isValid) {
           println(s"✓ $description: Valid")
         } else {
-          println(s"✗ $description: Errors: ${errors.mkString(", ")}")
+          println(s"✗ $description: Errors: ${result.errors.mkString(", ")}")
         }
       case _ => println(s"? $description: Cannot validate (not an ArrayChez)")
     }
@@ -510,11 +510,11 @@ object Validation {
       case _ => ujson.Str(value.toString)
     }
 
-    val errors = schema.validate(ujsonValue)
-    if (errors.isEmpty) {
+    val result = schema.validate(ujsonValue, ValidationContext())
+    if (result.isValid) {
       println(s"✓ $description: '$value' - Valid")
     } else {
-      println(s"✗ $description: '$value' - Errors: ${errors.mkString(", ")}")
+      println(s"✗ $description: '$value' - Errors: ${result.errors.mkString(", ")}")
     }
   }
 

@@ -2,26 +2,34 @@ package chez.primitives
 
 import utest.*
 import chez.primitives.*
+import chez.validation.ValidationContext
+import chez.*
 
 object BooleanChezTests extends TestSuite {
 
   val tests = Tests {
     test("basic boolean schema") {
       val schema = BooleanChez()
-      assert(schema.validate(true) == Nil)
-      assert(schema.validate(false) == Nil)
+      val result1 = schema.validate(ujson.Bool(true), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Bool(false), ValidationContext())
+      assert(result2.isValid)
     }
 
     test("const true validation") {
       val schema = BooleanChez(const = Some(true))
-      assert(schema.validate(true) == Nil)
-      assert(schema.validate(false).nonEmpty)
+      val result1 = schema.validate(ujson.Bool(true), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Bool(false), ValidationContext())
+      assert(!result2.isValid)
     }
 
     test("const false validation") {
       val schema = BooleanChez(const = Some(false))
-      assert(schema.validate(false) == Nil)
-      assert(schema.validate(true).nonEmpty)
+      val result1 = schema.validate(ujson.Bool(false), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Bool(true), ValidationContext())
+      assert(!result2.isValid)
     }
 
     test("json schema generation") {

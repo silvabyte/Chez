@@ -4,6 +4,7 @@ import utest.*
 import chez.*
 import chez.primitives.*
 import chez.complex.*
+import chez.validation.ValidationContext
 import upickle.default.*
 
 object ArrayChezTests extends TestSuite {
@@ -104,37 +105,37 @@ object ArrayChezTests extends TestSuite {
     test("validation behavior") {
       test("valid array validation") {
         val schema = ArrayChez(StringChez(), minItems = Some(1), maxItems = Some(3))
-        val errors = schema.validate(List(ujson.Str("test1"), ujson.Str("test2")))
-        assert(errors.isEmpty)
+        val result = schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test2")), ValidationContext())
+        assert(result.isValid)
       }
 
       test("min items validation") {
         val schema = ArrayChez(StringChez(), minItems = Some(2))
-        val errors = schema.validate(List(ujson.Str("test1")))
-        assert(errors.length == 1)
-        assert(errors.head.isInstanceOf[chez.ValidationError.MinItemsViolation])
+        val result = schema.validate(ujson.Arr(ujson.Str("test1")), ValidationContext())
+        assert(result.errors.length == 1)
+        assert(result.errors.head.isInstanceOf[chez.ValidationError.MinItemsViolation])
       }
 
       test("max items validation") {
         val schema = ArrayChez(StringChez(), maxItems = Some(2))
-        val errors =
-          schema.validate(List(ujson.Str("test1"), ujson.Str("test2"), ujson.Str("test3")))
-        assert(errors.length == 1)
-        assert(errors.head.isInstanceOf[chez.ValidationError.MaxItemsViolation])
+        val result =
+          schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test2"), ujson.Str("test3")), ValidationContext())
+        assert(result.errors.length == 1)
+        assert(result.errors.head.isInstanceOf[chez.ValidationError.MaxItemsViolation])
       }
 
       test("unique items validation") {
         val schema = ArrayChez(StringChez(), uniqueItems = Some(true))
-        val errors = schema.validate(List(ujson.Str("test1"), ujson.Str("test1")))
-        assert(errors.length == 1)
-        assert(errors.head.isInstanceOf[chez.ValidationError.UniqueViolation])
+        val result = schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test1")), ValidationContext())
+        assert(result.errors.length == 1)
+        assert(result.errors.head.isInstanceOf[chez.ValidationError.UniqueViolation])
       }
 
       test("multiple validation errors") {
         val schema =
           ArrayChez(StringChez(), minItems = Some(3), maxItems = Some(2), uniqueItems = Some(true))
-        val errors = schema.validate(List(ujson.Str("test1"), ujson.Str("test1")))
-        assert(errors.length == 2) // min items + unique items violations
+        val result = schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test1")), ValidationContext())
+        assert(result.errors.length == 2) // min items + unique items violations
       }
     }
 

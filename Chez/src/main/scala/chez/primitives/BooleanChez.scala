@@ -24,21 +24,6 @@ case class BooleanChez(
     schema
   }
 
-  /**
-   * Validate a boolean value against this schema
-   */
-  def validate(value: Boolean): List[chez.ValidationError] = {
-    var errors = List.empty[chez.ValidationError]
-
-    // Const validation
-    const.foreach { c =>
-      if (value != c) {
-        errors = chez.ValidationError.TypeMismatch(c.toString, value.toString, "/") :: errors
-      }
-    }
-
-    errors.reverse
-  }
 
   /**
    * Validate a ujson.Value against this boolean schema
@@ -54,13 +39,20 @@ case class BooleanChez(
     // Type check for ujson.Bool
     value match {
       case ujson.Bool(booleanValue) =>
-        // Delegate to existing validate(Boolean) method but update error paths
-        val errors = validate(booleanValue)
-        val pathAwareErrors = errors.map(updateErrorPath(_, context.path))
-        if (pathAwareErrors.isEmpty) {
+        // Inline validation logic
+        var errors = List.empty[chez.ValidationError]
+
+        // Const validation
+        const.foreach { c =>
+          if (booleanValue != c) {
+            errors = chez.ValidationError.TypeMismatch(c.toString, booleanValue.toString, context.path) :: errors
+          }
+        }
+
+        if (errors.isEmpty) {
           ValidationResult.valid()
         } else {
-          ValidationResult.invalid(pathAwareErrors)
+          ValidationResult.invalid(errors.reverse)
         }
       case _ =>
         // Non-boolean ujson.Value type - return TypeMismatch error
@@ -69,16 +61,6 @@ case class BooleanChez(
     }
   }
 
-  /**
-   * Update error path for context-aware error reporting
-   */
-  private def updateErrorPath(error: chez.ValidationError, path: String): chez.ValidationError = {
-    error match {
-      case chez.ValidationError.TypeMismatch(expected, actual, _) =>
-        chez.ValidationError.TypeMismatch(expected, actual, path)
-      case other => other // For error types that don't need path updates
-    }
-  }
 
   /**
    * Get string representation of ujson.Value type for error messages

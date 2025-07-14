@@ -1,6 +1,7 @@
 package chez.composition
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -24,32 +25,36 @@ case class OneOfChez(
   }
 
   /**
-   * Validate a value against this oneOf schema
+   * Validate a ujson.Value against this oneOf schema
    */
-  def validate(value: ujson.Value): List[chez.ValidationError] = {
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
     // For oneOf, exactly one schema must validate successfully
-    val results = schemas.map { schema =>
-      // For now, we'll implement basic validation
-      // In practice, we'd need to validate the value against each schema
-      // This is a placeholder for proper oneOf validation
-      // TODO: implement this
-      List.empty[chez.ValidationError]
+    var successCount = 0
+    var allErrors = List.empty[chez.ValidationError]
+    
+    schemas.foreach { schema =>
+      val result = schema.validate(value, context)
+      if (result.isValid) {
+        successCount += 1
+      } else {
+        allErrors = result.errors ++ allErrors
+      }
     }
 
-    val successCount = results.count(_.isEmpty)
-
     if (successCount == 1) {
-      List.empty
+      ValidationResult.valid()
     } else if (successCount == 0) {
-      List(chez.ValidationError.CompositionError(
+      val error = chez.ValidationError.CompositionError(
         "Value does not match any of the schemas in oneOf",
-        "/"
-      ))
+        context.path
+      )
+      ValidationResult.invalid(error :: allErrors)
     } else {
-      List(chez.ValidationError.CompositionError(
+      val error = chez.ValidationError.CompositionError(
         "Value matches more than one schema in oneOf",
-        "/"
-      ))
+        context.path
+      )
+      ValidationResult.invalid(error)
     }
   }
 }

@@ -1,6 +1,7 @@
 package chez.references
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -26,19 +27,14 @@ case class RefChez(
     schema
   }
 
-  /**
-   * Validate a value against this reference schema
-   *
-   * Note: In a complete implementation, this would resolve the reference and validate against the target schema. For now, we
-   * return a reference error indicating that reference resolution is needed.
-   */
-  def validate(value: ujson.Value): List[chez.ValidationError] = {
-    // In a full implementation, this would:
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    // In a complete implementation, this would:
     // 1. Resolve the reference URI against the base URI
     // 2. Retrieve the target schema
     // 3. Validate the value against the target schema
     //
     // For now, we return an error indicating unresolved reference
-    List(chez.ValidationError.ReferenceError(ref, "/"))
+    ValidationResult.invalid(List(chez.ValidationError.ReferenceError(ref, context.path)))
   }
+
 }

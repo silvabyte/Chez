@@ -1,6 +1,7 @@
 package chez.modifiers
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -40,6 +41,10 @@ case class ExamplesChez[T <: Chez](
       base("examples") = ujson.Arr(examplesValue*)
     }
     base
+  }
+
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    underlying.validate(value, context)
   }
 
   // Override modifier methods to maintain chaining

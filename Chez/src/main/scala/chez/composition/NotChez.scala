@@ -1,6 +1,7 @@
 package chez.composition
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -24,22 +25,19 @@ case class NotChez(
   }
 
   /**
-   * Validate a value against this not schema
+   * Validate a ujson.Value against this not schema
    */
-  def validate(value: ujson.Value): List[chez.ValidationError] = {
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
     // For not, the schema must NOT validate successfully
-    // For now, we'll implement basic validation
-    // In practice, we'd need to validate the value against the schema
-    // This is a placeholder for proper not validation
-    // TODO: implement this
-    val errors = List.empty[chez.ValidationError] // Placeholder
+    val result = schema.validate(value, context)
 
-    if (errors.isEmpty) {
+    if (result.isValid) {
       // Schema validated successfully, so NOT validation fails
-      List(chez.ValidationError.CompositionError("Value must NOT match the schema", "/"))
+      val error = chez.ValidationError.CompositionError("Value must NOT match the schema", context.path)
+      ValidationResult.invalid(error)
     } else {
       // Schema validation failed, so NOT validation succeeds
-      List.empty
+      ValidationResult.valid()
     }
   }
 }

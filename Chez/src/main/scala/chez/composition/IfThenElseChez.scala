@@ -1,6 +1,7 @@
 package chez.composition
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -28,18 +29,31 @@ case class IfThenElseChez(
   }
 
   /**
-   * Validate a value against this if-then-else schema
+   * Validate a ujson.Value against this if-then-else schema
    */
-  def validate(value: ujson.Value): List[chez.ValidationError] = {
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
     // For if-then-else, we need to:
     // 1. Check if the condition matches
     // 2. If it does, apply the "then" schema
     // 3. If it doesn't, apply the "else" schema
+    //
 
-    // For now, we'll implement basic validation
-    // In practice, we'd need to validate the value against the appropriate schema
-    // This is a placeholder for proper if-then-else validation
-    // TODO: implement this
-    List.empty[chez.ValidationError]
+    //TODO: we can do a little better here....
+
+    val conditionResult = condition.validate(value, context)
+    
+    if (conditionResult.isValid) {
+      // Condition matched, apply "then" schema if present
+      thenSchema match {
+        case Some(schema) => schema.validate(value, context)
+        case None => ValidationResult.valid()
+      }
+    } else {
+      // Condition didn't match, apply "else" schema if present
+      elseSchema match {
+        case Some(schema) => schema.validate(value, context)
+        case None => ValidationResult.valid()
+      }
+    }
   }
 }

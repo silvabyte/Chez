@@ -91,8 +91,8 @@ case class ObjectChez(
   override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
     value match {
       case obj: ujson.Obj =>
-        // Delegate to existing validate(ujson.Obj) method but update error paths
-        val errors = validate(obj, context)
+        // Inline validation logic
+        val errors = validateObject(obj, context)
         if (errors.isEmpty) {
           ValidationResult.valid()
         } else {
@@ -108,7 +108,7 @@ case class ObjectChez(
   /**
    * Validate an object value against this schema with proper context tracking
    */
-  def validate(value: ujson.Obj, context: ValidationContext): List[chez.ValidationError] = {
+  private def validateObject(value: ujson.Obj, context: ValidationContext): List[chez.ValidationError] = {
     var errors = List.empty[chez.ValidationError]
 
     // Min properties validation
@@ -196,31 +196,7 @@ case class ObjectChez(
     errors.reverse
   }
 
-  /**
-   * Legacy validate method for backward compatibility
-   */
-  def validate(value: ujson.Obj): List[chez.ValidationError] = {
-    validate(value, ValidationContext())
-  }
 
-  /**
-   * Update error path for ValidationError instances
-   */
-  private def updateErrorPath(error: chez.ValidationError, path: String): chez.ValidationError = {
-    error match {
-      case chez.ValidationError.MinPropertiesViolation(min, actual, _) =>
-        chez.ValidationError.MinPropertiesViolation(min, actual, path)
-      case chez.ValidationError.MaxPropertiesViolation(max, actual, _) =>
-        chez.ValidationError.MaxPropertiesViolation(max, actual, path)
-      case chez.ValidationError.MissingField(field, _) =>
-        chez.ValidationError.MissingField(field, path)
-      case chez.ValidationError.AdditionalProperty(prop, _) =>
-        chez.ValidationError.AdditionalProperty(prop, path)
-      case chez.ValidationError.TypeMismatch(expected, actual, _) =>
-        chez.ValidationError.TypeMismatch(expected, actual, path)
-      case other => other // For error types that don't need path updates
-    }
-  }
 
   /**
    * Get string representation of ujson.Value type for error messages

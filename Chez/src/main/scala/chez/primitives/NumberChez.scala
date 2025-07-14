@@ -34,56 +34,6 @@ case class NumberChez(
     schema
   }
 
-  /**
-   * Validate a number value against this schema
-   */
-  def validate(value: Double): List[chez.ValidationError] = {
-    var errors = List.empty[chez.ValidationError]
-
-    // Minimum validation
-    minimum.foreach { min =>
-      if (value < min) {
-        errors = chez.ValidationError.OutOfRange(Some(min), None, value, "/") :: errors
-      }
-    }
-
-    // Maximum validation
-    maximum.foreach { max =>
-      if (value > max) {
-        errors = chez.ValidationError.OutOfRange(None, Some(max), value, "/") :: errors
-      }
-    }
-
-    // Exclusive minimum validation
-    exclusiveMinimum.foreach { min =>
-      if (value <= min) {
-        errors = chez.ValidationError.OutOfRange(Some(min), None, value, "/") :: errors
-      }
-    }
-
-    // Exclusive maximum validation
-    exclusiveMaximum.foreach { max =>
-      if (value >= max) {
-        errors = chez.ValidationError.OutOfRange(None, Some(max), value, "/") :: errors
-      }
-    }
-
-    // Multiple of validation
-    multipleOf.foreach { mul =>
-      if (value % mul != 0) {
-        errors = chez.ValidationError.MultipleOfViolation(mul, value, "/") :: errors
-      }
-    }
-
-    // Const validation
-    const.foreach { c =>
-      if (value != c) {
-        errors = chez.ValidationError.TypeMismatch(c.toString, value.toString, "/") :: errors
-      }
-    }
-
-    errors.reverse
-  }
 
   /**
    * Validate a ujson.Value against this number schema
@@ -99,13 +49,55 @@ case class NumberChez(
     // Type check for ujson.Num
     value match {
       case ujson.Num(numberValue) =>
-        // Delegate to existing validate(Double) method but update error paths
-        val errors = validate(numberValue)
-        val pathAwareErrors = errors.map(updateErrorPath(_, context.path))
-        if (pathAwareErrors.isEmpty) {
+        // Inline validation logic
+        var errors = List.empty[chez.ValidationError]
+
+        // Minimum validation
+        minimum.foreach { min =>
+          if (numberValue < min) {
+            errors = chez.ValidationError.OutOfRange(Some(min), None, numberValue, context.path) :: errors
+          }
+        }
+
+        // Maximum validation
+        maximum.foreach { max =>
+          if (numberValue > max) {
+            errors = chez.ValidationError.OutOfRange(None, Some(max), numberValue, context.path) :: errors
+          }
+        }
+
+        // Exclusive minimum validation
+        exclusiveMinimum.foreach { min =>
+          if (numberValue <= min) {
+            errors = chez.ValidationError.OutOfRange(Some(min), None, numberValue, context.path) :: errors
+          }
+        }
+
+        // Exclusive maximum validation
+        exclusiveMaximum.foreach { max =>
+          if (numberValue >= max) {
+            errors = chez.ValidationError.OutOfRange(None, Some(max), numberValue, context.path) :: errors
+          }
+        }
+
+        // Multiple of validation
+        multipleOf.foreach { mul =>
+          if (numberValue % mul != 0) {
+            errors = chez.ValidationError.MultipleOfViolation(mul, numberValue, context.path) :: errors
+          }
+        }
+
+        // Const validation
+        const.foreach { c =>
+          if (numberValue != c) {
+            errors = chez.ValidationError.TypeMismatch(c.toString, numberValue.toString, context.path) :: errors
+          }
+        }
+
+        if (errors.isEmpty) {
           ValidationResult.valid()
         } else {
-          ValidationResult.invalid(pathAwareErrors)
+          ValidationResult.invalid(errors.reverse)
         }
       case _ =>
         // Non-number ujson.Value type - return TypeMismatch error
@@ -114,20 +106,6 @@ case class NumberChez(
     }
   }
 
-  /**
-   * Update error path for context-aware error reporting
-   */
-  private def updateErrorPath(error: chez.ValidationError, path: String): chez.ValidationError = {
-    error match {
-      case chez.ValidationError.OutOfRange(min, max, actual, _) =>
-        chez.ValidationError.OutOfRange(min, max, actual, path)
-      case chez.ValidationError.MultipleOfViolation(multiple, value, _) =>
-        chez.ValidationError.MultipleOfViolation(multiple, value, path)
-      case chez.ValidationError.TypeMismatch(expected, actual, _) =>
-        chez.ValidationError.TypeMismatch(expected, actual, path)
-      case other => other // For error types that don't need path updates
-    }
-  }
 
   /**
    * Get string representation of ujson.Value type for error messages

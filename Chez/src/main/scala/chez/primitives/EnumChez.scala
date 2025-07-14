@@ -50,64 +50,6 @@ case class EnumChez(
     schema
   }
 
-  /**
-   * Validate a JSON value against this enum schema
-   */
-  def validate(value: ujson.Value): List[chez.ValidationError] = {
-    if (enumValues.contains(value)) {
-      List.empty
-    } else {
-      val allowedValues = enumValues.map(writeJs(_)).mkString(", ")
-      List(chez.ValidationError.TypeMismatch(allowedValues, writeJs(value).toString, "/"))
-    }
-  }
-
-  /**
-   * Validate a string value against this enum (convenience method for string enums)
-   */
-  def validateString(value: String): List[chez.ValidationError] = {
-    validate(ujson.Str(value))
-  }
-
-  /**
-   * Validate a numeric value against this enum (convenience method for numeric enums)
-   */
-  def validateNumber(value: Double): List[chez.ValidationError] = {
-    validate(ujson.Num(value))
-  }
-
-  /**
-   * Validate an integer value against this enum (convenience method for integer enums)
-   */
-  def validateInt(value: Int): List[chez.ValidationError] = {
-    validate(ujson.Num(value))
-  }
-
-  /**
-   * Validate a boolean value against this enum (convenience method for boolean enums)
-   */
-  def validateBoolean(value: Boolean): List[chez.ValidationError] = {
-    validate(if (value) ujson.True else ujson.False)
-  }
-
-  /**
-   * Validate null value against this enum (convenience method for nullable enums)
-   */
-  def validateNull(): List[chez.ValidationError] = {
-    validate(ujson.Null)
-  }
-
-  /**
-   * Validate with context path for better error reporting
-   */
-  def validateAtPath(value: ujson.Value, path: String): List[chez.ValidationError] = {
-    if (enumValues.contains(value)) {
-      List.empty
-    } else {
-      val allowedValues = enumValues.map(writeJs(_)).mkString(", ")
-      List(chez.ValidationError.TypeMismatch(allowedValues, writeJs(value).toString, path))
-    }
-  }
 
   /**
    * Check if a value type is compatible with this enum
@@ -143,11 +85,12 @@ case class EnumChez(
    * Validate a ujson.Value against this enum schema with context using ValidationResult
    */
   override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
-    val errors = validateAtPath(value, context.path)
-    if (errors.isEmpty) {
+    if (enumValues.contains(value)) {
       ValidationResult.valid()
     } else {
-      ValidationResult.invalid(errors)
+      val allowedValues = enumValues.map(writeJs(_)).mkString(", ")
+      val error = chez.ValidationError.TypeMismatch(allowedValues, writeJs(value).toString, context.path)
+      ValidationResult.invalid(error)
     }
   }
 }
@@ -217,11 +160,4 @@ object EnumChez {
     EnumChez(values.map(b => if (b) ujson.True else ujson.False).toList)
   }
 
-  /**
-   * Create a validation helper for complex enum validation scenarios
-   */
-  def validator(allowedValues: ujson.Value*): ujson.Value => List[chez.ValidationError] = {
-    val enumSchema = EnumChez(allowedValues.toList)
-    value => enumSchema.validate(value)
-  }
 }

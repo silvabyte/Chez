@@ -1,6 +1,7 @@
 package chez.complex
 
 import chez.Chez
+import chez.validation.{ValidationResult, ValidationContext}
 import upickle.default.*
 
 /**
@@ -53,39 +54,67 @@ case class ArrayChez[T <: Chez](
   }
 
   /**
-   * Validate an array value against this schema
+   * Validate a ujson.Value against this array schema
    */
-  def validate(value: List[ujson.Value]): List[chez.ValidationError] = {
-    var errors = List.empty[chez.ValidationError]
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    value match {
+      case arr: ujson.Arr =>
+        val arrayValue = arr.arr.toList
+        var errors = List.empty[chez.ValidationError]
 
-    // Min items validation
-    minItems.foreach { min =>
-      if (value.length < min) {
-        errors = chez.ValidationError.MinItemsViolation(min, value.length, "/") :: errors
-      }
+        // Min items validation
+        minItems.foreach { min =>
+          if (arrayValue.length < min) {
+            errors = chez.ValidationError.MinItemsViolation(min, arrayValue.length, context.path) :: errors
+          }
+        }
+
+        // Max items validation
+        maxItems.foreach { max =>
+          if (arrayValue.length > max) {
+            errors = chez.ValidationError.MaxItemsViolation(max, arrayValue.length, context.path) :: errors
+          }
+        }
+
+        // Unique items validation
+        uniqueItems.foreach { unique =>
+          if (unique && arrayValue.distinct.length != arrayValue.length) {
+            errors = chez.ValidationError.UniqueViolation(context.path) :: errors
+          }
+        }
+
+        // Validate each item against the items schema
+        arrayValue.zipWithIndex.foreach { case (item, index) =>
+          val itemContext = context.withIndex(index)
+          val itemResult = items.validate(item, itemContext)
+          if (!itemResult.isValid) {
+            errors = itemResult.errors ++ errors
+          }
+        }
+
+        if (errors.isEmpty) {
+          ValidationResult.valid()
+        } else {
+          ValidationResult.invalid(errors.reverse)
+        }
+      case _ =>
+        val error = chez.ValidationError.TypeMismatch("array", getValueType(value), context.path)
+        ValidationResult.invalid(error)
     }
+  }
 
-    // Max items validation
-    maxItems.foreach { max =>
-      if (value.length > max) {
-        errors = chez.ValidationError.MaxItemsViolation(max, value.length, "/") :: errors
-      }
+
+  /**
+   * Get string representation of ujson.Value type for error messages
+   */
+  private def getValueType(value: ujson.Value): String = {
+    value match {
+      case _: ujson.Str => "string"
+      case _: ujson.Num => "number"  
+      case _: ujson.Bool => "boolean"
+      case ujson.Null => "null"
+      case _: ujson.Arr => "array"
+      case _: ujson.Obj => "object"
     }
-
-    // Unique items validation
-    uniqueItems.foreach { unique =>
-      if (unique && value.distinct.length != value.length) {
-        errors = chez.ValidationError.UniqueViolation("/") :: errors
-      }
-    }
-
-    // Validate each item against the items schema
-    value.zipWithIndex.foreach { case (item, index) =>
-    // For now, we'll implement basic validation
-    // In practice, we'd need to validate each item against the items schema
-    // This is a placeholder for proper item validation
-    }
-
-    errors.reverse
   }
 }

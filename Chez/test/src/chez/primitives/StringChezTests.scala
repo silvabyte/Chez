@@ -10,111 +10,165 @@ object StringChezTests extends TestSuite {
   val tests = Tests {
     test("basic string schema") {
       val schema = StringChez()
-      assert(schema.validate("hello") == Nil)
-      assert(schema.validate("") == Nil)
-      assert(schema.validate("multiple words") == Nil)
+      val result1 = schema.validate(ujson.Str("hello"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str(""), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("multiple words"), ValidationContext())
+      assert(result3.isValid)
     }
 
     test("min length validation") {
       val schema = StringChez(minLength = Some(5))
-      assert(schema.validate("hello") == Nil)
-      assert(schema.validate("longer string") == Nil)
-      assert(schema.validate("hi").nonEmpty)
-      assert(schema.validate("").nonEmpty)
+      val result1 = schema.validate(ujson.Str("hello"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("longer string"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("hi"), ValidationContext())
+      assert(!result3.isValid)
+      val result4 = schema.validate(ujson.Str(""), ValidationContext())
+      assert(!result4.isValid)
     }
 
     test("max length validation") {
       val schema = StringChez(maxLength = Some(10))
-      assert(schema.validate("short") == Nil)
-      assert(schema.validate("exactly10!") == Nil)
-      assert(schema.validate("this is way too long").nonEmpty)
+      val result1 = schema.validate(ujson.Str("short"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("exactly10!"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("this is way too long"), ValidationContext())
+      assert(!result3.isValid)
     }
 
     test("pattern validation") {
       val schema = StringChez(pattern = Some("^[a-zA-Z]+$"))
-      assert(schema.validate("hello") == Nil)
-      assert(schema.validate("OnlyLetters") == Nil)
-      assert(schema.validate("hello123").nonEmpty)
-      assert(schema.validate("hello world").nonEmpty)
-      assert(schema.validate("123").nonEmpty)
+      val result1 = schema.validate(ujson.Str("hello"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("OnlyLetters"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("hello123"), ValidationContext())
+      assert(!result3.isValid)
+      val result4 = schema.validate(ujson.Str("hello world"), ValidationContext())
+      assert(!result4.isValid)
+      val result5 = schema.validate(ujson.Str("123"), ValidationContext())
+      assert(!result5.isValid)
     }
 
     test("const validation") {
       val schema = StringChez(const = Some("exactly this"))
-      assert(schema.validate("exactly this") == Nil)
-      assert(schema.validate("not this").nonEmpty)
-      assert(schema.validate("EXACTLY THIS").nonEmpty)
+      val result1 = schema.validate(ujson.Str("exactly this"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("not this"), ValidationContext())
+      assert(!result2.isValid)
+      val result3 = schema.validate(ujson.Str("EXACTLY THIS"), ValidationContext())
+      assert(!result3.isValid)
     }
 
     test("enum validation - moved to EnumChez") {
       // Note: enum validation is now handled by EnumChez, not StringChez
       // This test exists for backward compatibility documentation
       val enumSchema = chez.primitives.EnumChez.fromStrings("red", "green", "blue")
-      assert(enumSchema.validateString("red") == Nil)
-      assert(enumSchema.validateString("green") == Nil)
-      assert(enumSchema.validateString("blue") == Nil)
-      assert(enumSchema.validateString("yellow").nonEmpty)
-      assert(enumSchema.validateString("Red").nonEmpty) // case sensitive
+      val result1 = enumSchema.validate(ujson.Str("red"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = enumSchema.validate(ujson.Str("green"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = enumSchema.validate(ujson.Str("blue"), ValidationContext())
+      assert(result3.isValid)
+      val result4 = enumSchema.validate(ujson.Str("yellow"), ValidationContext())
+      assert(!result4.isValid)
+      val result5 = enumSchema.validate(ujson.Str("Red"), ValidationContext())
+      assert(!result5.isValid) // case sensitive
     }
 
     test("email format validation") {
       val schema = StringChez(format = Some("email"))
-      assert(schema.validate("user@example.com") == Nil)
-      assert(schema.validate("test.email+tag@domain.co.uk") == Nil)
-      assert(schema.validate("not-an-email").nonEmpty)
-      assert(schema.validate("@domain.com").nonEmpty)
-      assert(schema.validate("user@").nonEmpty)
+      val result1 = schema.validate(ujson.Str("user@example.com"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("test.email+tag@domain.co.uk"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("not-an-email"), ValidationContext())
+      assert(!result3.isValid)
+      val result4 = schema.validate(ujson.Str("@domain.com"), ValidationContext())
+      assert(!result4.isValid)
+      val result5 = schema.validate(ujson.Str("user@"), ValidationContext())
+      assert(!result5.isValid)
     }
 
     test("uri format validation") {
       val schema = StringChez(format = Some("uri"))
-      assert(schema.validate("https://example.com") == Nil)
-      assert(schema.validate("http://localhost:8080/path") == Nil)
-      assert(schema.validate("ftp://files.example.org") == Nil)
-      assert(schema.validate("not a uri").nonEmpty)
-      assert(schema.validate("://invalid").nonEmpty)
+      val result1 = schema.validate(ujson.Str("https://example.com"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("http://localhost:8080/path"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("ftp://files.example.org"), ValidationContext())
+      assert(result3.isValid)
+      val result4 = schema.validate(ujson.Str("not a uri"), ValidationContext())
+      assert(!result4.isValid)
+      val result5 = schema.validate(ujson.Str("://invalid"), ValidationContext())
+      assert(!result5.isValid)
     }
 
     test("uuid format validation") {
       val schema = StringChez(format = Some("uuid"))
-      assert(schema.validate("550e8400-e29b-41d4-a716-446655440000") == Nil)
-      assert(schema.validate("6ba7b810-9dad-11d1-80b4-00c04fd430c8") == Nil)
-      assert(schema.validate("not-a-uuid").nonEmpty)
-      assert(schema.validate("550e8400-e29b-41d4-a716").nonEmpty) // too short
-      assert(schema.validate("550e8400-e29b-41d4-a716-446655440000-extra").nonEmpty)
+      val result1 = schema.validate(ujson.Str("550e8400-e29b-41d4-a716-446655440000"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("6ba7b810-9dad-11d1-80b4-00c04fd430c8"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("not-a-uuid"), ValidationContext())
+      assert(!result3.isValid)
+      val result4 = schema.validate(ujson.Str("550e8400-e29b-41d4-a716"), ValidationContext())
+      assert(!result4.isValid) // too short
+      val result5 = schema.validate(ujson.Str("550e8400-e29b-41d4-a716-446655440000-extra"), ValidationContext())
+      assert(!result5.isValid)
     }
 
     test("date format validation") {
       val schema = StringChez(format = Some("date"))
-      assert(schema.validate("2023-12-25") == Nil)
-      assert(schema.validate("1999-01-01") == Nil)
-      assert(schema.validate("not-a-date").nonEmpty)
-      assert(schema.validate("12-25-2023").nonEmpty) // wrong format
-      assert(schema.validate("2023/12/25").nonEmpty) // wrong separator
+      val result1 = schema.validate(ujson.Str("2023-12-25"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("1999-01-01"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("not-a-date"), ValidationContext())
+      assert(!result3.isValid)
+      val result4 = schema.validate(ujson.Str("12-25-2023"), ValidationContext())
+      assert(!result4.isValid) // wrong format
+      val result5 = schema.validate(ujson.Str("2023/12/25"), ValidationContext())
+      assert(!result5.isValid) // wrong separator
     }
 
     test("time format validation") {
       val schema = StringChez(format = Some("time"))
-      assert(schema.validate("14:30:00") == Nil)
-      assert(schema.validate("09:05:15") == Nil)
-      assert(schema.validate("not-a-time").nonEmpty)
-      assert(schema.validate("2:30:00").nonEmpty) // missing leading zero
-      assert(schema.validate("14:30").nonEmpty) // missing seconds
+      val result1 = schema.validate(ujson.Str("14:30:00"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("09:05:15"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("not-a-time"), ValidationContext())
+      assert(!result3.isValid)
+      val result4 = schema.validate(ujson.Str("2:30:00"), ValidationContext())
+      assert(!result4.isValid) // missing leading zero
+      val result5 = schema.validate(ujson.Str("14:30"), ValidationContext())
+      assert(!result5.isValid) // missing seconds
     }
 
     test("date-time format validation") {
       val schema = StringChez(format = Some("date-time"))
-      assert(schema.validate("2023-12-25T14:30:00") == Nil)
-      assert(schema.validate("1999-01-01T00:00:00") == Nil)
-      assert(schema.validate("not-datetime").nonEmpty)
-      assert(schema.validate("2023-12-25 14:30:00").nonEmpty) // space instead of T
+      val result1 = schema.validate(ujson.Str("2023-12-25T14:30:00"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("1999-01-01T00:00:00"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("not-datetime"), ValidationContext())
+      assert(!result3.isValid)
+      val result4 = schema.validate(ujson.Str("2023-12-25 14:30:00"), ValidationContext())
+      assert(!result4.isValid) // space instead of T
     }
 
     test("unknown format validation") {
       val schema = StringChez(format = Some("unknown-format"))
       // Unknown formats should not cause validation errors
-      assert(schema.validate("any string") == Nil)
-      assert(schema.validate("12345") == Nil)
+      val result1 = schema.validate(ujson.Str("any string"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("12345"), ValidationContext())
+      assert(result2.isValid)
     }
 
     test("combined validations") {
@@ -123,11 +177,16 @@ object StringChezTests extends TestSuite {
         maxLength = Some(20),
         pattern = Some("^[a-zA-Z0-9]+$")
       )
-      assert(schema.validate("Password123") == Nil)
-      assert(schema.validate("abcd1234") == Nil)
-      assert(schema.validate("abc123").nonEmpty) // too short
-      assert(schema.validate("this_password_is_way_too_long").nonEmpty) // too long
-      assert(schema.validate("Password 123").nonEmpty) // contains space
+      val result1 = schema.validate(ujson.Str("Password123"), ValidationContext())
+      assert(result1.isValid)
+      val result2 = schema.validate(ujson.Str("abcd1234"), ValidationContext())
+      assert(result2.isValid)
+      val result3 = schema.validate(ujson.Str("abc123"), ValidationContext())
+      assert(!result3.isValid) // too short
+      val result4 = schema.validate(ujson.Str("this_password_is_way_too_long"), ValidationContext())
+      assert(!result4.isValid) // too long
+      val result5 = schema.validate(ujson.Str("Password 123"), ValidationContext())
+      assert(!result5.isValid) // contains space
     }
 
     test("json schema generation") {
@@ -340,32 +399,34 @@ object StringChezTests extends TestSuite {
       }
     }
 
-    test("Existing validate(String) method continues to work unchanged") {
+    test("String validation using new ValidationResult framework") {
       val schema = Chez.String(minLength = Some(3), pattern = Some("^[a-z]+$"))
 
       test("valid string") {
-        val errors = schema.validate("hello")
-        assert(errors.isEmpty)
+        val result = schema.validate(ujson.Str("hello"), ValidationContext())
+        assert(result.isValid)
       }
 
       test("invalid string") {
-        val errors = schema.validate("Hi")
-        assert(errors.length == 2) // Both minLength and pattern violations
-        assert(errors.exists(_.isInstanceOf[ValidationError.MinLengthViolation]))
-        assert(errors.exists(_.isInstanceOf[ValidationError.PatternMismatch]))
+        val result = schema.validate(ujson.Str("Hi"), ValidationContext())
+        assert(!result.isValid)
+        assert(result.errors.length == 2) // Both minLength and pattern violations
+        assert(result.errors.exists(_.isInstanceOf[ValidationError.MinLengthViolation]))
+        assert(result.errors.exists(_.isInstanceOf[ValidationError.PatternMismatch]))
       }
 
       test("string too short") {
-        val errors = schema.validate("hi")
-        assert(errors.length == 1)
-        assert(errors.head.isInstanceOf[ValidationError.MinLengthViolation])
+        val result = schema.validate(ujson.Str("hi"), ValidationContext())
+        assert(!result.isValid)
+        assert(result.errors.length == 1)
+        assert(result.errors.head.isInstanceOf[ValidationError.MinLengthViolation])
       }
 
-      test("errors still use default path") {
-        val errors = schema.validate("X")
-        assert(errors.nonEmpty)
-        // Original method should still use "/" path
-        errors.foreach { error =>
+      test("errors use default path") {
+        val result = schema.validate(ujson.Str("X"), ValidationContext())
+        assert(!result.isValid)
+        // ValidationContext() should use "/" path
+        result.errors.foreach { error =>
           val path = error match {
             case ValidationError.MinLengthViolation(_, _, path) => path
             case ValidationError.PatternMismatch(_, _, path) => path
