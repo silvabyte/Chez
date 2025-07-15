@@ -113,12 +113,6 @@ test-web-validation:
 	@echo "🧪 Running web validation tests (T8)..."
 	./mill CaskChez.test caskchez.WebValidationTests
 
-# Run tests with coverage (if available)
-.PHONY: test-coverage
-test-coverage:
-	@echo "🧪 Running tests with coverage..."
-	./mill Chez.test
-
 # Run tests in watch mode - reruns on file changes
 .PHONY: test-watch
 test-watch:
@@ -214,7 +208,7 @@ examples:
 	@echo ""
 	@echo "✅ All examples completed!"
 
-# Alias for examples command
+# Alias for examples command compile
 .PHONY: demo
 demo: examples
 
@@ -252,7 +246,7 @@ format:
 
 # Run linting (compile warnings)
 .PHONY: lint
-lint:
+lint: compile
 	@echo "🔍 Linting code..."
 	./mill Chez.compile
 	./mill CaskChez.compile
