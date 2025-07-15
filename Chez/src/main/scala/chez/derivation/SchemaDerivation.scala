@@ -8,6 +8,7 @@ import chez.primitives.*
 import chez.complex.*
 import chez.derivation.SchemaAnnotations.*
 import chez.derivation.CollectionSchemas.given
+import chez.validation.ValidationContext
 import upickle.default.*
 
 /**
@@ -385,9 +386,17 @@ object ValidatedReadWriter {
       value => writeJs(value),
       // Reader: ujson.Value -> T (validate against schema, then deserialize)
       json => {
-        // TODO: Add actual schema validation here
-        // For now, just deserialize with the case class ReadWriter
-        read[T](json)
+        // Validate against the derived schema
+        val validationResult = s.schema.validate(json, ValidationContext())
+        
+        if (validationResult.isValid) {
+          // Validation passed, deserialize with the case class ReadWriter
+          read[T](json)
+        } else {
+          // Validation failed, create a meaningful error message
+          val errorMessages = validationResult.errors.map(_.toString).mkString(", ")
+          throw new IllegalArgumentException(s"Schema validation failed: $errorMessages")
+        }
       }
     )
 }
