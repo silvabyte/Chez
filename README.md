@@ -19,10 +19,10 @@ import chez.derivation.Schema
 case class User(
   @Schema.description("User's full name")
   @Schema.minLength(1) name: String,
-  
+
   @Schema.description("Email address")
   @Schema.format("email") email: String,
-  
+
   @Schema.description("User's age")
   @Schema.minimum(0) @Schema.default(18) age: Int
 ) derives Schema
@@ -46,6 +46,8 @@ def createUser(validatedRequest: ValidatedRequest) = {
 ```
 
 ## Installation
+
+TODO: cut a release and publish when ready...
 
 ```scala
 // build.mill
