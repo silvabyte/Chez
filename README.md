@@ -34,10 +34,10 @@ val jsonSchema = userSchema.toJsonSchema
 // Automatic validation
 val validationResult = userSchema.validate(userData)
 
-// HTTP endpoints with validation
+// HTTP endpoints with automatic validation
 @CaskChez.post("/users", RouteSchema(body = Some(Schema[User])))
 def createUser(validatedRequest: ValidatedRequest) = {
-  // Request automatically validated!
+  // Request automatically validated against schema!
   validatedRequest.getBody[User] match {
     case Right(user) => processUser(user)
     case Left(error) => handleError(error)
@@ -67,6 +67,12 @@ def ivyDeps = Agg(
 # Run examples
 ./mill Chez.runMain chez.examples.BasicUsage
 ./mill CaskChez.runMain caskchez.examples.UserCrudAPI
+
+# Run tests
+make test                 # Run all tests
+make test-integration    # Run basic CRUD tests
+make test-comprehensive  # Run advanced scenario tests
+make test-web-validation # Run HTTP validation tests
 ```
 
 ## Features
@@ -77,7 +83,8 @@ def ivyDeps = Agg(
 ✅ **Annotation-based schema derivation**  
 ✅ **Automatic HTTP request/response validation**  
 ✅ **OpenAPI specification generation**  
-✅ **Zero boilerplate validation**
+✅ **Zero boilerplate validation**  
+✅ **Comprehensive validation for body, query, params, headers**
 
 ## License
 

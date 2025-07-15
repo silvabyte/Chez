@@ -281,6 +281,8 @@ val schemaWithDefs = Chez.Object(
 
 ### Validation
 
+Chez includes a comprehensive validation engine that powers the T8 HTTP validation framework:
+
 ```scala
 import chez.validation.*
 
@@ -299,6 +301,27 @@ val validationResult2 = schema.validate(invalidData)
 // Check results
 assert(validationResult1.isEmpty) // Valid
 assert(validationResult2.nonEmpty) // Invalid - returns validation errors
+
+// Validation errors provide detailed information
+validationResult2.foreach { error =>
+  println(s"Error: ${error.message} at path: ${error.path}")
+}
+```
+
+### HTTP Validation Integration
+
+The validation engine integrates with CaskChez for automatic HTTP request validation:
+
+```scala
+// HTTP requests validated automatically
+@CaskChez.post("/users", RouteSchema(body = Some(Schema[User])))
+def createUser(validatedRequest: ValidatedRequest) = {
+  // Request body, query params, headers already validated
+  validatedRequest.getBody[User] match {
+    case Right(user) => processUser(user)
+    case Left(error) => handleValidationError(error)
+  }
+}
 ```
 
 ## Architecture
@@ -359,4 +382,20 @@ For HTTP integration, see `CaskChez/src/main/scala/caskchez/examples/UserCrudAPI
 
 # Run CaskChez CRUD API example
 ./mill CaskChez.runMain caskchez.examples.UserCrudAPI
+```
+
+## Running Tests
+
+```bash
+# Run all tests
+make test
+
+# Run Chez core tests
+make test-chez
+
+# Run specific test categories
+make test-validation      # Validation engine tests
+make test-primitives      # Primitive types tests
+make test-complex         # Complex types tests
+make test-derivation      # Schema derivation tests
 ```

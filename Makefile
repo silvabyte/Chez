@@ -57,6 +57,7 @@ clean-all: clean
 test:
 	@echo "🧪 Running all tests..."
 	./mill Chez.test
+	./mill CaskChez.test
 
 # Run only Chez module tests
 .PHONY: test-chez
@@ -69,6 +70,18 @@ test-chez:
 test-cask:
 	@echo "🧪 Running CaskChez tests..."
 	./mill CaskChez.test
+
+# Run CaskChez integration tests (UserCrud API)
+.PHONY: test-integration
+test-integration:
+	@echo "🧪 Running CaskChez integration tests..."
+	./mill CaskChez.test caskchez.UserCrudAPITest
+
+# Run comprehensive CaskChez integration tests (all scenarios)
+.PHONY: test-comprehensive
+test-comprehensive:
+	@echo "🧪 Running comprehensive CaskChez integration tests..."
+	./mill CaskChez.test caskchez.ComprehensiveUserCrudAPITest
 
 # Run primitive type tests (String, Number, Boolean, etc.)
 .PHONY: test-primitives
@@ -94,6 +107,12 @@ test-validation:
 	@echo "🧪 Running validation framework tests..."
 	./mill Chez.test chez.validation
 
+# Run web validation tests (T8 - CaskChez request validation)
+.PHONY: test-web-validation
+test-web-validation:
+	@echo "🧪 Running web validation tests (T8)..."
+	./mill CaskChez.test caskchez.WebValidationTests
+
 # Run tests with coverage (if available)
 .PHONY: test-coverage
 test-coverage:
@@ -118,6 +137,7 @@ test-watch:
 quick-test:
 	@echo "⚡ Running quick smoke test..."
 	./mill Chez.test chez.primitives.StringChezTests
+	./mill CaskChez.test caskchez.WebValidationTests
 
 # ============================================================================
 # EXAMPLES & DEMOS
@@ -237,28 +257,6 @@ lint:
 	./mill Chez.compile
 	./mill CaskChez.compile
 
-# Setup development environment
-.PHONY: dev-setup
-dev-setup:
-	@echo "🛠️  Setting up development environment..."
-	@echo "✅ Mill is available"
-	@echo "✅ Scala 3.6.2 configured"
-	@echo "✅ Dependencies will be downloaded on first build"
-	@echo "🚀 Ready to develop! Try: make compile && make test"
-
-# Show development status and project statistics
-.PHONY: dev-status
-dev-status:
-	@echo "📊 Development Status"
-	@echo "===================="
-	@echo "📁 Project structure:"
-	@find Chez/src -name "*.scala" | wc -l | xargs echo "  Chez source files:"
-	@find CaskChez/src -name "*.scala" 2>/dev/null | wc -l | xargs echo "  CaskChez source files:" || echo "  CaskChez source files: 0"
-	@find Chez/test -name "*.scala" | wc -l | xargs echo "  Test files:"
-	@echo ""
-	@echo "🧪 Test status:"
-	@echo "  Run 'make test' to check current test status"
-	@echo ""
 
 # ============================================================================
 # PROJECT MANAGEMENT
@@ -272,8 +270,17 @@ info:
 	@echo "🔸 Scala Version: 3.6.2"
 	@echo "🔸 Build Tool: Mill"
 	@echo "🔸 Test Framework: utest"
-	@echo "🔸 Main Dependencies: upickle, os-lib"
+	@echo "🔸 Main Dependencies: upickle, os-lib, cask, requests"
 	@echo "🔸 Modules: Chez (core), CaskChez (web framework integration)"
+	@echo ""
+	@echo "🧪 Available Test Commands:"
+	@echo "  make test                 - Run all tests"
+	@echo "  make test-chez           - Run Chez core tests"
+	@echo "  make test-cask           - Run CaskChez tests"
+	@echo "  make test-integration    - Run UserCrud API integration tests"
+	@echo "  make test-comprehensive  - Run comprehensive integration tests (all scenarios)"
+	@echo "  make test-web-validation - Run T8 web validation tests (unit)"
+	@echo "  make test-validation     - Run Chez validation framework tests"
 	@echo ""
 
 # Show version information for tools and dependencies

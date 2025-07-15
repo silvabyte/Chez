@@ -5,11 +5,12 @@ CaskChez provides seamless integration with the Cask HTTP framework, enabling au
 ## Features
 
 - 🌐 **Annotation-Driven APIs**: Define complete HTTP APIs with `@CaskChez.get`, `@CaskChez.post`, etc.
-- 🛡️ **Automatic Validation**: Built-in JSON Schema validation for requests and responses
+- 🛡️ **Automatic Request Validation**: Complete HTTP request/response validation with structured error handling
 - 📋 **Schema Registry**: Centralized registry for all route schemas
 - 🔍 **Schema Introspection**: Runtime access to all registered schemas and routes
 - 🏷️ **OpenAPI 3.1.1**: Automatic OpenAPI specification generation
 - ⚡ **Zero Boilerplate**: Eliminate manual validation code with annotations
+- 🧪 **Comprehensive Validation**: Body, query parameters, path parameters, and headers
 
 ## Quick Start
 
@@ -681,14 +682,21 @@ def openapi(): ujson.Value = openAPISpec
 - **Integration**: Seamless Cask HTTP framework integration
 - **OpenAPI**: Automatic OpenAPI 3.0 specification generation
 
-### Validation Flow
+### Request Validation Flow
 
 1. **Request Receipt**: Cask receives HTTP request
-2. **Schema Lookup**: `@SchemaEndpoint` decorator finds registered schema
-3. **Validation**: Request body, parameters, and headers validated against schema
+2. **Schema Lookup**: `@CaskChez` decorator finds registered schema
+3. **Automatic Validation**: Request body, query parameters, path parameters, and headers validated against schema
 4. **Processing**: If valid, request forwarded to handler with `ValidatedRequest`
 5. **Response**: Response optionally validated against response schema
-6. **Error Handling**: Validation errors automatically converted to HTTP error responses
+6. **Error Handling**: Validation errors automatically converted to structured HTTP error responses
+
+### Validation Components
+
+- **ValidatedRequest**: Container for validated request data with type-safe accessors
+- **RouteSchema**: Schema definition for endpoint validation requirements
+- **ValidationError**: Structured error types for different validation failures
+- **Automatic Error Conversion**: Seamless conversion from schema validation to HTTP errors
 
 ## Examples
 
@@ -713,38 +721,73 @@ curl http://localhost:8082/openapi
 
 ## Testing
 
+CaskChez includes comprehensive testing infrastructure with 43 tests across three test suites:
+
+### Test Categories
+
+- **Unit Tests (WebValidationTests)**: 21 tests covering HTTP validation logic
+- **Integration Tests (UserCrudAPITest)**: 9 tests covering basic CRUD operations
+- **Advanced Scenarios (ComprehensiveUserCrudAPITest)**: 13 tests covering edge cases, performance, and advanced validation
+
+### Running Tests
+
+```bash
+# Run all CaskChez tests
+make test-cask
+
+# Run specific test categories
+make test-web-validation    # HTTP validation unit tests
+make test-integration      # Basic CRUD integration tests
+make test-comprehensive    # Advanced scenario tests
+```
+
+### Test Example
+
 ```scala
 // Test validated endpoints
-class UserAPITest extends munit.FunSuite {
+class UserAPITest extends utest.TestSuite {
 
   test("create user validates request body") {
-    val validRequest = ujson.Obj(
-      "name" -> "John Doe",
-      "email" -> "john@example.com",
-      "age" -> 30
-    )
+    TestServer.withServer { (host, routes) =>
+      val validRequest = routes.CreateUserRequest(
+        name = "John Doe",
+        email = "john@example.com",
+        age = 30
+      )
 
-    val invalidRequest = ujson.Obj(
-      "name" -> "", // Too short
-      "email" -> "invalid-email",
-      "age" -> -5
-    )
+      val response = requests.post(
+        url = s"$host/users",
+        data = requests.RequestBlob.ByteSourceRequestBlob(write(validRequest)),
+        headers = Map("Content-Type" -> "application/json")
+      )
+      
+      assert(response.statusCode == 200)
+      val user = read[routes.User](response.text())
+      assert(user.name == "John Doe")
+    }
+  }
 
-    // Test with valid data
-    val response1 = requests.post(
-      s"$baseUrl/users",
-      data = ujson.write(validRequest),
-      headers = Map("Content-Type" -> "application/json")
-    )
-    assertEquals(response1.statusCode, 201)
+  test("validation errors are properly structured") {
+    TestServer.withServer { (host, routes) =>
+      val invalidRequest = routes.CreateUserRequest(
+        name = "", // Too short
+        email = "invalid-email",
+        age = -5
+      )
 
-    // Test with invalid data
-    val response2 = requests.post(
-      s"$baseUrl/users",
-      data = ujson.write(invalidRequest),
-      headers = Map("Content-Type" -> "application/json")
-    )
-    assertEquals(response2.statusCode, 400)
+      try {
+        requests.post(
+          url = s"$host/users",
+          data = requests.RequestBlob.ByteSourceRequestBlob(write(invalidRequest)),
+          headers = Map("Content-Type" -> "application/json")
+        )
+      } catch {
+        case e: requests.RequestFailedException =>
+          assert(e.response.statusCode == 400)
+          val responseBody = e.response.text()
+          assert(responseBody.contains("Validation failed"))
+      }
+    }
   }
 }
 ```
