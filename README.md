@@ -66,15 +66,11 @@ def ivyDeps = Agg(
 ## Examples
 
 ```bash
-# Run examples
-./mill Chez.runMain chez.examples.BasicUsage
-./mill CaskChez.runMain caskchez.examples.UserCrudAPI
+# Run all examples
+make demo
 
 # Run tests
 make test                 # Run all tests
-make test-integration    # Run basic CRUD tests
-make test-comprehensive  # Run advanced scenario tests
-make test-web-validation # Run HTTP validation tests
 ```
 
 ## Features
