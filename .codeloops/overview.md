@@ -1,0 +1,1 @@
+What is this garbly gook? Its how I do project management for my projects... I write out json files for the given projet at hand, (problem.json, technical.json and tasks.json) and then use those as the source of truth for wrking through a given project.
