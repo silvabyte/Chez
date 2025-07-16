@@ -31,3 +31,11 @@ object CaskChez extends Shared {
     ivy"com.lihaoyi::scalatags:0.13.1"
   )
 }
+
+object ChezWiz extends Shared {
+  override def ivyDeps = super.ivyDeps() ++ Agg(
+    ivy"com.outr::scribe:3.6.6",
+    ivy"com.lihaoyi::requests:0.9.0"
+  )
+
+}

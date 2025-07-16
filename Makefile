@@ -11,6 +11,7 @@ compile:
 	@echo "🔨 Compiling all modules..."
 	./mill Chez.compile
 	./mill CaskChez.compile
+	./mill ChezWiz.compile
 
 # Compile only the Chez core module
 .PHONY: compile-chez
@@ -58,6 +59,13 @@ test:
 	@echo "🧪 Running all tests..."
 	./mill Chez.test
 	./mill CaskChez.test
+	./mill ChezWiz.test
+	#
+# Run only ChezWiz module tests
+.PHONY: test-wiz
+test-wiz:
+	@echo "🧪 Running ChezWiz tests..."
+	./mill ChezWiz.test
 
 # Run only Chez module tests
 .PHONY: test-chez
@@ -136,6 +144,15 @@ quick-test:
 # ============================================================================
 # EXAMPLES & DEMOS
 # ============================================================================
+#
+
+# ChezWiz AI Agent examples
+
+# Runs all ChezWiz examples
+.PHONY: example-wiz-all
+example-wiz-all:
+	@echo "🚀 Running All ChezWiz examples..."
+	./mill ChezWhiz.runMain chezwiz.examples.AllExamples
 
 # Run basic usage example showing core functionality
 .PHONY: example-basic
@@ -211,20 +228,6 @@ examples:
 # Alias for examples command compile
 .PHONY: demo
 demo: examples
-
-# ============================================================================
-# DEVELOPMENT & MAINTENANCE  
-# ============================================================================
-
-# Start Scala REPL with project classpath loaded
-.PHONY: repl
-repl:
-	@echo "🎯 Starting Scala REPL..."
-	./mill Chez.repl
-
-# Alias for repl command
-.PHONY: console
-console: repl
 
 # Show dependency tree for Chez module
 .PHONY: deps
