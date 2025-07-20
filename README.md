@@ -18,13 +18,17 @@ import chez.derivation.Schema
 // Annotation-based derivation (the main hotness!)
 case class User(
   @Schema.description("User's full name")
-  @Schema.minLength(1) name: String,
+  @Schema.minLength(1)
+  name: String,
 
   @Schema.description("Email address")
-  @Schema.format("email") email: String,
+  @Schema.format("email")
+  email: String,
 
   @Schema.description("User's age")
-  @Schema.minimum(0) @Schema.default(18) age: Int
+  @Schema.minimum(0)
+  @Schema.default(18)
+  age: Int
 ) derives Schema
 
 // Generate JSON Schema automatically
