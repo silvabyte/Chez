@@ -41,8 +41,7 @@ object AnnotationExample {
         @Schema.minLength(2)
         @Schema.maxLength(100)
         name: String
-    ) derives Schema,
-          ReadWriter
+    ) derives Schema, ReadWriter
 
     // Get the derived schema - annotations are automatically processed
     val userSchema = Schema[AnnotatedUser]
@@ -74,8 +73,7 @@ object AnnotationExample {
         @Schema.description("Product tag slug")
         @Schema.pattern("^[a-z0-9-]+$")
         slug: String
-    ) derives Schema,
-          ReadWriter
+    ) derives Schema, ReadWriter
 
     @Schema.title("Product")
     @Schema.description("E-commerce product")
