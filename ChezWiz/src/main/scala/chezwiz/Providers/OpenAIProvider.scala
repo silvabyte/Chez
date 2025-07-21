@@ -6,12 +6,11 @@ import chezwiz.agent.{
   ChatRequest,
   ChatResponse,
   ObjectRequest,
-  RawObjectResponse,
+  ObjectResponse,
   Role,
   Usage,
   LLMError
 }
-import chezwiz.agent.ChezSchemaHelpers.toJsonValue
 
 class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
 
@@ -26,15 +25,16 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
     "gpt-3.5-turbo"
   )
 
-  override protected def buildHeaders(apiKey: String): Map[String, String] =
+  override protected def buildHeaders(apiKey: String): Map[String, String] = {
     Map(
       "Authorization" -> s"Bearer $apiKey",
       "Content-Type" -> "application/json"
     )
+  }
 
-  override protected def buildRequestBody(request: ChatRequest): ujson.Value =
+  override protected def buildRequestBody(request: ChatRequest): ujson.Value = {
     val messages = ujson.Arr(
-      request.messages.map(msg =>
+      request.messages.map(msg => {
         ujson.Obj(
           "role" -> (msg.role match
             case Role.System => "system"
@@ -42,7 +42,7 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
             case Role.Assistant => "assistant"),
           "content" -> msg.content
         )
-      )*
+      })*
     )
 
     val baseObj = ujson.Obj(
@@ -55,8 +55,9 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
     request.maxTokens.foreach(tokens => baseObj("max_tokens") = tokens)
 
     baseObj
+  }
 
-  override protected def parseResponse(responseBody: String): Try[ChatResponse] =
+  override protected def parseResponse(responseBody: String): Try[ChatResponse] = {
     Try {
       // First try to parse as successful response
       Try {
@@ -80,9 +81,10 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
       case ex: NoSuchElementException =>
         Failure(LLMError(s"Missing required field in OpenAI response: ${ex.getMessage}"))
     }
+  }
 
   // Helper method to ensure schema is OpenAI compliant
-  private def ensureOpenAICompliantSchema(schema: ujson.Value): ujson.Value =
+  private def ensureOpenAICompliantSchema(schema: ujson.Value): ujson.Value = {
     schema match
       case obj: ujson.Obj =>
         val newObj = obj.copy()
@@ -129,10 +131,11 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
         }
         newObj
       case _ => schema
+  }
 
-  override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value =
+  override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value = {
     val messages = ujson.Arr(
-      request.messages.map(msg =>
+      request.messages.map(msg => {
         ujson.Obj(
           "role" -> (msg.role match
             case Role.System => "system"
@@ -140,11 +143,11 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
             case Role.Assistant => "assistant"),
           "content" -> msg.content
         )
-      )*
+      })*
     )
 
     // Ensure the schema is OpenAI compliant
-    val compliantSchema = ensureOpenAICompliantSchema(request.schema.toJsonValue)
+    val compliantSchema = ensureOpenAICompliantSchema(request.schema.toJsonSchema)
 
     val baseObj = ujson.Obj(
       "model" -> request.model,
@@ -164,13 +167,15 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
     request.maxTokens.foreach(tokens => baseObj("max_tokens") = tokens)
 
     baseObj
+  }
 
-  override protected def parseObjectResponse(responseBody: String): Try[RawObjectResponse] =
+  override protected def parseObjectResponse(responseBody: String)
+      : Try[ObjectResponse[ujson.Value]] = {
     Try {
       // First try to parse as successful response
       Try {
         val openAIResponse = read[OpenAIResponse](responseBody)
-        openAIResponse.toRawObjectResponse
+        openAIResponse.toObjectResponse
       }.recoverWith {
         case _: upickle.core.AbortException | _: ujson.ParsingFailedException =>
           // If that fails, try to parse as error response
@@ -193,3 +198,4 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
       case ex =>
         Failure(LLMError(s"Unexpected error in parseObjectResponse: ${ex.getMessage}"))
     }
+  }

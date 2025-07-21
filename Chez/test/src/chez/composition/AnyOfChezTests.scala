@@ -55,7 +55,7 @@ object AnyOfChezTests extends TestSuite {
         val result1 = schema.validate(ujson.Str("hello"), ValidationContext())
         assert(result1.isValid)
 
-        // Valid integer (matches second schema)  
+        // Valid integer (matches second schema)
         val result2 = schema.validate(ujson.Num(15), ValidationContext())
         assert(result2.isValid)
 
@@ -87,7 +87,7 @@ object AnyOfChezTests extends TestSuite {
         assert(!result1.isValid)
         assert(result1.errors.length >= 2) // Should collect errors from failed schemas
 
-        // Small integer fails all schemas  
+        // Small integer fails all schemas
         val result2 = schema.validate(ujson.Num(5), ValidationContext())
         assert(!result2.isValid)
         assert(result2.errors.length >= 2)
@@ -125,7 +125,8 @@ object AnyOfChezTests extends TestSuite {
         assert(result1.isValid)
 
         // Valid company object
-        val company = ujson.Obj("companyName" -> ujson.Str("Acme Corp"), "employees" -> ujson.Num(100))
+        val company =
+          ujson.Obj("companyName" -> ujson.Str("Acme Corp"), "employees" -> ujson.Num(100))
         val result2 = schema.validate(company, ValidationContext())
         assert(result2.isValid)
 
@@ -178,7 +179,7 @@ object AnyOfChezTests extends TestSuite {
 
         val context = ValidationContext("/data/value")
         val result = schema.validate(ujson.Str("short"), context)
-        
+
         assert(!result.isValid)
         // Should have errors from both schemas with correct path
         val hasCorrectPath = result.errors.exists(_.toString.contains("/data/value"))
@@ -188,7 +189,7 @@ object AnyOfChezTests extends TestSuite {
       test("multiple validation errors are collected") {
         val schema = AnyOfChez(List(
           StringChez(minLength = Some(5), maxLength = Some(3)), // impossible constraint
-          IntegerChez(minimum = Some(10), maximum = Some(5)), // impossible constraint  
+          IntegerChez(minimum = Some(10), maximum = Some(5)), // impossible constraint
           BooleanChez()
         ))
 
@@ -236,8 +237,9 @@ object AnyOfChezTests extends TestSuite {
         val result1 = schema.validate(ujson.Str("test@example.com"), ValidationContext())
         assert(result1.isValid)
 
-        // Valid UUID format  
-        val result2 = schema.validate(ujson.Str("550e8400-e29b-41d4-a716-446655440000"), ValidationContext())
+        // Valid UUID format
+        val result2 =
+          schema.validate(ujson.Str("550e8400-e29b-41d4-a716-446655440000"), ValidationContext())
         assert(result2.isValid)
 
         // Valid phone number

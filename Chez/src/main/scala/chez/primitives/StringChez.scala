@@ -33,7 +33,6 @@ case class StringChez(
     schema
   }
 
-
   /**
    * Validate a ujson.Value against this string schema
    */
@@ -54,13 +53,21 @@ case class StringChez(
         // Length validation
         minLength.foreach { min =>
           if (stringValue.length < min) {
-            errors = chez.ValidationError.MinLengthViolation(min, stringValue.length, context.path) :: errors
+            errors = chez.ValidationError.MinLengthViolation(
+              min,
+              stringValue.length,
+              context.path
+            ) :: errors
           }
         }
 
         maxLength.foreach { max =>
           if (stringValue.length > max) {
-            errors = chez.ValidationError.MaxLengthViolation(max, stringValue.length, context.path) :: errors
+            errors = chez.ValidationError.MaxLengthViolation(
+              max,
+              stringValue.length,
+              context.path
+            ) :: errors
           }
         }
 
@@ -81,10 +88,13 @@ case class StringChez(
         // Format validation - this is a basic implementation...
         format.foreach { f =>
           val isValid = f match {
-            case "email" => stringValue.matches("""^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$""")
+            case "email" =>
+              stringValue.matches("""^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$""")
             case "uri" => Try(java.net.URI(stringValue)).isSuccess
             case "uuid" =>
-              stringValue.matches("""^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$""")
+              stringValue.matches(
+                """^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"""
+              )
             case "date" => stringValue.matches("""^\d{4}-\d{2}-\d{2}$""")
             case "time" => stringValue.matches("""^\d{2}:\d{2}:\d{2}$""")
             case "date-time" => stringValue.matches("""^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}""")
@@ -109,7 +119,6 @@ case class StringChez(
         ValidationResult.invalid(error)
     }
   }
-
 
   /**
    * Get string representation of ujson.Value type for error messages

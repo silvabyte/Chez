@@ -50,7 +50,6 @@ case class EnumChez(
     schema
   }
 
-
   /**
    * Check if a value type is compatible with this enum
    */
@@ -89,7 +88,8 @@ case class EnumChez(
       ValidationResult.valid()
     } else {
       val allowedValues = enumValues.map(writeJs(_)).mkString(", ")
-      val error = chez.ValidationError.TypeMismatch(allowedValues, writeJs(value).toString, context.path)
+      val error =
+        chez.ValidationError.TypeMismatch(allowedValues, writeJs(value).toString, context.path)
       ValidationResult.invalid(error)
     }
   }

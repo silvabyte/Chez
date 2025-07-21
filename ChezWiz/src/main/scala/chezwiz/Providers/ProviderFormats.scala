@@ -2,7 +2,7 @@ package chezwiz.agent.providers
 
 import upickle.default.*
 import ujson.Value
-import chezwiz.agent.{ChatResponse, Usage, RawObjectResponse}
+import chezwiz.agent.{ChatResponse, Usage, ObjectResponse}
 
 // Provider-specific response formats for automatic parsing
 
@@ -42,13 +42,13 @@ case class OpenAIResponse(
       finishReason = firstChoice.finish_reason
     )
   }
-  
-  // Convert to unified RawObjectResponse (for structured responses)
-  def toRawObjectResponse: RawObjectResponse = {
+
+  // Convert to unified ObjectResponse with ujson.Value (for structured responses)
+  def toObjectResponse: ObjectResponse[ujson.Value] = {
     val firstChoice = choices.head
     val contentJson = ujson.read(firstChoice.message.content)
-    RawObjectResponse(
-      `object` = contentJson,
+    ObjectResponse[ujson.Value](
+      data = contentJson,
       usage = usage.map(u => Usage(u.prompt_tokens, u.completion_tokens, u.total_tokens)),
       model = model,
       finishReason = firstChoice.finish_reason

@@ -30,7 +30,7 @@ case class AllOfChez(
   override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
     // For allOf, all schemas must validate successfully
     var allErrors = List.empty[chez.ValidationError]
-    
+
     schemas.foreach { schema =>
       val result = schema.validate(value, context)
       if (!result.isValid) {

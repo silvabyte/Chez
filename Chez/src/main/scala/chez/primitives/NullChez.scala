@@ -20,7 +20,6 @@ case class NullChez() extends Chez {
     schema
   }
 
-
   /**
    * Validate a ujson.Value against this null schema
    */

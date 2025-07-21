@@ -38,10 +38,10 @@ case class IfThenElseChez(
     // 3. If it doesn't, apply the "else" schema
     //
 
-    //TODO: we can do a little better here....
+    // TODO: we can do a little better here....
 
     val conditionResult = condition.validate(value, context)
-    
+
     if (conditionResult.isValid) {
       // Condition matched, apply "then" schema if present
       thenSchema match {

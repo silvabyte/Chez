@@ -21,13 +21,13 @@ object ObjectChezTests extends TestSuite {
       }
 
       test("basic object with properties") {
-        val schema = ObjectChez(properties =
+        val schema = ObjectChez(properties = {
           Map(
             "name" -> StringChez(),
             "age" -> IntegerChez(),
             "active" -> BooleanChez()
           )
-        )
+        })
         val json = schema.toJsonSchema
 
         assert(json("type").str == "object")
@@ -209,19 +209,19 @@ object ObjectChezTests extends TestSuite {
 
     test("nested object schemas") {
       test("object with nested object properties") {
-        val addressSchema = ObjectChez(properties =
+        val addressSchema = ObjectChez(properties = {
           Map(
             "street" -> StringChez(),
             "city" -> StringChez(),
             "zipCode" -> StringChez()
           )
-        )
-        val userSchema = ObjectChez(properties =
+        })
+        val userSchema = ObjectChez(properties = {
           Map(
             "name" -> StringChez(),
             "address" -> addressSchema
           )
-        )
+        })
         val json = userSchema.toJsonSchema
 
         assert(json("type").str == "object")

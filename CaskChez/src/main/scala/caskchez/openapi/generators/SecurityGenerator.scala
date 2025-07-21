@@ -88,21 +88,21 @@ object SecurityGenerator {
     OAuthFlowsObject(
       authorizationCode = flows
         .get("authorizationCode")
-        .map(_ =>
+        .map(_ => {
           OAuthFlowObject(
             authorizationUrl = Some("https://example.com/oauth/authorize"),
             tokenUrl = Some("https://example.com/oauth/token"),
             scopes = flows
           )
-        ),
+        }),
       clientCredentials = flows
         .get("clientCredentials")
-        .map(_ =>
+        .map(_ => {
           OAuthFlowObject(
             tokenUrl = Some("https://example.com/oauth/token"),
             scopes = flows
           )
-        )
+        })
     )
   }
 }

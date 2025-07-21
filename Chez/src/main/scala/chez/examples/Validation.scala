@@ -208,8 +208,10 @@ object Validation {
       maxItems = Some(5)
     )
 
-    val validTuple = ujson.Arr(ujson.Num(42), ujson.Str("hello"), ujson.Bool(true), ujson.Str("extra"))
-    val invalidTuple = ujson.Arr(ujson.Num(-5), ujson.Str(""), ujson.Bool(false)) // negative number, empty string
+    val validTuple =
+      ujson.Arr(ujson.Num(42), ujson.Str("hello"), ujson.Bool(true), ujson.Str("extra"))
+    val invalidTuple =
+      ujson.Arr(ujson.Num(-5), ujson.Str(""), ujson.Bool(false)) // negative number, empty string
 
     testArrayValidation(tupleSchema, validTuple, "valid tuple with prefixItems")
     testArrayValidation(tupleSchema, invalidTuple, "invalid tuple with constraint violations")
@@ -217,7 +219,8 @@ object Validation {
     // Contains validation
     val containsSchema = ArrayChez(
       items = Chez.String(),
-      contains = Some(Chez.String(pattern = Some("^test.*"))), // Must contain strings starting with "test"
+      contains =
+        Some(Chez.String(pattern = Some("^test.*"))), // Must contain strings starting with "test"
       minContains = Some(1),
       maxContains = Some(2)
     )
@@ -243,8 +246,13 @@ object Validation {
       maxItems = Some(6)
     )
 
-    val validComplexArray = ujson.Arr(ujson.Num(10), ujson.Str("hello"), ujson.Str("validstring"), ujson.Str("other"))
-    testArrayValidation(complexArraySchema, validComplexArray, "complex array with tuple + contains validation")
+    val validComplexArray =
+      ujson.Arr(ujson.Num(10), ujson.Str("hello"), ujson.Str("validstring"), ujson.Str("other"))
+    testArrayValidation(
+      complexArraySchema,
+      validComplexArray,
+      "complex array with tuple + contains validation"
+    )
 
     // 4. Number validation with ranges
     println("\n4. Number Validation with Ranges:")
@@ -567,9 +575,9 @@ object Validation {
     // AllOf Example: String with multiple constraints
     println("\n📋 AllOf - All schemas must validate:")
     val strongPasswordSchema = AllOfChez(List(
-      Chez.String(minLength = Some(8)),        // At least 8 characters
+      Chez.String(minLength = Some(8)), // At least 8 characters
       Chez.String(pattern = Some(".*[A-Z].*")), // Contains uppercase
-      Chez.String(pattern = Some(".*[0-9].*"))  // Contains digit
+      Chez.String(pattern = Some(".*[0-9].*")) // Contains digit
     ))
 
     testValidationResult(

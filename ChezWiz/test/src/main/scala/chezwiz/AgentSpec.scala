@@ -1,10 +1,8 @@
 import utest.*
 import chezwiz.agent.*
 import chezwiz.agent.providers.*
-import scala.concurrent.{Future, Await, ExecutionContext}
-import scala.concurrent.duration.*
+import chezwiz.agent.providers.{OpenAIResponse, ErrorResponse}
 import scala.util.{Success, Failure}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object AgentSpec extends TestSuite:
 
@@ -13,32 +11,38 @@ object AgentSpec extends TestSuite:
     override val name: String = "Mock"
     override val supportedModels: List[String] = List("mock-model-1", "mock-model-2")
 
-    override def chat(request: ChatRequest): Future[ChatResponse] =
-      Future.successful(
-        ChatResponse(
-          content = s"Mock response to: ${request.messages.last.content}",
-          usage = Some(Usage(10, 20, 30)),
-          model = request.model,
-          finishReason = Some("stop")
-        )
+    override def chat(request: ChatRequest): ChatResponse = {
+      ChatResponse(
+        content = s"Mock response to: ${request.messages.last.content}",
+        usage = Some(Usage(10, 20, 30)),
+        model = request.model,
+        finishReason = Some("stop")
       )
+    }
 
-    override def generateObject(request: ObjectRequest): Future[ObjectResponse] =
-      Future.successful(
-        ObjectResponse(
-          `object` = ujson.Obj("mock" -> "response"),
-          usage = Some(Usage(10, 20, 30)),
-          model = request.model,
-          finishReason = Some("stop")
-        )
+    override def generateObject(request: ObjectRequest): ObjectResponse[ujson.Value] = {
+      ObjectResponse[ujson.Value](
+        data = ujson.Obj("mock" -> "response"),
+        usage = Some(Usage(10, 20, 30)),
+        model = request.model,
+        finishReason = Some("stop")
       )
+    }
 
     override protected def buildHeaders(apiKey: String): Map[String, String] = Map.empty
     override protected def buildRequestBody(request: ChatRequest): ujson.Value = ujson.Obj()
     override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value = ujson.Obj()
-    override protected def parseResponse(responseBody: String): scala.util.Try[ChatResponse] = ???
+    override protected def parseResponse(responseBody: String): scala.util.Try[ChatResponse] =
+      scala.util.Success(ChatResponse("mock", None, "mock-model-1", Some("stop")))
     override protected def parseObjectResponse(responseBody: String)
-        : scala.util.Try[ObjectResponse] = ???
+        : scala.util.Try[ObjectResponse[ujson.Value]] = {
+      scala.util.Success(ObjectResponse[ujson.Value](
+        data = ujson.Obj("mock" -> "response"),
+        usage = None,
+        model = "mock-model-1",
+        finishReason = Some("stop")
+      ))
+    }
 
   val tests = Tests {
 
@@ -65,7 +69,7 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      val response = Await.result(agent.generateText("Hello"), 5.seconds)
+      val response = agent.generateText("Hello")
       assert(response.content == "Mock response to: Hello")
       assert(response.model == "mock-model-1")
       assert(response.usage.isDefined)
@@ -80,8 +84,8 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      Await.result(agent.generateText("First message"), 5.seconds)
-      Await.result(agent.generateText("Second message"), 5.seconds)
+      agent.generateText("First message")
+      agent.generateText("Second message")
 
       val history = agent.getConversationHistory
       assert(history.size == 5) // system + user1 + assistant1 + user2 + assistant2
@@ -103,7 +107,7 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      Await.result(agent.generateText("Test message"), 5.seconds)
+      agent.generateText("Test message")
       assert(agent.getConversationHistory.size > 1)
 
       agent.clearHistory()

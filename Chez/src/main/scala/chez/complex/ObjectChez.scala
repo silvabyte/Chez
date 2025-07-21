@@ -108,7 +108,10 @@ case class ObjectChez(
   /**
    * Validate an object value against this schema with proper context tracking
    */
-  private def validateObject(value: ujson.Obj, context: ValidationContext): List[chez.ValidationError] = {
+  private def validateObject(
+      value: ujson.Obj,
+      context: ValidationContext
+  ): List[chez.ValidationError] = {
     var errors = List.empty[chez.ValidationError]
 
     // Min properties validation
@@ -195,8 +198,6 @@ case class ObjectChez(
 
     errors.reverse
   }
-
-
 
   /**
    * Get string representation of ujson.Value type for error messages

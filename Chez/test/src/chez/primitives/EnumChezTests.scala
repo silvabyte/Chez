@@ -210,7 +210,8 @@ object EnumChezTests extends TestSuite {
       test("validate with context provides correct error paths") {
         val enumSchema = EnumChez.fromStrings("red", "green", "blue")
 
-        val result = enumSchema.validate(ujson.Str("yellow"), ValidationContext("/properties/color"))
+        val result =
+          enumSchema.validate(ujson.Str("yellow"), ValidationContext("/properties/color"))
         assert(!result.isValid)
 
         val error = result.errors.head

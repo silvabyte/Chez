@@ -46,7 +46,12 @@ enum ValidationError {
   case UniqueViolation(path: String)
   case MinItemsViolation(min: Int, actual: Int, path: String)
   case MaxItemsViolation(max: Int, actual: Int, path: String)
-  case ContainsViolation(minContains: Option[Int], maxContains: Option[Int], actualContains: Int, path: String)
+  case ContainsViolation(
+      minContains: Option[Int],
+      maxContains: Option[Int],
+      actualContains: Int,
+      path: String
+  )
   case MinLengthViolation(min: Int, actual: Int, path: String)
   case MaxLengthViolation(max: Int, actual: Int, path: String)
   case MinPropertiesViolation(min: Int, actual: Int, path: String)

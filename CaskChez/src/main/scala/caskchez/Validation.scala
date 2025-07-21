@@ -54,10 +54,14 @@ object ValidationError {
 
   def fromChezError(chezError: chez.ValidationError, context: String): ValidationError = {
     val errorType = context match {
-      case "body" => (msg: String, path: String, field: Option[String]) => RequestBodyError(msg, path, field)
-      case "query" => (msg: String, path: String, field: Option[String]) => QueryParamError(msg, path, field)
-      case "params" => (msg: String, path: String, field: Option[String]) => PathParamError(msg, path, field)
-      case "headers" => (msg: String, path: String, field: Option[String]) => HeaderError(msg, path, field)
+      case "body" =>
+        (msg: String, path: String, field: Option[String]) => RequestBodyError(msg, path, field)
+      case "query" =>
+        (msg: String, path: String, field: Option[String]) => QueryParamError(msg, path, field)
+      case "params" =>
+        (msg: String, path: String, field: Option[String]) => PathParamError(msg, path, field)
+      case "headers" =>
+        (msg: String, path: String, field: Option[String]) => HeaderError(msg, path, field)
       case _ => (msg: String, path: String, field: Option[String]) => SchemaError(msg, path, field)
     }
 
@@ -95,7 +99,11 @@ object ValidationError {
           case (None, Some(max)) => s"at most $max"
           case (None, None) => "valid number of"
         }
-        errorType(s"Array must contain $containsDesc matching items, got $actualContains", path, None)
+        errorType(
+          s"Array must contain $containsDesc matching items, got $actualContains",
+          path,
+          None
+        )
       case chez.ValidationError.MinLengthViolation(min, actual, path) =>
         errorType(s"String must be at least $min characters, got $actual", path, None)
       case chez.ValidationError.MaxLengthViolation(max, actual, path) =>
@@ -189,11 +197,14 @@ case class ValidatedRequest(
  * Helper functions for different types of validation
  */
 object ValidationHelpers {
-  
+
   /**
    * Validate request body against schema
    */
-  def validateRequestBody(request: cask.Request, bodySchema: Chez): Either[List[ValidationError], ujson.Value] = {
+  def validateRequestBody(
+      request: cask.Request,
+      bodySchema: Chez
+  ): Either[List[ValidationError], ujson.Value] = {
     Try {
       val bodyBytes = request.data.readAllBytes()
       val bodyStr = new String(bodyBytes, "UTF-8")
@@ -205,15 +216,21 @@ object ValidationHelpers {
           case result if result.isValid => Right(bodyJson)
           case result => Left(result.errors.map(ValidationError.fromChezError(_, "body")))
         }
-      case Failure(e) => 
-        Left(List(ValidationError.RequestBodyError(s"Failed to parse JSON body: ${e.getMessage}", "/")))
+      case Failure(e) =>
+        Left(List(ValidationError.RequestBodyError(
+          s"Failed to parse JSON body: ${e.getMessage}",
+          "/"
+        )))
     }
   }
 
   /**
    * Validate query parameters against schema
    */
-  def validateQueryParams(request: cask.Request, querySchema: Chez): Either[List[ValidationError], Map[String, ujson.Value]] = {
+  def validateQueryParams(
+      request: cask.Request,
+      querySchema: Chez
+  ): Either[List[ValidationError], Map[String, ujson.Value]] = {
     Try {
       // Convert query parameters to ujson.Value format
       val queryMap = request.queryParams.map { case (key, values) =>
@@ -221,50 +238,62 @@ object ValidationHelpers {
         key -> convertStringToJson(value)
       }
       val queryJson = ujson.Obj.from(queryMap)
-      
+
       val context = chez.validation.ValidationContext("/query")
       querySchema.validate(queryJson, context) match {
-        case result if result.isValid => 
+        case result if result.isValid =>
           Right(queryMap)
-        case result => 
+        case result =>
           Left(result.errors.map(ValidationError.fromChezError(_, "query")))
       }
     } match {
       case Success(result) => result
-      case Failure(e) => 
-        Left(List(ValidationError.QueryParamError(s"Failed to process query parameters: ${e.getMessage}", "/")))
+      case Failure(e) =>
+        Left(List(ValidationError.QueryParamError(
+          s"Failed to process query parameters: ${e.getMessage}",
+          "/"
+        )))
     }
   }
 
   /**
    * Validate path parameters against schema
    */
-  def validatePathParams(pathParams: Map[String, String], paramsSchema: Chez): Either[List[ValidationError], Map[String, ujson.Value]] = {
+  def validatePathParams(
+      pathParams: Map[String, String],
+      paramsSchema: Chez
+  ): Either[List[ValidationError], Map[String, ujson.Value]] = {
     Try {
       // Convert path parameters to ujson.Value format
       val paramMap = pathParams.map { case (key, value) =>
         key -> convertStringToJson(value)
       }
       val paramsJson = ujson.Obj.from(paramMap)
-      
+
       val context = chez.validation.ValidationContext("/params")
       paramsSchema.validate(paramsJson, context) match {
-        case result if result.isValid => 
+        case result if result.isValid =>
           Right(paramMap)
-        case result => 
+        case result =>
           Left(result.errors.map(ValidationError.fromChezError(_, "params")))
       }
     } match {
       case Success(result) => result
-      case Failure(e) => 
-        Left(List(ValidationError.PathParamError(s"Failed to process path parameters: ${e.getMessage}", "/")))
+      case Failure(e) =>
+        Left(List(ValidationError.PathParamError(
+          s"Failed to process path parameters: ${e.getMessage}",
+          "/"
+        )))
     }
   }
 
   /**
    * Validate request headers against schema
    */
-  def validateHeaders(request: cask.Request, headersSchema: Chez): Either[List[ValidationError], Map[String, ujson.Value]] = {
+  def validateHeaders(
+      request: cask.Request,
+      headersSchema: Chez
+  ): Either[List[ValidationError], Map[String, ujson.Value]] = {
     Try {
       // Convert headers to ujson.Value format
       val headerMap = request.headers.map { case (key, values) =>
@@ -272,17 +301,17 @@ object ValidationHelpers {
         key -> ujson.Str(value)
       }
       val headersJson = ujson.Obj.from(headerMap)
-      
+
       val context = chez.validation.ValidationContext("/headers")
       headersSchema.validate(headersJson, context) match {
-        case result if result.isValid => 
+        case result if result.isValid =>
           Right(headerMap)
-        case result => 
+        case result =>
           Left(result.errors.map(ValidationError.fromChezError(_, "headers")))
       }
     } match {
       case Success(result) => result
-      case Failure(e) => 
+      case Failure(e) =>
         Left(List(ValidationError.HeaderError(s"Failed to process headers: ${e.getMessage}", "/")))
     }
   }

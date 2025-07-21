@@ -105,7 +105,8 @@ object ArrayChezTests extends TestSuite {
     test("validation behavior") {
       test("valid array validation") {
         val schema = ArrayChez(StringChez(), minItems = Some(1), maxItems = Some(3))
-        val result = schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test2")), ValidationContext())
+        val result =
+          schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test2")), ValidationContext())
         assert(result.isValid)
       }
 
@@ -118,15 +119,20 @@ object ArrayChezTests extends TestSuite {
 
       test("max items validation") {
         val schema = ArrayChez(StringChez(), maxItems = Some(2))
-        val result =
-          schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test2"), ujson.Str("test3")), ValidationContext())
+        val result = {
+          schema.validate(
+            ujson.Arr(ujson.Str("test1"), ujson.Str("test2"), ujson.Str("test3")),
+            ValidationContext()
+          )
+        }
         assert(result.errors.length == 1)
         assert(result.errors.head.isInstanceOf[chez.ValidationError.MaxItemsViolation])
       }
 
       test("unique items validation") {
         val schema = ArrayChez(StringChez(), uniqueItems = Some(true))
-        val result = schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test1")), ValidationContext())
+        val result =
+          schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test1")), ValidationContext())
         assert(result.errors.length == 1)
         assert(result.errors.head.isInstanceOf[chez.ValidationError.UniqueViolation])
       }
@@ -134,7 +140,8 @@ object ArrayChezTests extends TestSuite {
       test("multiple validation errors") {
         val schema =
           ArrayChez(StringChez(), minItems = Some(3), maxItems = Some(2), uniqueItems = Some(true))
-        val result = schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test1")), ValidationContext())
+        val result =
+          schema.validate(ujson.Arr(ujson.Str("test1"), ujson.Str("test1")), ValidationContext())
         assert(result.errors.length == 2) // min items + unique items violations
       }
     }
@@ -200,9 +207,10 @@ object ArrayChezTests extends TestSuite {
             BooleanChez()
           ))
         )
-        
+
         // Valid tuple: [42, "hello", true, "extra"]
-        val validArray = ujson.Arr(ujson.Num(42), ujson.Str("hello"), ujson.Bool(true), ujson.Str("extra"))
+        val validArray =
+          ujson.Arr(ujson.Num(42), ujson.Str("hello"), ujson.Bool(true), ujson.Str("extra"))
         val result = schema.validate(validArray, ValidationContext())
         assert(result.isValid)
       }
@@ -216,18 +224,18 @@ object ArrayChezTests extends TestSuite {
             BooleanChez()
           ))
         )
-        
+
         // Invalid tuple: [5, "hi", true] - first two items violate constraints
         val invalidArray = ujson.Arr(ujson.Num(5), ujson.Str("hi"), ujson.Bool(true))
         val result = schema.validate(invalidArray, ValidationContext())
         assert(!result.isValid)
         assert(result.errors.length == 2) // Two constraint violations
-        
+
         // Check that errors have correct paths
-        val hasIndexZeroError = result.errors.exists(error => 
+        val hasIndexZeroError = result.errors.exists(error =>
           error.asInstanceOf[chez.ValidationError].toString.contains("/0")
         )
-        val hasIndexOneError = result.errors.exists(error => 
+        val hasIndexOneError = result.errors.exists(error =>
           error.asInstanceOf[chez.ValidationError].toString.contains("/1")
         )
         assert(hasIndexZeroError)
@@ -239,13 +247,14 @@ object ArrayChezTests extends TestSuite {
           items = StringChez(minLength = Some(3)), // Items beyond prefix must be strings >= 3 chars
           prefixItems = Some(List(IntegerChez(), BooleanChez()))
         )
-        
+
         // Array: [42, true, "validstring", "x"] - last item too short
-        val invalidArray = ujson.Arr(ujson.Num(42), ujson.Bool(true), ujson.Str("validstring"), ujson.Str("x"))
+        val invalidArray =
+          ujson.Arr(ujson.Num(42), ujson.Bool(true), ujson.Str("validstring"), ujson.Str("x"))
         val result = schema.validate(invalidArray, ValidationContext())
         assert(!result.isValid)
         assert(result.errors.length == 1)
-        
+
         // Error should be at index 3
         val error = result.errors.head.asInstanceOf[chez.ValidationError.MinLengthViolation]
         assert(error.path == "/3")
@@ -256,13 +265,20 @@ object ArrayChezTests extends TestSuite {
       test("valid contains validation") {
         val schema = ArrayChez(
           items = StringChez(),
-          contains = Some(StringChez(pattern = Some("^test.*"))), // Must contain strings starting with "test"
+          contains = Some(StringChez(pattern =
+            Some("^test.*")
+          )), // Must contain strings starting with "test"
           minContains = Some(1),
           maxContains = Some(2)
         )
-        
+
         // Array with exactly 2 items matching pattern: ["test1", "other", "test2", "another"]
-        val validArray = ujson.Arr(ujson.Str("test1"), ujson.Str("other"), ujson.Str("test2"), ujson.Str("another"))
+        val validArray = ujson.Arr(
+          ujson.Str("test1"),
+          ujson.Str("other"),
+          ujson.Str("test2"),
+          ujson.Str("another")
+        )
         val result = schema.validate(validArray, ValidationContext())
         assert(result.isValid)
       }
@@ -274,14 +290,14 @@ object ArrayChezTests extends TestSuite {
           minContains = Some(2),
           maxContains = Some(5)
         )
-        
+
         // Array with only 1 matching item: ["test1", "other", "another"]
         val invalidArray = ujson.Arr(ujson.Str("test1"), ujson.Str("other"), ujson.Str("another"))
         val result = schema.validate(invalidArray, ValidationContext())
         assert(!result.isValid)
         assert(result.errors.length == 1)
         assert(result.errors.head.isInstanceOf[chez.ValidationError.ContainsViolation])
-        
+
         val containsError = result.errors.head.asInstanceOf[chez.ValidationError.ContainsViolation]
         assert(containsError.minContains == Some(2))
         assert(containsError.actualContains == 1)
@@ -294,14 +310,14 @@ object ArrayChezTests extends TestSuite {
           minContains = Some(1),
           maxContains = Some(2)
         )
-        
+
         // Array with 3 matching items: ["test1", "test2", "test3"]
         val invalidArray = ujson.Arr(ujson.Str("test1"), ujson.Str("test2"), ujson.Str("test3"))
         val result = schema.validate(invalidArray, ValidationContext())
         assert(!result.isValid)
         assert(result.errors.length == 1)
         assert(result.errors.head.isInstanceOf[chez.ValidationError.ContainsViolation])
-        
+
         val containsError = result.errors.head.asInstanceOf[chez.ValidationError.ContainsViolation]
         assert(containsError.maxContains == Some(2))
         assert(containsError.actualContains == 3)
@@ -313,14 +329,15 @@ object ArrayChezTests extends TestSuite {
           contains = Some(StringChez(pattern = Some("^test.*")))
           // No minContains or maxContains specified
         )
-        
+
         // Array with 0 matches should be valid
         val zeroMatchArray = ujson.Arr(ujson.Str("other"), ujson.Str("another"))
         val result1 = schema.validate(zeroMatchArray, ValidationContext())
         assert(result1.isValid)
-        
+
         // Array with many matches should be valid
-        val manyMatchArray = ujson.Arr(ujson.Str("test1"), ujson.Str("test2"), ujson.Str("test3"), ujson.Str("test4"))
+        val manyMatchArray =
+          ujson.Arr(ujson.Str("test1"), ujson.Str("test2"), ujson.Str("test3"), ujson.Str("test4"))
         val result2 = schema.validate(manyMatchArray, ValidationContext())
         assert(result2.isValid)
       }
@@ -339,9 +356,10 @@ object ArrayChezTests extends TestSuite {
           minItems = Some(3),
           maxItems = Some(6)
         )
-        
+
         // Valid array: [42, "hello", "validstring", "other"]
-        val validArray = ujson.Arr(ujson.Num(42), ujson.Str("hello"), ujson.Str("validstring"), ujson.Str("other"))
+        val validArray =
+          ujson.Arr(ujson.Num(42), ujson.Str("hello"), ujson.Str("validstring"), ujson.Str("other"))
         val result = schema.validate(validArray, ValidationContext())
         assert(result.isValid)
       }
@@ -355,10 +373,10 @@ object ArrayChezTests extends TestSuite {
           minItems = Some(5),
           uniqueItems = Some(true)
         )
-        
-        // Invalid array with multiple violations: [5, "hi", "hi"] 
+
+        // Invalid array with multiple violations: [5, "hi", "hi"]
         // - prefix violation (5 < 100)
-        // - items violation ("hi" < 5 chars) 
+        // - items violation ("hi" < 5 chars)
         // - contains violation (no "required" pattern)
         // - minItems violation (3 < 5)
         // - uniqueItems violation (duplicate "hi")
@@ -377,10 +395,10 @@ object ArrayChezTests extends TestSuite {
           contains = Some(StringChez(pattern = Some("^test.*"))),
           minContains = Some(1)
         )
-        
+
         val validArray = ujson.Arr(ujson.Num(42), ujson.Str("hello"), ujson.Str("test123"))
         val result = schema.validate(validArray, ValidationContext())
-        
+
         assert(result.isValid)
         assert(result.errors.isEmpty)
         assert(result.isInstanceOf[ValidationResult.Valid.type])
@@ -393,10 +411,10 @@ object ArrayChezTests extends TestSuite {
           contains = Some(StringChez(pattern = Some("^required.*"))),
           minContains = Some(1)
         )
-        
+
         val invalidArray = ujson.Arr(ujson.Num(5), ujson.Str("hello"))
         val result = schema.validate(invalidArray, ValidationContext())
-        
+
         assert(!result.isValid)
         assert(result.errors.nonEmpty)
         assert(result.isInstanceOf[ValidationResult.Invalid])

@@ -15,7 +15,8 @@ object IfThenElseChezTests extends TestSuite {
       test("basic if-then-else schema") {
         val schema = IfThenElseChez(
           condition = ObjectChez(properties = Map("type" -> StringChez(const = Some("user")))),
-          thenSchema = Some(ObjectChez(properties = Map("role" -> StringChez()), required = Set("role"))),
+          thenSchema =
+            Some(ObjectChez(properties = Map("role" -> StringChez()), required = Set("role"))),
           elseSchema = Some(ObjectChez(properties = Map("permissions" -> ArrayChez(StringChez()))))
         )
         val json = schema.toJsonSchema
@@ -23,13 +24,13 @@ object IfThenElseChezTests extends TestSuite {
         assert(json.obj.contains("if"))
         assert(json.obj.contains("then"))
         assert(json.obj.contains("else"))
-        
+
         val ifSchema = json("if")
         assert(ifSchema("properties").obj.contains("type"))
-        
+
         val thenSchema = json("then")
         assert(thenSchema("properties").obj.contains("role"))
-        
+
         val elseSchema = json("else")
         assert(elseSchema("properties").obj.contains("permissions"))
       }
@@ -76,10 +77,11 @@ object IfThenElseChezTests extends TestSuite {
       test("applies then schema when condition matches") {
         val schema = IfThenElseChez(
           condition = ObjectChez(properties = Map("type" -> StringChez(const = Some("user")))),
-          thenSchema = Some(ObjectChez(properties = Map("name" -> StringChez()), required = Set("name"))),
+          thenSchema =
+            Some(ObjectChez(properties = Map("name" -> StringChez()), required = Set("name"))),
           elseSchema = Some(ObjectChez(properties = Map("id" -> IntegerChez())))
         )
-        
+
         val value = ujson.Obj("type" -> ujson.Str("user"), "name" -> ujson.Str("John"))
         val context = ValidationContext()
         val result = schema.validate(value, context)
@@ -90,10 +92,15 @@ object IfThenElseChezTests extends TestSuite {
       test("applies else schema when condition doesn't match") {
         val schema = IfThenElseChez(
           condition = ObjectChez(properties = Map("type" -> StringChez(const = Some("admin")))),
-          thenSchema = Some(ObjectChez(properties = Map("permissions" -> ArrayChez(StringChez())), required = Set("permissions"))),
-          elseSchema = Some(ObjectChez(properties = Map("role" -> StringChez()), required = Set("role")))
+          thenSchema =
+            Some(ObjectChez(
+              properties = Map("permissions" -> ArrayChez(StringChez())),
+              required = Set("permissions")
+            )),
+          elseSchema =
+            Some(ObjectChez(properties = Map("role" -> StringChez()), required = Set("role")))
         )
-        
+
         val value = ujson.Obj("type" -> ujson.Str("user"), "role" -> ujson.Str("viewer"))
         val context = ValidationContext()
         val result = schema.validate(value, context)
@@ -104,10 +111,16 @@ object IfThenElseChezTests extends TestSuite {
       test("fails when then schema doesn't validate") {
         val schema = IfThenElseChez(
           condition = ObjectChez(properties = Map("type" -> StringChez(const = Some("user")))),
-          thenSchema = Some(ObjectChez(properties = Map("name" -> StringChez(minLength = Some(10))), required = Set("name")))
+          thenSchema = {
+            Some(ObjectChez(
+              properties = Map("name" -> StringChez(minLength = Some(10))),
+              required = Set("name")
+            ))
+          }
         )
-        
-        val value = ujson.Obj("type" -> ujson.Str("user"), "name" -> ujson.Str("Jo")) // Name too short
+
+        val value =
+          ujson.Obj("type" -> ujson.Str("user"), "name" -> ujson.Str("Jo")) // Name too short
         val context = ValidationContext()
         val result = schema.validate(value, context)
 
@@ -118,9 +131,14 @@ object IfThenElseChezTests extends TestSuite {
         val schema = IfThenElseChez(
           condition = ObjectChez(properties = Map("type" -> StringChez(const = Some("admin")))),
           thenSchema = Some(ObjectChez(properties = Map("permissions" -> ArrayChez(StringChez())))),
-          elseSchema = Some(ObjectChez(properties = Map("age" -> IntegerChez(minimum = Some(18))), required = Set("age")))
+          elseSchema = {
+            Some(ObjectChez(
+              properties = Map("age" -> IntegerChez(minimum = Some(18))),
+              required = Set("age")
+            ))
+          }
         )
-        
+
         val value = ujson.Obj("type" -> ujson.Str("user"), "age" -> ujson.Num(16)) // Age too low
         val context = ValidationContext()
         val result = schema.validate(value, context)
@@ -133,7 +151,7 @@ object IfThenElseChezTests extends TestSuite {
           condition = StringChez(minLength = Some(5)),
           elseSchema = Some(StringChez(maxLength = Some(3)))
         )
-        
+
         val value = ujson.Str("hello world") // Condition matches, no then schema to fail
         val context = ValidationContext()
         val result = schema.validate(value, context)
@@ -146,7 +164,7 @@ object IfThenElseChezTests extends TestSuite {
           condition = StringChez(minLength = Some(10)),
           thenSchema = Some(StringChez(pattern = Some("^[A-Z].*")))
         )
-        
+
         val value = ujson.Str("short") // Condition doesn't match, no else schema to fail
         val context = ValidationContext()
         val result = schema.validate(value, context)
@@ -162,12 +180,12 @@ object IfThenElseChezTests extends TestSuite {
           thenSchema = Some(StringChez(minLength = Some(10))),
           elseSchema = Some(StringChez(maxLength = Some(8)))
         )
-        
+
         val outerIfThenElse = IfThenElseChez(
           condition = StringChez(),
           thenSchema = Some(innerIfThenElse)
         )
-        
+
         val value = ujson.Str("admin12345") // Matches inner condition and then constraint
         val context = ValidationContext()
         val result = outerIfThenElse.validate(value, context)
@@ -178,15 +196,21 @@ object IfThenElseChezTests extends TestSuite {
       test("object type discrimination") {
         val schema = IfThenElseChez(
           condition = ObjectChez(properties = Map("type" -> StringChez(const = Some("circle")))),
-          thenSchema = Some(ObjectChez(properties = Map(
-            "radius" -> NumberChez(minimum = Some(0))
-          ), required = Set("radius"))),
-          elseSchema = Some(ObjectChez(properties = Map(
-            "width" -> NumberChez(minimum = Some(0)),
-            "height" -> NumberChez(minimum = Some(0))
-          ), required = Set("width", "height")))
+          thenSchema = Some(ObjectChez(
+            properties = Map(
+              "radius" -> NumberChez(minimum = Some(0))
+            ),
+            required = Set("radius")
+          )),
+          elseSchema = Some(ObjectChez(
+            properties = Map(
+              "width" -> NumberChez(minimum = Some(0)),
+              "height" -> NumberChez(minimum = Some(0))
+            ),
+            required = Set("width", "height")
+          ))
         )
-        
+
         // Circle case
         val circleValue = ujson.Obj("type" -> ujson.Str("circle"), "radius" -> ujson.Num(5))
         val context = ValidationContext()
@@ -194,7 +218,11 @@ object IfThenElseChezTests extends TestSuite {
         assert(circleResult.isValid)
 
         // Rectangle case
-        val rectValue = ujson.Obj("type" -> ujson.Str("rectangle"), "width" -> ujson.Num(10), "height" -> ujson.Num(5))
+        val rectValue = ujson.Obj(
+          "type" -> ujson.Str("rectangle"),
+          "width" -> ujson.Num(10),
+          "height" -> ujson.Num(5)
+        )
         val rectResult = schema.validate(rectValue, context)
         assert(rectResult.isValid)
       }
@@ -205,7 +233,7 @@ object IfThenElseChezTests extends TestSuite {
           thenSchema = Some(ArrayChez(StringChez(minLength = Some(5)))),
           elseSchema = Some(ArrayChez(StringChez()))
         )
-        
+
         // Long array with long strings
         val longArray = ujson.Arr(ujson.Str("hello"), ujson.Str("world"), ujson.Str("testing"))
         val context = ValidationContext()
@@ -225,7 +253,7 @@ object IfThenElseChezTests extends TestSuite {
           condition = StringChez(),
           thenSchema = Some(StringChez(minLength = Some(10)))
         )
-        
+
         val value = ujson.Str("short")
         val context = ValidationContext("/test/path")
         val result = schema.validate(value, context)
@@ -239,7 +267,7 @@ object IfThenElseChezTests extends TestSuite {
           condition = IntegerChez(),
           elseSchema = Some(StringChez(minLength = Some(10)))
         )
-        
+
         val value = ujson.Str("short")
         val context = ValidationContext("/test/path")
         val result = schema.validate(value, context)
@@ -253,7 +281,7 @@ object IfThenElseChezTests extends TestSuite {
           condition = ObjectChez(properties = Map("flag" -> BooleanChez())),
           thenSchema = Some(StringChez(minLength = Some(10)))
         )
-        
+
         // String value doesn't match condition (object), so else branch (none) validates
         val value = ujson.Str("test")
         val context = ValidationContext()
@@ -267,15 +295,21 @@ object IfThenElseChezTests extends TestSuite {
       test("user role-based validation") {
         val schema = IfThenElseChez(
           condition = ObjectChez(properties = Map("role" -> StringChez(const = Some("admin")))),
-          thenSchema = Some(ObjectChez(properties = Map(
-            "permissions" -> ArrayChez(StringChez(), minItems = Some(1)),
-            "department" -> StringChez()
-          ), required = Set("permissions", "department"))),
-          elseSchema = Some(ObjectChez(properties = Map(
-            "supervisor" -> StringChez()
-          ), required = Set("supervisor")))
+          thenSchema = Some(ObjectChez(
+            properties = Map(
+              "permissions" -> ArrayChez(StringChez(), minItems = Some(1)),
+              "department" -> StringChez()
+            ),
+            required = Set("permissions", "department")
+          )),
+          elseSchema = Some(ObjectChez(
+            properties = Map(
+              "supervisor" -> StringChez()
+            ),
+            required = Set("supervisor")
+          ))
         )
-        
+
         // Admin user
         val adminUser = ujson.Obj(
           "role" -> ujson.Str("admin"),
@@ -298,14 +332,20 @@ object IfThenElseChezTests extends TestSuite {
       test("API versioning conditional validation") {
         val schema = IfThenElseChez(
           condition = ObjectChez(properties = Map("version" -> StringChez(const = Some("v2")))),
-          thenSchema = Some(ObjectChez(properties = Map(
-            "data" -> ObjectChez(properties = Map("format" -> StringChez(const = Some("json"))))
-          ), required = Set("data"))),
-          elseSchema = Some(ObjectChez(properties = Map(
-            "payload" -> StringChez()
-          ), required = Set("payload")))
+          thenSchema = Some(ObjectChez(
+            properties = Map(
+              "data" -> ObjectChez(properties = Map("format" -> StringChez(const = Some("json"))))
+            ),
+            required = Set("data")
+          )),
+          elseSchema = Some(ObjectChez(
+            properties = Map(
+              "payload" -> StringChez()
+            ),
+            required = Set("payload")
+          ))
         )
-        
+
         // v2 API format
         val v2Request = ujson.Obj(
           "version" -> ujson.Str("v2"),
@@ -326,15 +366,20 @@ object IfThenElseChezTests extends TestSuite {
 
       test("feature flag conditional validation") {
         val schema = IfThenElseChez(
-          condition = ObjectChez(properties = Map("experimentalFeatures" -> BooleanChez(const = Some(true)))),
-          thenSchema = Some(ObjectChez(properties = Map(
-            "betaConfig" -> ObjectChez(properties = Map("enabled" -> BooleanChez()))
-          ))),
-          elseSchema = Some(ObjectChez(properties = Map(
-            "stableConfig" -> ObjectChez(properties = Map("version" -> StringChez()))
-          )))
+          condition =
+            ObjectChez(properties = Map("experimentalFeatures" -> BooleanChez(const = Some(true)))),
+          thenSchema = Some(ObjectChez(properties = {
+            Map(
+              "betaConfig" -> ObjectChez(properties = Map("enabled" -> BooleanChez()))
+            )
+          })),
+          elseSchema = Some(ObjectChez(properties = {
+            Map(
+              "stableConfig" -> ObjectChez(properties = Map("version" -> StringChez()))
+            )
+          }))
         )
-        
+
         // Experimental features enabled
         val betaConfig = ujson.Obj(
           "experimentalFeatures" -> ujson.Bool(true),
@@ -404,7 +449,7 @@ object IfThenElseChezTests extends TestSuite {
           thenSchema = Some(StringChez(maxLength = Some(10))),
           elseSchema = Some(StringChez())
         )
-        
+
         // Meets complex condition
         val value = ujson.Str("Hello")
         val context = ValidationContext()
@@ -423,7 +468,7 @@ object IfThenElseChezTests extends TestSuite {
           thenSchema = Some(ObjectChez(properties = Map("key" -> StringChez()))),
           elseSchema = Some(StringChez())
         )
-        
+
         // String doesn't match object condition, should use else
         val value = ujson.Str("not an object")
         val context = ValidationContext()

@@ -24,7 +24,6 @@ case class BooleanChez(
     schema
   }
 
-
   /**
    * Validate a ujson.Value against this boolean schema
    */
@@ -45,7 +44,11 @@ case class BooleanChez(
         // Const validation
         const.foreach { c =>
           if (booleanValue != c) {
-            errors = chez.ValidationError.TypeMismatch(c.toString, booleanValue.toString, context.path) :: errors
+            errors = chez.ValidationError.TypeMismatch(
+              c.toString,
+              booleanValue.toString,
+              context.path
+            ) :: errors
           }
         }
 
@@ -60,7 +63,6 @@ case class BooleanChez(
         ValidationResult.invalid(error)
     }
   }
-
 
   /**
    * Get string representation of ujson.Value type for error messages

@@ -34,9 +34,12 @@ object NotChezTests extends TestSuite {
       }
 
       test("not schema with complex nested schema") {
-        val objectSchema = ObjectChez(properties = Map(
-          "type" -> StringChez(const = Some("admin"))
-        ), required = Set("type"))
+        val objectSchema = ObjectChez(
+          properties = Map(
+            "type" -> StringChez(const = Some("admin"))
+          ),
+          required = Set("type")
+        )
         val schema = NotChez(objectSchema)
         val json = schema.toJsonSchema
 
@@ -90,11 +93,14 @@ object NotChezTests extends TestSuite {
 
     test("Complex Not scenarios") {
       test("not with object schema") {
-        val adminSchema = ObjectChez(properties = Map(
-          "role" -> StringChez(const = Some("admin"))
-        ), required = Set("role"))
+        val adminSchema = ObjectChez(
+          properties = Map(
+            "role" -> StringChez(const = Some("admin"))
+          ),
+          required = Set("role")
+        )
         val schema = NotChez(adminSchema)
-        
+
         // Should validate - not an admin object
         val userValue = ujson.Obj("role" -> ujson.Str("user"))
         val context = ValidationContext()
@@ -110,7 +116,7 @@ object NotChezTests extends TestSuite {
       test("not with array schema") {
         val emptyArraySchema = ArrayChez(StringChez(), maxItems = Some(0))
         val schema = NotChez(emptyArraySchema)
-        
+
         // Should validate - not an empty array
         val value = ujson.Arr(ujson.Str("item"))
         val context = ValidationContext()
@@ -126,7 +132,7 @@ object NotChezTests extends TestSuite {
       test("nested not composition") {
         val innerNot = NotChez(StringChez())
         val outerNot = NotChez(innerNot)
-        
+
         // Double negation should validate strings
         val value = ujson.Str("test")
         val context = ValidationContext()
@@ -167,7 +173,7 @@ object NotChezTests extends TestSuite {
       test("exclude specific values") {
         val bannedValueSchema = StringChez(const = Some("admin"))
         val schema = NotChez(bannedValueSchema)
-        
+
         val allowedValue = ujson.Str("user")
         val context = ValidationContext()
         val result = schema.validate(allowedValue, context)
@@ -179,11 +185,14 @@ object NotChezTests extends TestSuite {
       }
 
       test("exclude object pattern") {
-        val testObjectSchema = ObjectChez(properties = Map(
-          "test" -> BooleanChez(const = Some(true))
-        ), required = Set("test"))
+        val testObjectSchema = ObjectChez(
+          properties = Map(
+            "test" -> BooleanChez(const = Some(true))
+          ),
+          required = Set("test")
+        )
         val schema = NotChez(testObjectSchema)
-        
+
         // Should validate - production object
         val prodValue = ujson.Obj("env" -> ujson.Str("production"))
         val context = ValidationContext()
@@ -199,7 +208,7 @@ object NotChezTests extends TestSuite {
       test("exclude number range") {
         val invalidRangeSchema = IntegerChez(minimum = Some(18), maximum = Some(65))
         val schema = NotChez(invalidRangeSchema)
-        
+
         // Should validate - outside range
         val youngValue = ujson.Num(16)
         val context = ValidationContext()
@@ -247,12 +256,12 @@ object NotChezTests extends TestSuite {
         // A schema that accepts anything (empty object schema)
         val alwaysTrueSchema = ObjectChez()
         val schema = NotChez(alwaysTrueSchema)
-        
+
         // Should fail for all values since everything matches an empty object schema
         val value = ujson.Str("anything")
         val context = ValidationContext()
         val result = schema.validate(value, context)
-        
+
         // This depends on how ObjectChez handles type mismatches
         // If ObjectChez rejects non-objects, then not should validate
         // If ObjectChez accepts all values, then not should fail
@@ -263,7 +272,7 @@ object NotChezTests extends TestSuite {
         // A schema that never validates (impossible constraints)
         val alwaysFalseSchema = StringChez(minLength = Some(10), maxLength = Some(5))
         val schema = NotChez(alwaysFalseSchema)
-        
+
         // Should validate for all strings since the inner schema never validates
         val value = ujson.Str("test")
         val context = ValidationContext()

@@ -20,13 +20,13 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
             email = "baby@example.com",
             age = 0
           )
-          
+
           val minAgeResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(minAgeUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(minAgeResponse.statusCode == 200)
           val createdMinUser = read[routes.User](minAgeResponse.text())
           assert(createdMinUser.age == 0)
@@ -37,13 +37,13 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
             email = "elder@example.com",
             age = 150
           )
-          
+
           val maxAgeResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(maxAgeUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(maxAgeResponse.statusCode == 200)
           val createdMaxUser = read[routes.User](maxAgeResponse.text())
           assert(createdMaxUser.age == 150)
@@ -54,13 +54,13 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
             email = "a@example.com",
             age = 25
           )
-          
+
           val minNameResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(minNameUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(minNameResponse.statusCode == 200)
           val createdMinNameUser = read[routes.User](minNameResponse.text())
           assert(createdMinNameUser.name == "A")
@@ -72,13 +72,13 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
             email = "long@example.com",
             age = 25
           )
-          
+
           val maxNameResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(maxNameUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(maxNameResponse.statusCode == 200)
           val createdMaxNameUser = read[routes.User](maxNameResponse.text())
           assert(createdMaxNameUser.name == longName)
@@ -93,13 +93,13 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
             email = "unicode@example.com",
             age = 30
           )
-          
+
           val unicodeResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(unicodeNameUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(unicodeResponse.statusCode == 200)
           val createdUser = read[routes.User](unicodeResponse.text())
           assert(createdUser.name == "José Müller-Østra 한국어")
@@ -110,13 +110,13 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
             email = "symbols@example.com",
             age = 25
           )
-          
+
           val symbolResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(symbolNameUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(symbolResponse.statusCode == 200)
           val symbolUser = read[routes.User](symbolResponse.text())
           assert(symbolUser.name == "User123 & Co. Ltd.")
@@ -135,13 +135,13 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
               email = email,
               age = 25 + index
             )
-            
+
             val response = requests.post(
               url = s"$host/users",
               data = requests.RequestBlob.ByteSourceRequestBlob(write(user)),
               headers = Map("Content-Type" -> "application/json")
             )
-            
+
             assert(response.statusCode == 200)
             val createdUser = read[routes.User](response.text())
             assert(createdUser.email == email)
@@ -154,17 +154,17 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
           // Test JSON with extra whitespace and formatting using proper structure
           val formattedUser = routes.CreateUserRequest(
             name = "Formatted User",
-            email = "formatted@example.com", 
+            email = "formatted@example.com",
             age = 35,
             isActive = true
           )
-          
+
           val formattedResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(formattedUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(formattedResponse.statusCode == 200)
           val user = read[routes.User](formattedResponse.text())
           assert(user.name == "Formatted User")
@@ -183,13 +183,13 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
               age = 30,
               isActive = expected
             )
-            
+
             val response = requests.post(
               url = s"$host/users",
               data = requests.RequestBlob.ByteSourceRequestBlob(write(testUser)),
               headers = Map("Content-Type" -> "application/json")
             )
-            
+
             assert(response.statusCode == 200)
             val user = read[routes.User](response.text())
             assert(user.isActive == expected)
@@ -204,14 +204,15 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
         TestServer.withServer { (host, routes) =>
           // Test request with multiple validation issues
           try {
-            val multiErrorJson = """{"name": "", "email": "invalid-email", "age": -1, "isActive": "not-boolean"}"""
-            
+            val multiErrorJson =
+              """{"name": "", "email": "invalid-email", "age": -1, "isActive": "not-boolean"}"""
+
             val response = requests.post(
               url = s"$host/users",
               data = requests.RequestBlob.ByteSourceRequestBlob(multiErrorJson),
               headers = Map("Content-Type" -> "application/json")
             )
-            
+
             // Should either fail at HTTP level (400) or return validation errors
             if (response.statusCode == 400) {
               val body = response.text()
@@ -246,14 +247,16 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
                 data = requests.RequestBlob.ByteSourceRequestBlob(malformedJson),
                 headers = Map("Content-Type" -> "application/json")
               )
-              
+
               // Should return error
               assert(response.statusCode >= 400)
             } catch {
               case e: requests.RequestFailedException =>
                 assert(e.response.statusCode >= 400)
                 val body = e.response.text()
-                assert(body.contains("parse") || body.contains("JSON") || body.contains("validation"))
+                assert(
+                  body.contains("parse") || body.contains("JSON") || body.contains("validation")
+                )
             }
           }
         }
@@ -273,7 +276,7 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
             data = requests.RequestBlob.ByteSourceRequestBlob(write(validUser))
             // No Content-Type header
           )
-          
+
           // Should still work since the JSON is valid
           assert(noContentTypeResponse.statusCode == 200)
 
@@ -290,7 +293,7 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
               data = requests.RequestBlob.ByteSourceRequestBlob(write(validUser)),
               headers = Map("Content-Type" -> contentType)
             )
-            
+
             assert(response.statusCode == 200)
           }
         }
@@ -347,7 +350,7 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
           // Verify final state consistency
           val finalResponse = requests.get(s"$host/users")
           val finalUsers = read[List[routes.User]](finalResponse.text())
-          
+
           // Check that all expected users exist
           assert(finalUsers.exists(_.email == "a@load.com"))
           assert(finalUsers.exists(_.email == "b@load.com"))
@@ -387,13 +390,13 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
               email = s"large$i@example.com",
               age = 25 + i
             )
-            
+
             val response = requests.post(
               url = s"$host/users",
               data = requests.RequestBlob.ByteSourceRequestBlob(write(user)),
               headers = Map("Content-Type" -> "application/json")
             )
-            
+
             assert(response.statusCode == 200)
           }
         }
@@ -409,24 +412,24 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
             email = "response@example.com",
             age = 30
           )
-          
+
           val createResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(testUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(createResponse.statusCode == 200)
           val responseBody = createResponse.text()
           val json = ujson.read(responseBody)
-          
+
           // Verify all required fields are present and correctly typed
           assert(json.obj.contains("id"))
           assert(json.obj.contains("name"))
           assert(json.obj.contains("email"))
           assert(json.obj.contains("age"))
           assert(json.obj.contains("isActive"))
-          
+
           // Verify field types
           assert(json("id").str.nonEmpty)
           assert(json("name").str == "Response Test User")
@@ -448,16 +451,16 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
           // Test error response for non-existent user has proper structure
           val response = requests.get(s"$host/users/999")
           assert(response.statusCode == 200) // Our implementation returns 200 with error body
-          
+
           val responseBody = response.text()
           val json = ujson.read(responseBody)
-          
+
           // Verify error response structure
           assert(json.obj.contains("error"))
           assert(json.obj.contains("message"))
           assert(json("error").str == "user_not_found")
           assert(json("message").str.contains("999"))
-          
+
           // Details field should be present and be an array (even if empty)
           if (json.obj.contains("details")) {
             assert(json("details").arr.length >= 0)
@@ -469,13 +472,13 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
             email = "alice@example.com", // Already exists
             age = 25
           )
-          
+
           val duplicateResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(duplicateUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(duplicateResponse.statusCode == 200)
           val duplicateJson = ujson.read(duplicateResponse.text())
           assert(duplicateJson.obj.contains("error"))
@@ -492,27 +495,27 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
             email = "precision@example.com",
             age = 42
           )
-          
+
           val createResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(precisionUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(createResponse.statusCode == 200)
           val createdUser = read[routes.User](createResponse.text())
-          
+
           // Verify exact data preservation
           assert(createdUser.name == "Precision Test User")
           assert(createdUser.email == "precision@example.com")
           assert(createdUser.age == 42)
           assert(createdUser.isActive == true) // Default value
-          
+
           // Verify the user can be retrieved with exact same data
           val retrieveResponse = requests.get(s"$host/users/${createdUser.id}")
           assert(retrieveResponse.statusCode == 200)
           val retrievedUser = read[routes.User](retrieveResponse.text())
-          
+
           assert(retrievedUser == createdUser) // Exact match
         }
       }
@@ -523,21 +526,21 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
         TestServer.withServer { (host, routes) =>
           // Test that our T8 validation framework is properly integrated
           // by testing edge cases that should trigger validation logic
-          
+
           // Test validation with edge case values that should pass
           val edgeCaseUsers = List(
             routes.CreateUserRequest("A", "a@b.co", 0), // Minimum values
             routes.CreateUserRequest("Z" * 100, "z@example.com", 150), // Maximum values
             routes.CreateUserRequest("Mixed123!@#", "mixed@test.org", 75) // Mixed content
           )
-          
+
           edgeCaseUsers.foreach { user =>
             val response = requests.post(
               url = s"$host/users",
               data = requests.RequestBlob.ByteSourceRequestBlob(write(user)),
               headers = Map("Content-Type" -> "application/json")
             )
-            
+
             assert(response.statusCode == 200)
             val createdUser = read[routes.User](response.text())
             assert(createdUser.name == user.name)
@@ -548,7 +551,7 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
           // Verify all edge case users were stored correctly
           val listResponse = requests.get(s"$host/users")
           val allUsers = read[List[routes.User]](listResponse.text())
-          
+
           assert(allUsers.exists(_.name == "A"))
           assert(allUsers.exists(_.name == "Z" * 100))
           assert(allUsers.exists(_.name == "Mixed123!@#"))

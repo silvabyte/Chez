@@ -11,9 +11,9 @@ object WebValidationTests extends TestSuite {
 
   // Mock cask.Request for testing
   class MockRequest(
-    bodyContent: String = "",
-    queryParamsMap: Map[String, Seq[String]] = Map.empty,
-    headersMap: Map[String, Seq[String]] = Map.empty
+      bodyContent: String = "",
+      queryParamsMap: Map[String, Seq[String]] = Map.empty,
+      headersMap: Map[String, Seq[String]] = Map.empty
   ) extends cask.Request(null, Seq.empty, Map.empty) {
     override lazy val data = new ByteArrayInputStream(bodyContent.getBytes("UTF-8"))
     override lazy val queryParams = queryParamsMap
@@ -26,7 +26,7 @@ object WebValidationTests extends TestSuite {
       test("convert Chez ValidationError to CaskChez ValidationError") {
         val chezError = chez.ValidationError.TypeMismatch("string", "number", "/test")
         val caskChezError = caskchez.ValidationError.fromChezError(chezError, "body")
-        
+
         assert(caskChezError.isInstanceOf[caskchez.ValidationError.RequestBodyError])
         assert(caskChezError.message.contains("Type mismatch"))
         assert(caskChezError.path == "/test")
@@ -34,16 +34,16 @@ object WebValidationTests extends TestSuite {
 
       test("convert different error types with different contexts") {
         val chezError = chez.ValidationError.MissingField("name", "/user")
-        
+
         val bodyError = caskchez.ValidationError.fromChezError(chezError, "body")
         assert(bodyError.isInstanceOf[caskchez.ValidationError.RequestBodyError])
-        
+
         val queryError = caskchez.ValidationError.fromChezError(chezError, "query")
         assert(queryError.isInstanceOf[caskchez.ValidationError.QueryParamError])
-        
+
         val paramError = caskchez.ValidationError.fromChezError(chezError, "params")
         assert(paramError.isInstanceOf[caskchez.ValidationError.PathParamError])
-        
+
         val headerError = caskchez.ValidationError.fromChezError(chezError, "headers")
         assert(headerError.isInstanceOf[caskchez.ValidationError.HeaderError])
       }
@@ -58,13 +58,13 @@ object WebValidationTests extends TestSuite {
           ),
           required = Set("name", "age")
         )
-        
+
         val validBody = """{"name": "John", "age": 25}"""
         val request = new MockRequest(bodyContent = validBody)
-        
+
         val result = ValidationHelpers.validateRequestBody(request, bodySchema)
         assert(result.isRight)
-        
+
         val bodyJson = result.getOrElse(throw new Exception("Expected Right"))
         assert(bodyJson("name").str == "John")
         assert(bodyJson("age").num == 25)
@@ -75,13 +75,13 @@ object WebValidationTests extends TestSuite {
           properties = Map("name" -> Chez.String(minLength = Some(1))),
           required = Set("name")
         )
-        
+
         val invalidBody = """{"name": ""}""" // Empty name fails minLength
         val request = new MockRequest(bodyContent = invalidBody)
-        
+
         val result = ValidationHelpers.validateRequestBody(request, bodySchema)
         assert(result.isLeft)
-        
+
         val errors = result.left.getOrElse(throw new Exception("Expected Left"))
         assert(errors.nonEmpty)
         assert(errors.head.isInstanceOf[caskchez.ValidationError.RequestBodyError])
@@ -89,13 +89,13 @@ object WebValidationTests extends TestSuite {
 
       test("malformed JSON body fails with parse error") {
         val bodySchema = Chez.Object(properties = Map("name" -> Chez.String()))
-        
+
         val malformedBody = """{"name": invalid json}"""
         val request = new MockRequest(bodyContent = malformedBody)
-        
+
         val result = ValidationHelpers.validateRequestBody(request, bodySchema)
         assert(result.isLeft)
-        
+
         val errors = result.left.getOrElse(throw new Exception("Expected Left"))
         assert(errors.head.message.contains("Failed to parse JSON body"))
       }
@@ -110,16 +110,16 @@ object WebValidationTests extends TestSuite {
           ),
           required = Set("page")
         )
-        
+
         val queryParams = Map(
           "page" -> Seq("2"),
           "limit" -> Seq("10")
         )
         val request = new MockRequest(queryParamsMap = queryParams)
-        
+
         val result = ValidationHelpers.validateQueryParams(request, querySchema)
         assert(result.isRight)
-        
+
         val params = result.getOrElse(throw new Exception("Expected Right"))
         assert(params("page") == ujson.Num(2))
         assert(params("limit") == ujson.Num(10))
@@ -130,13 +130,13 @@ object WebValidationTests extends TestSuite {
           properties = Map("page" -> Chez.Integer(minimum = Some(1))),
           required = Set("page")
         )
-        
+
         val queryParams = Map("page" -> Seq("0")) // Below minimum
         val request = new MockRequest(queryParamsMap = queryParams)
-        
+
         val result = ValidationHelpers.validateQueryParams(request, querySchema)
         assert(result.isLeft)
-        
+
         val errors = result.left.getOrElse(throw new Exception("Expected Left"))
         assert(errors.nonEmpty)
         assert(errors.head.isInstanceOf[caskchez.ValidationError.QueryParamError])
@@ -150,17 +150,17 @@ object WebValidationTests extends TestSuite {
             "name" -> Chez.String()
           )
         )
-        
+
         val queryParams = Map(
           "enabled" -> Seq("true"),
           "count" -> Seq("42"),
           "name" -> Seq("test")
         )
         val request = new MockRequest(queryParamsMap = queryParams)
-        
+
         val result = ValidationHelpers.validateQueryParams(request, querySchema)
         assert(result.isRight)
-        
+
         val params = result.getOrElse(throw new Exception("Expected Right"))
         assert(params("enabled") == ujson.Bool(true))
         assert(params("count") == ujson.Num(42))
@@ -177,15 +177,15 @@ object WebValidationTests extends TestSuite {
           ),
           required = Set("id", "category")
         )
-        
+
         val pathParams = Map(
           "id" -> "123",
           "category" -> "books"
         )
-        
+
         val result = ValidationHelpers.validatePathParams(pathParams, paramsSchema)
         assert(result.isRight)
-        
+
         val params = result.getOrElse(throw new Exception("Expected Right"))
         assert(params("id") == ujson.Num(123))
         assert(params("category") == ujson.Str("books"))
@@ -196,12 +196,12 @@ object WebValidationTests extends TestSuite {
           properties = Map("id" -> Chez.Integer(minimum = Some(1))),
           required = Set("id")
         )
-        
+
         val pathParams = Map("id" -> "0") // Below minimum
-        
+
         val result = ValidationHelpers.validatePathParams(pathParams, paramsSchema)
         assert(result.isLeft)
-        
+
         val errors = result.left.getOrElse(throw new Exception("Expected Left"))
         assert(errors.nonEmpty)
         assert(errors.head.isInstanceOf[caskchez.ValidationError.PathParamError])
@@ -217,16 +217,16 @@ object WebValidationTests extends TestSuite {
           ),
           required = Set("Authorization")
         )
-        
+
         val headers = Map(
           "Authorization" -> Seq("Bearer token123"),
           "Content-Type" -> Seq("application/json")
         )
         val request = new MockRequest(headersMap = headers)
-        
+
         val result = ValidationHelpers.validateHeaders(request, headersSchema)
         assert(result.isRight)
-        
+
         val validatedHeaders = result.getOrElse(throw new Exception("Expected Right"))
         assert(validatedHeaders("Authorization") == ujson.Str("Bearer token123"))
         assert(validatedHeaders("Content-Type") == ujson.Str("application/json"))
@@ -237,13 +237,13 @@ object WebValidationTests extends TestSuite {
           properties = Map("Authorization" -> Chez.String(pattern = Some("Bearer .*"))),
           required = Set("Authorization")
         )
-        
+
         val headers = Map("Authorization" -> Seq("InvalidToken")) // Doesn't match pattern
         val request = new MockRequest(headersMap = headers)
-        
+
         val result = ValidationHelpers.validateHeaders(request, headersSchema)
         assert(result.isLeft)
-        
+
         val errors = result.left.getOrElse(throw new Exception("Expected Left"))
         assert(errors.nonEmpty)
         assert(errors.head.isInstanceOf[caskchez.ValidationError.HeaderError])
@@ -268,17 +268,17 @@ object WebValidationTests extends TestSuite {
             properties = Map("Content-Type" -> Chez.String())
           ))
         )
-        
+
         val request = new MockRequest(
           bodyContent = """{"name": "John"}""",
           queryParamsMap = Map("page" -> Seq("2")),
           headersMap = Map("Content-Type" -> Seq("application/json"))
         )
         val pathParams = Map("id" -> "123")
-        
+
         val result = SchemaValidator.validateRequest(request, routeSchema, pathParams)
         assert(result.isRight)
-        
+
         val validatedRequest = result.getOrElse(throw new Exception("Expected Right"))
         assert(validatedRequest.validatedBody.isDefined)
         assert(validatedRequest.validatedQuery.isDefined)
@@ -297,18 +297,18 @@ object WebValidationTests extends TestSuite {
             required = Set("page")
           ))
         )
-        
+
         val request = new MockRequest(
           bodyContent = """{"name": ""}""", // Empty name fails validation
           queryParamsMap = Map("page" -> Seq("0")) // Below minimum
         )
-        
+
         val result = SchemaValidator.validateRequest(request, routeSchema)
         assert(result.isLeft)
-        
+
         val errors = result.left.getOrElse(throw new Exception("Expected Left"))
         assert(errors.length >= 2) // Should have errors from both body and query validation
-        
+
         val hasBodyError = errors.exists(_.isInstanceOf[caskchez.ValidationError.RequestBodyError])
         val hasQueryError = errors.exists(_.isInstanceOf[caskchez.ValidationError.QueryParamError])
         assert(hasBodyError)
@@ -323,16 +323,16 @@ object WebValidationTests extends TestSuite {
           ))
           // No query, params, or headers schemas
         )
-        
+
         val request = new MockRequest(
           bodyContent = """{"name": "John"}""",
           queryParamsMap = Map("anything" -> Seq("value")), // Should be ignored
           headersMap = Map("Custom" -> Seq("header")) // Should be ignored
         )
-        
+
         val result = SchemaValidator.validateRequest(request, routeSchema)
         assert(result.isRight)
-        
+
         val validatedRequest = result.getOrElse(throw new Exception("Expected Right"))
         assert(validatedRequest.validatedBody.isDefined)
         assert(validatedRequest.validatedQuery.isEmpty) // No schema provided
@@ -350,10 +350,10 @@ object WebValidationTests extends TestSuite {
           original = new MockRequest(),
           validatedBody = Some(ujson.Obj("name" -> ujson.Str("John"), "age" -> ujson.Num(25)))
         )
-        
+
         val userResult = validatedRequest.getBody[User]
         assert(userResult.isRight)
-        
+
         val user = userResult.getOrElse(throw new Exception("Expected Right"))
         assert(user.name == "John")
         assert(user.age == 25)
@@ -364,7 +364,7 @@ object WebValidationTests extends TestSuite {
           original = new MockRequest(),
           validatedParams = Some(Map("id" -> "123", "category" -> "books"))
         )
-        
+
         assert(validatedRequest.getParam("id").contains("123"))
         assert(validatedRequest.getParam("category").contains("books"))
         assert(validatedRequest.getParam("nonexistent").isEmpty)
@@ -375,7 +375,7 @@ object WebValidationTests extends TestSuite {
           original = new MockRequest(),
           validatedQuery = Some(Map("page" -> "2", "limit" -> "10"))
         )
-        
+
         assert(validatedRequest.getQueryParam("page").contains("2"))
         assert(validatedRequest.getQueryParam("limit").contains("10"))
         assert(validatedRequest.getQueryParam("nonexistent").isEmpty)
@@ -384,9 +384,10 @@ object WebValidationTests extends TestSuite {
       test("getHeader extracts header value") {
         val validatedRequest = ValidatedRequest(
           original = new MockRequest(),
-          validatedHeaders = Some(Map("Authorization" -> "Bearer token", "Content-Type" -> "application/json"))
+          validatedHeaders =
+            Some(Map("Authorization" -> "Bearer token", "Content-Type" -> "application/json"))
         )
-        
+
         assert(validatedRequest.getHeader("Authorization").contains("Bearer token"))
         assert(validatedRequest.getHeader("Content-Type").contains("application/json"))
         assert(validatedRequest.getHeader("nonexistent").isEmpty)
@@ -399,16 +400,16 @@ object WebValidationTests extends TestSuite {
           caskchez.ValidationError.RequestBodyError("Invalid name", "/name", Some("name")),
           caskchez.ValidationError.QueryParamError("Invalid page", "/page", Some("page"))
         )
-        
+
         val response = SchemaValidator.createErrorResponse(errors, 400)
-        
+
         assert(response.statusCode == 400)
         assert(response.headers.contains("Content-Type" -> "application/json"))
-        
+
         val responseData = response.data
         assert(responseData("error").str == "Validation failed")
         assert(responseData("details").arr.length == 2)
-        
+
         val firstDetail = responseData("details")(0)
         assert(firstDetail("message").str == "Invalid name")
         assert(firstDetail("path").str == "/name")
@@ -429,7 +430,7 @@ object WebValidationTests extends TestSuite {
             "empty" -> Chez.String()
           )
         )
-        
+
         val queryParams = Map(
           "bool_true" -> Seq("true"),
           "bool_false" -> Seq("false"),
@@ -439,10 +440,10 @@ object WebValidationTests extends TestSuite {
           "empty" -> Seq("")
         )
         val request = new MockRequest(queryParamsMap = queryParams)
-        
+
         val result = ValidationHelpers.validateQueryParams(request, querySchema)
         assert(result.isRight)
-        
+
         val params = result.getOrElse(throw new Exception("Expected Right"))
         assert(params("bool_true") == ujson.Bool(true))
         assert(params("bool_false") == ujson.Bool(false))

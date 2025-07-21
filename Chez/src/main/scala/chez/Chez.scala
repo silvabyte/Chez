@@ -185,7 +185,7 @@ object Chez {
       additionalPropertiesSchema: Option[Chez] = None,
       patternProperties: Map[String, Chez] = Map.empty,
       propertyNames: Option[Chez] = None
-  ): ObjectChez =
+  ): ObjectChez = {
     ObjectChez(
       properties,
       required,
@@ -196,6 +196,7 @@ object Chez {
       patternProperties,
       propertyNames
     )
+  }
 
   // Composition keywords
   def AnyOf(schemas: Chez*): AnyOfChez = AnyOfChez(schemas.toList)

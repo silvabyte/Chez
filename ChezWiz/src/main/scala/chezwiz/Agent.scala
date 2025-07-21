@@ -25,17 +25,19 @@ case class AgentConfig(
     maxTokens: Option[Int] = None
 )
 
-class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.empty) extends Logging:
+class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.empty)
+    extends Logging:
 
-  private var history: Vector[ChatMessage] =
+  private var history: Vector[ChatMessage] = {
     if initialHistory.isEmpty then Vector(ChatMessage(Role.System, config.instructions))
     else initialHistory
+  }
 
   def name: String = config.name
   def provider: LLMProvider = config.provider
   def model: String = config.model
 
-  def generateText(userChatMessage: String): ChatResponse =
+  def generateText(userChatMessage: String): ChatResponse = {
     logger.info(s"Agent '${config.name}' generating text for: $userChatMessage")
 
     // Add user message to conversation history
@@ -50,24 +52,26 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       stream = false
     )
 
-    try
+    try {
       val response = config.provider.chat(request)
-      
+
       // Add assistant response to conversation history
       val assistantMsg = ChatMessage(Role.Assistant, response.content)
       history = history :+ assistantMsg
 
       logger.info(s"Agent '${config.name}' generated response: ${response.content.take(100)}...")
       response
-    catch
+    } catch {
       case ex: LLMError =>
         logger.error(s"Agent '${config.name}' failed to generate text", ex)
         throw ex
       case ex =>
         logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
         throw LLMError(s"Unexpected error: ${ex.getMessage}")
+    }
+  }
 
-  def generateTextWithoutHistory(userChatMessage: String): ChatResponse =
+  def generateTextWithoutHistory(userChatMessage: String): ChatResponse = {
     logger.info(s"Agent '${config.name}' generating text without history for: $userChatMessage")
 
     val messages = List(
@@ -83,17 +87,19 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       stream = false
     )
 
-    try
+    try {
       config.provider.chat(request)
-    catch
+    } catch {
       case ex: LLMError =>
         logger.error(s"Agent '${config.name}' failed to generate text without history", ex)
         throw ex
       case ex =>
         logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
         throw LLMError(s"Unexpected error: ${ex.getMessage}")
+    }
+  }
 
-  def generateObject[T: Schema: Reader](userChatMessage: String): ObjectResponse[T] =
+  def generateObject[T: Schema: Reader](userChatMessage: String): ObjectResponse[T] = {
     logger.info(s"Agent '${config.name}' generating structured object for: $userChatMessage")
 
     // Add user message to conversation history
@@ -112,18 +118,23 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       stream = false
     )
 
-    try
-      val rawResponse = config.provider.generateObject(request)
-      val typedResponse = rawResponse.to[T]
-      
+    try {
+      val jsonResponse = config.provider.generateObject(request)
+      val typedResponse = ObjectResponse[T](
+        data = read[T](jsonResponse.data),
+        usage = jsonResponse.usage,
+        model = jsonResponse.model,
+        finishReason = jsonResponse.finishReason
+      )
+
       // Add assistant response to conversation history (convert object to string representation)
-      val assistantMsg = ChatMessage(Role.Assistant, rawResponse.`object`.toString())
+      val assistantMsg = ChatMessage(Role.Assistant, jsonResponse.data.toString())
       history = history :+ assistantMsg
 
       logger.info(s"Agent '${config.name}' generated structured object")
-      
+
       typedResponse
-    catch
+    } catch {
       case ex: LLMError =>
         logger.error(s"Agent '${config.name}' failed to generate structured object", ex)
         throw ex
@@ -133,10 +144,12 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       case ex =>
         logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
         throw LLMError(s"Unexpected error: ${ex.getMessage}")
+    }
+  }
 
   def generateObjectWithoutHistory[T: Schema: Reader](
       userChatMessage: String
-  ): ObjectResponse[T] =
+  ): ObjectResponse[T] = {
     logger.info(
       s"Agent '${config.name}' generating structured object without history for: $userChatMessage"
     )
@@ -158,13 +171,18 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       stream = false
     )
 
-    try
-      val rawResponse = config.provider.generateObject(request)
-      val typedResponse = rawResponse.to[T]
+    try {
+      val jsonResponse = config.provider.generateObject(request)
+      val typedResponse = ObjectResponse[T](
+        data = read[T](jsonResponse.data),
+        usage = jsonResponse.usage,
+        model = jsonResponse.model,
+        finishReason = jsonResponse.finishReason
+      )
       logger.info(s"Agent '${config.name}' generated structured object")
-      
+
       typedResponse
-    catch
+    } catch {
       case ex: LLMError =>
         logger.error(
           s"Agent '${config.name}' failed to generate structured object without history",
@@ -177,20 +195,23 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       case ex =>
         logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
         throw LLMError(s"Unexpected error: ${ex.getMessage}")
-
+    }
+  }
 
   def getConversationHistory: List[ChatMessage] = history.toList
 
-  def clearHistory(): Unit =
+  def clearHistory(): Unit = {
     logger.info(s"Agent '${config.name}' clearing conversation history")
     history = Vector(ChatMessage(Role.System, config.instructions))
+  }
 
   def addChatMessage(message: ChatMessage): Unit =
     history = history :+ message
 
-  def withSystemChatMessage(systemChatMessage: String): Agent =
+  def withSystemChatMessage(systemChatMessage: String): Agent = {
     val newConfig = config.copy(instructions = systemChatMessage)
     new Agent(newConfig)
+  }
 
 object Agent:
   def apply(
@@ -200,6 +221,7 @@ object Agent:
       model: String,
       temperature: Option[Double] = None,
       maxTokens: Option[Int] = None
-  ): Agent =
+  ): Agent = {
     val config = AgentConfig(name, instructions, provider, model, temperature, maxTokens)
     new Agent(config)
+  }

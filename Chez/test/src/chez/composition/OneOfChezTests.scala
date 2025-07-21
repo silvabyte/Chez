@@ -75,10 +75,10 @@ object OneOfChezTests extends TestSuite {
         val result1 = schema.validate(ujson.Str("hi"), ValidationContext())
         assert(!result1.isValid)
         assert(result1.errors.length >= 2) // Should collect errors from failed schemas
-        
+
         // Check for "does not match any" error
         val hasNoMatchError = result1.errors.exists {
-          case chez.ValidationError.CompositionError(msg, _) => 
+          case chez.ValidationError.CompositionError(msg, _) =>
             msg.contains("does not match any")
           case _ => false
         }
@@ -99,10 +99,10 @@ object OneOfChezTests extends TestSuite {
         // String matches both first and second schema - should fail
         val result = schema.validate(ujson.Str("hello"), ValidationContext())
         assert(!result.isValid)
-        
+
         // Check for "matches more than one" error
         val hasMultipleMatchError = result.errors.exists {
-          case chez.ValidationError.CompositionError(msg, _) => 
+          case chez.ValidationError.CompositionError(msg, _) =>
             msg.contains("matches more than one")
           case _ => false
         }
@@ -202,7 +202,7 @@ object OneOfChezTests extends TestSuite {
 
         val context = ValidationContext("/config/value")
         val result = schema.validate(ujson.Str("short"), context)
-        
+
         assert(!result.isValid)
         // Should have errors with correct path
         val hasCorrectPath = result.errors.exists(_.toString.contains("/config/value"))
@@ -217,7 +217,7 @@ object OneOfChezTests extends TestSuite {
 
         val context = ValidationContext("/api/data")
         val result = schema.validate(ujson.Str("test"), context)
-        
+
         assert(!result.isValid)
         val compositionError = result.errors.find {
           case chez.ValidationError.CompositionError(_, path) => path == "/api/data"
@@ -386,9 +386,9 @@ object OneOfChezTests extends TestSuite {
         // Should fail because string matches both identical schemas
         val result = schema.validate(ujson.Str("test"), ValidationContext())
         assert(!result.isValid)
-        
+
         val hasMultipleMatchError = result.errors.exists {
-          case chez.ValidationError.CompositionError(msg, _) => 
+          case chez.ValidationError.CompositionError(msg, _) =>
             msg.contains("matches more than one")
           case _ => false
         }

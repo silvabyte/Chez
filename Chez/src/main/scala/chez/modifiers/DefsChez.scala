@@ -102,7 +102,6 @@ case class DefsChez[T <: Chez](
     }
   }
 
-
   /**
    * Get a definition by name
    */

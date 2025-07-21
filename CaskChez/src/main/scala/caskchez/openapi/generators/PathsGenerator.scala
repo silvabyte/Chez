@@ -119,7 +119,7 @@ object PathsGenerator {
     val pattern = """\{([^}]+)\}""".r
     val paramNames = pattern.findAllMatchIn(path).map(_.group(1)).toList
 
-    paramNames.map(name =>
+    paramNames.map(name => {
       ParameterObject(
         name = name,
         in = "path",
@@ -127,7 +127,7 @@ object PathsGenerator {
         description = Some(s"Path parameter: $name"),
         schema = paramsSchema.map(_.toJsonSchema)
       )
-    )
+    })
   }
 
   /**

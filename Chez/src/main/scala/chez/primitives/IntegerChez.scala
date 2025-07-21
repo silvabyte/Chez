@@ -34,7 +34,6 @@ case class IntegerChez(
     schema
   }
 
-
   /**
    * Validate a ujson.Value against this integer schema
    */
@@ -56,42 +55,78 @@ case class IntegerChez(
         // Minimum validation
         minimum.foreach { min =>
           if (intValue < min) {
-            errors = chez.ValidationError.OutOfRange(Some(min.toDouble), None, intValue.toDouble, context.path) :: errors
+            errors = {
+              chez.ValidationError.OutOfRange(
+                Some(min.toDouble),
+                None,
+                intValue.toDouble,
+                context.path
+              ) :: errors
+            }
           }
         }
 
         // Maximum validation
         maximum.foreach { max =>
           if (intValue > max) {
-            errors = chez.ValidationError.OutOfRange(None, Some(max.toDouble), intValue.toDouble, context.path) :: errors
+            errors = {
+              chez.ValidationError.OutOfRange(
+                None,
+                Some(max.toDouble),
+                intValue.toDouble,
+                context.path
+              ) :: errors
+            }
           }
         }
 
         // Exclusive minimum validation
         exclusiveMinimum.foreach { min =>
           if (intValue <= min) {
-            errors = chez.ValidationError.OutOfRange(Some(min.toDouble), None, intValue.toDouble, context.path) :: errors
+            errors = {
+              chez.ValidationError.OutOfRange(
+                Some(min.toDouble),
+                None,
+                intValue.toDouble,
+                context.path
+              ) :: errors
+            }
           }
         }
 
         // Exclusive maximum validation
         exclusiveMaximum.foreach { max =>
           if (intValue >= max) {
-            errors = chez.ValidationError.OutOfRange(None, Some(max.toDouble), intValue.toDouble, context.path) :: errors
+            errors = {
+              chez.ValidationError.OutOfRange(
+                None,
+                Some(max.toDouble),
+                intValue.toDouble,
+                context.path
+              ) :: errors
+            }
           }
         }
 
         // Multiple of validation
         multipleOf.foreach { mul =>
           if (intValue % mul != 0) {
-            errors = chez.ValidationError.MultipleOfViolation(mul.toDouble, intValue.toDouble, context.path) :: errors
+            errors = chez.ValidationError.MultipleOfViolation(
+              mul.toDouble,
+              intValue.toDouble,
+              context.path
+            ) :: errors
           }
         }
 
         // Const validation
         const.foreach { c =>
           if (intValue != c) {
-            errors = chez.ValidationError.TypeMismatch(c.toString, intValue.toString, context.path) :: errors
+            errors = chez.ValidationError.TypeMismatch(
+              c.toString,
+              intValue.toString,
+              context.path
+            ) :: errors
           }
         }
 
@@ -110,7 +145,6 @@ case class IntegerChez(
         ValidationResult.invalid(error)
     }
   }
-
 
   /**
    * Get string representation of ujson.Value type for error messages

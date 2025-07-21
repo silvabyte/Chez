@@ -31,7 +31,7 @@ case class DynamicRefChez(
   }
 
   override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
-    //TODO: implement this validation
+    // TODO: implement this validation
     // In a complete implementation, this would:
     // 1. Search the dynamic scope for a matching $dynamicAnchor
     // 2. If found, resolve to that schema and validate
@@ -39,7 +39,10 @@ case class DynamicRefChez(
     // 4. Validate the value against the resolved schema
     //
     // For now, we return an error indicating unresolved dynamic reference
-    ValidationResult.invalid(List(chez.ValidationError.ReferenceError(s"$dynamicRef (dynamic)", context.path)))
+    ValidationResult.invalid(List(chez.ValidationError.ReferenceError(
+      s"$dynamicRef (dynamic)",
+      context.path
+    )))
   }
 
 }

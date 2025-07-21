@@ -10,7 +10,7 @@ import chez.derivation.Schema
 
 /**
  * Test version of UserCrudAPI for integration testing
- * 
+ *
  * This is a simplified version of the main UserCrudAPI specifically designed for testing
  * with in-memory storage that can be easily reset between tests.
  */

@@ -23,7 +23,7 @@ object UserCrudAPITest extends TestSuite {
       TestServer.withServer { (host, routes) =>
         val response = requests.get(s"$host/users")
         assert(response.statusCode == 200)
-        
+
         val users = read[List[routes.User]](response.text())
         assert(users.length == 2)
         assert(users.exists(_.name == "Alice Smith"))
@@ -36,7 +36,7 @@ object UserCrudAPITest extends TestSuite {
         // Test existing user
         val response = requests.get(s"$host/users/1")
         assert(response.statusCode == 200)
-        
+
         val user = read[routes.User](response.text())
         assert(user.id == "1")
         assert(user.name == "Alice Smith")
@@ -45,7 +45,7 @@ object UserCrudAPITest extends TestSuite {
         // Test non-existent user
         val notFoundResponse = requests.get(s"$host/users/999")
         assert(notFoundResponse.statusCode == 200) // API returns 200 with error body
-        
+
         val error = read[routes.ErrorResponse](notFoundResponse.text())
         assert(error.error == "user_not_found")
         assert(error.message.contains("999"))
@@ -60,20 +60,20 @@ object UserCrudAPITest extends TestSuite {
           age = 30,
           isActive = true
         )
-        
+
         val response = requests.post(
           url = s"$host/users",
           data = requests.RequestBlob.ByteSourceRequestBlob(write(newUser)),
           headers = Map("Content-Type" -> "application/json")
         )
-        
+
         assert(response.statusCode == 200)
         val createdUser = read[routes.User](response.text())
         assert(createdUser.name == "John Doe")
         assert(createdUser.email == "john@example.com")
         assert(createdUser.age == 30)
         assert(createdUser.isActive == true)
-        
+
         // Verify user was actually created
         val listResponse = requests.get(s"$host/users")
         val users = read[List[routes.User]](listResponse.text())
@@ -90,14 +90,14 @@ object UserCrudAPITest extends TestSuite {
           email = "test@example.com",
           age = 25
         )
-        
+
         try {
           val emptyNameResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(emptyNameUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           // If no exception, check for validation error response
           assert(emptyNameResponse.statusCode == 400)
           val responseBody = emptyNameResponse.text()
@@ -115,14 +115,14 @@ object UserCrudAPITest extends TestSuite {
           email = "test2@example.com",
           age = 200 // Over maximum
         )
-        
+
         try {
           val invalidAgeResponse = requests.post(
             url = s"$host/users",
             data = requests.RequestBlob.ByteSourceRequestBlob(write(invalidAgeUser)),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(invalidAgeResponse.statusCode == 400)
           val responseBody = invalidAgeResponse.text()
           assert(responseBody.contains("Validation failed"))
@@ -142,14 +142,16 @@ object UserCrudAPITest extends TestSuite {
           email = "alice@example.com", // This email already exists
           age = 28
         )
-        
+
         val response = requests.post(
           url = s"$host/users",
           data = requests.RequestBlob.ByteSourceRequestBlob(write(duplicateUser)),
           headers = Map("Content-Type" -> "application/json")
         )
-        
-        assert(response.statusCode == 200) // The endpoint returns 200 even for business logic errors
+
+        assert(
+          response.statusCode == 200
+        ) // The endpoint returns 200 even for business logic errors
         val error = read[routes.ErrorResponse](response.text())
         assert(error.error == "email_exists")
         assert(error.message.contains("alice@example.com"))
@@ -161,7 +163,7 @@ object UserCrudAPITest extends TestSuite {
         // Test deleting existing user
         val response = requests.delete(s"$host/users/1")
         assert(response.statusCode == 200)
-        
+
         val deletedUser = read[routes.User](response.text())
         assert(deletedUser.id == "1")
         assert(deletedUser.name == "Alice Smith")
@@ -181,7 +183,7 @@ object UserCrudAPITest extends TestSuite {
         // Test deleting non-existent user
         val notFoundResponse = requests.delete(s"$host/users/999")
         assert(notFoundResponse.statusCode == 200) // Endpoint returns 200 with error body
-        
+
         val error = read[routes.ErrorResponse](notFoundResponse.text())
         assert(error.error == "user_not_found")
         assert(error.message.contains("999"))
@@ -193,10 +195,12 @@ object UserCrudAPITest extends TestSuite {
         try {
           val response = requests.post(
             url = s"$host/users",
-            data = requests.RequestBlob.ByteSourceRequestBlob("""{"name": "John", "email": invalid json}"""),
+            data = requests.RequestBlob.ByteSourceRequestBlob(
+              """{"name": "John", "email": invalid json}"""
+            ),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(response.statusCode == 400)
           val responseBody = response.text()
           assert(responseBody.contains("Validation failed"))
@@ -218,7 +222,7 @@ object UserCrudAPITest extends TestSuite {
             data = requests.RequestBlob.ByteSourceRequestBlob(""),
             headers = Map("Content-Type" -> "application/json")
           )
-          
+
           assert(response.statusCode == 400)
           val responseBody = response.text()
           assert(responseBody.contains("Validation failed"))

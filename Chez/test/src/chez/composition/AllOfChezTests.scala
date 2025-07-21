@@ -73,7 +73,7 @@ object AllOfChezTests extends TestSuite {
       test("collects all validation errors") {
         val schema = AllOfChez(List(
           StringChez(minLength = Some(10)), // Will fail - too short
-          StringChez(maxLength = Some(3)),  // Will fail - too long
+          StringChez(maxLength = Some(3)), // Will fail - too long
           StringChez(pattern = Some("^\\d+$")) // Will fail - not numeric
         ))
         val value = ujson.Str("Hello")
@@ -88,13 +88,19 @@ object AllOfChezTests extends TestSuite {
     test("Complex AllOf scenarios") {
       test("allOf with object schemas") {
         val schema = AllOfChez(List(
-          ObjectChez(properties = Map(
-            "name" -> StringChez(),
-            "age" -> IntegerChez()
-          ), required = Set("name")),
-          ObjectChez(properties = Map(
-            "age" -> IntegerChez(minimum = Some(18))
-          ), required = Set("age"))
+          ObjectChez(
+            properties = Map(
+              "name" -> StringChez(),
+              "age" -> IntegerChez()
+            ),
+            required = Set("name")
+          ),
+          ObjectChez(
+            properties = Map(
+              "age" -> IntegerChez(minimum = Some(18))
+            ),
+            required = Set("age")
+          )
         ))
         val value = ujson.Obj("name" -> ujson.Str("John"), "age" -> ujson.Num(25))
         val context = ValidationContext()
@@ -105,13 +111,19 @@ object AllOfChezTests extends TestSuite {
 
       test("allOf object validation failure") {
         val schema = AllOfChez(List(
-          ObjectChez(properties = Map(
-            "name" -> StringChez(),
-            "age" -> IntegerChez()
-          ), required = Set("name")),
-          ObjectChez(properties = Map(
-            "age" -> IntegerChez(minimum = Some(18))
-          ), required = Set("age"))
+          ObjectChez(
+            properties = Map(
+              "name" -> StringChez(),
+              "age" -> IntegerChez()
+            ),
+            required = Set("name")
+          ),
+          ObjectChez(
+            properties = Map(
+              "age" -> IntegerChez(minimum = Some(18))
+            ),
+            required = Set("age")
+          )
         ))
         val value = ujson.Obj("name" -> ujson.Str("John"), "age" -> ujson.Num(16)) // Age too low
         val context = ValidationContext()
@@ -172,7 +184,7 @@ object AllOfChezTests extends TestSuite {
         val schema = AllOfChez(List(
           StringChez(minLength = Some(8)),
           StringChez(pattern = Some(".*[A-Z].*")), // Must contain uppercase
-          StringChez(pattern = Some(".*[0-9].*"))  // Must contain digit
+          StringChez(pattern = Some(".*[0-9].*")) // Must contain digit
         ))
         val validValue = ujson.Str("Password123")
         val context = ValidationContext()
@@ -186,18 +198,24 @@ object AllOfChezTests extends TestSuite {
       }
 
       test("object inheritance pattern") {
-        val baseSchema = ObjectChez(properties = Map(
-          "id" -> StringChez(),
-          "created" -> StringChez()
-        ), required = Set("id"))
-        
-        val specificSchema = ObjectChez(properties = Map(
-          "name" -> StringChez(minLength = Some(1)),
-          "email" -> StringChez(format = Some("email"))
-        ), required = Set("name", "email"))
-        
+        val baseSchema = ObjectChez(
+          properties = Map(
+            "id" -> StringChez(),
+            "created" -> StringChez()
+          ),
+          required = Set("id")
+        )
+
+        val specificSchema = ObjectChez(
+          properties = Map(
+            "name" -> StringChez(minLength = Some(1)),
+            "email" -> StringChez(format = Some("email"))
+          ),
+          required = Set("name", "email")
+        )
+
         val schema = AllOfChez(List(baseSchema, specificSchema))
-        
+
         val value = ujson.Obj(
           "id" -> ujson.Str("123"),
           "created" -> ujson.Str("2023-01-01"),

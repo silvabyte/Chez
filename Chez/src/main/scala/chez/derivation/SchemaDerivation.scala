@@ -65,16 +65,17 @@ object Schema {
    * This is the enhanced core derivation method that analyzes case class structure, processes annotations, and generates the
    * corresponding Chez schema automatically with rich metadata.
    */
-  inline def derived[T](using m: Mirror.Of[T]): Schema[T] =
+  inline def derived[T](using m: Mirror.Of[T]): Schema[T] = {
     val chez = inline m match
       case p: Mirror.ProductOf[T] => deriveProductWithAnnotations[T](p)
       case s: Mirror.SumOf[T] => deriveSumWithAnnotations[T](s)
     instance[T](chez)
+  }
 
   /**
    * Derive schema for product types (case classes) - original method
    */
-  inline def deriveProduct[T](p: Mirror.ProductOf[T]): Chez =
+  inline def deriveProduct[T](p: Mirror.ProductOf[T]): Chez = {
     val typeName = constValue[p.MirroredLabel]
     val elemLabels = getElemLabels[p.MirroredElemLabels]
     val elemSchemas = getElemSchemas[T, p.MirroredElemTypes]
@@ -85,11 +86,12 @@ object Schema {
       properties = properties,
       required = required
     )
+  }
 
   /**
    * Derive schema for product types (case classes) with annotation processing
    */
-  inline def deriveProductWithAnnotations[T](p: Mirror.ProductOf[T]): Chez =
+  inline def deriveProductWithAnnotations[T](p: Mirror.ProductOf[T]): Chez = {
     val typeName = constValue[p.MirroredLabel]
     val elemLabels = getElemLabels[p.MirroredElemLabels]
 
@@ -121,11 +123,12 @@ object Schema {
     val enhancedSchema = AnnotationProcessor.applyMetadata(baseObjectSchema, classMetadata)
 
     enhancedSchema
+  }
 
   /**
    * Derive schema for sum types (enums/sealed traits)
    */
-  inline def deriveSum[T](s: Mirror.SumOf[T]): Chez =
+  inline def deriveSum[T](s: Mirror.SumOf[T]): Chez = {
     val elemLabels = getElemLabels[s.MirroredElemLabels]
 
     // For Scala 3 enums, we detect them by checking if all element types are singletons
@@ -141,13 +144,14 @@ object Schema {
       else
         chez.Chez.String()
     }
+  }
 
   /**
    * Check if this is a simple enum by examining the element types at compile time
    * Simple enums have singleton cases with empty parameter lists
    * Sealed traits have case classes with non-empty parameter lists
    */
-  inline def isSimpleEnum[Elems <: Tuple]: Boolean =
+  inline def isSimpleEnum[Elems <: Tuple]: Boolean = {
     inline erasedValue[Elems] match
       case _: (head *: tail) =>
         // Use a different approach: check if this type can be treated as a simple singleton
@@ -158,12 +162,13 @@ object Schema {
           false // Has fields, so not a simple enum
         }
       case _: EmptyTuple => true
+  }
 
   /**
    * Check if a type is an empty product type (no constructor parameters)
    * This distinguishes enum cases from case classes with parameters
    */
-  inline def isEmptyProductType[T]: Boolean =
+  inline def isEmptyProductType[T]: Boolean = {
     summonFrom {
       case mirror: Mirror.ProductOf[T] =>
         // Check if the mirrored element types is EmptyTuple
@@ -174,11 +179,12 @@ object Schema {
         // If no Mirror.ProductOf, treat as enum case (true singleton)
         true
     }
+  }
 
   /**
    * Derive schema for sum types (enums/sealed traits) with annotation processing
    */
-  inline def deriveSumWithAnnotations[T](s: Mirror.SumOf[T]): Chez =
+  inline def deriveSumWithAnnotations[T](s: Mirror.SumOf[T]): Chez = {
     val elemLabels = getElemLabels[s.MirroredElemLabels]
 
     // For Scala 3 enums, we detect them by checking if all element types are singletons
@@ -195,14 +201,16 @@ object Schema {
           addTypeDiscriminator(schema, typeName)
         }
         chez.Chez.OneOf(discriminatedSchemas*)
-      else
+      else {
         chez.Chez.String()
+      }
     }
+  }
 
   /**
    * Add a type discriminator field to a schema for sealed trait variants
    */
-  def addTypeDiscriminator(schema: Chez, typeName: String): Chez =
+  def addTypeDiscriminator(schema: Chez, typeName: String): Chez = {
     schema match {
       case obj: chez.complex.ObjectChez =>
         // Add "type" field with the variant name as a constant
@@ -221,29 +229,32 @@ object Schema {
           required = Set("type")
         )
     }
+  }
 
   /**
    * Get element labels as List[String]
    */
-  inline def getElemLabels[Labels <: Tuple]: List[String] =
+  inline def getElemLabels[Labels <: Tuple]: List[String] = {
     inline erasedValue[Labels] match
       case _: (head *: tail) =>
         constValue[head].asInstanceOf[String] :: getElemLabels[tail]
       case _: EmptyTuple => Nil
+  }
 
   /**
    * Get element schemas by recursively deriving or summoning Schema instances
    */
-  inline def getElemSchemas[T, Elems <: Tuple]: List[Chez] =
+  inline def getElemSchemas[T, Elems <: Tuple]: List[Chez] = {
     inline erasedValue[Elems] match
       case _: (head *: tail) =>
         getElemSchema[T, head] :: getElemSchemas[T, tail]
       case _: EmptyTuple => Nil
+  }
 
   /**
    * Get schema for a single element type
    */
-  inline def getElemSchema[T, Elem]: Chez =
+  inline def getElemSchema[T, Elem]: Chez = {
     inline erasedValue[Elem] match
       case _: String => chez.Chez.String()
       case _: Int => chez.Chez.Integer()
@@ -256,11 +267,12 @@ object Schema {
       case _ =>
         // For complex types, try to summon a Schema instance
         summonInline[Schema[Elem]].schema
+  }
 
   /**
    * Determine required fields (non-Option types)
    */
-  inline def getRequiredFields[Elems <: Tuple](labels: List[String]): Set[String] =
+  inline def getRequiredFields[Elems <: Tuple](labels: List[String]): Set[String] = {
     inline erasedValue[Elems] match
       case _: (head *: tail) =>
         val requiredTail = getRequiredFields[tail](labels.tail)
@@ -268,6 +280,7 @@ object Schema {
           case _: Option[_] => requiredTail
           case _ => requiredTail + labels.head
       case _: EmptyTuple => Set.empty
+  }
 
   /**
    * Determine required fields considering both Option types, @Schema.default annotations and Scala defaults
@@ -290,7 +303,7 @@ object Schema {
       fieldAnnotations: Map[String, AnnotationProcessor.AnnotationMetadata],
       acc: Set[String],
       fieldIndex: Int
-  ): Set[String] =
+  ): Set[String] = {
     inline erasedValue[Elems] match
       case _: (head *: tail) =>
         val fieldName = labels.head
@@ -318,6 +331,7 @@ object Schema {
           fieldIndex + 1
         )
       case _: EmptyTuple => acc
+  }
 
   /**
    * Check if a field at the given index has a default value in the case class definition
@@ -380,7 +394,7 @@ object ValidatedReadWriter {
   /**
    * Create a ReadWriter that validates against the derived schema
    */
-  def derived[T](using s: Schema[T], rw: ReadWriter[T]): ReadWriter[T] =
+  def derived[T](using s: Schema[T], rw: ReadWriter[T]): ReadWriter[T] = {
     readwriter[ujson.Value].bimap[T](
       // Writer: T -> ujson.Value (use case class ReadWriter)
       value => writeJs(value),
@@ -388,7 +402,7 @@ object ValidatedReadWriter {
       json => {
         // Validate against the derived schema
         val validationResult = s.schema.validate(json, ValidationContext())
-        
+
         if (validationResult.isValid) {
           // Validation passed, deserialize with the case class ReadWriter
           read[T](json)
@@ -399,4 +413,5 @@ object ValidatedReadWriter {
         }
       }
     )
+  }
 }

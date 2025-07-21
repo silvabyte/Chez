@@ -33,7 +33,8 @@ case class NotChez(
 
     if (result.isValid) {
       // Schema validated successfully, so NOT validation fails
-      val error = chez.ValidationError.CompositionError("Value must NOT match the schema", context.path)
+      val error =
+        chez.ValidationError.CompositionError("Value must NOT match the schema", context.path)
       ValidationResult.invalid(error)
     } else {
       // Schema validation failed, so NOT validation succeeds

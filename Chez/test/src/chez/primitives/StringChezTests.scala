@@ -110,15 +110,20 @@ object StringChezTests extends TestSuite {
 
     test("uuid format validation") {
       val schema = StringChez(format = Some("uuid"))
-      val result1 = schema.validate(ujson.Str("550e8400-e29b-41d4-a716-446655440000"), ValidationContext())
+      val result1 =
+        schema.validate(ujson.Str("550e8400-e29b-41d4-a716-446655440000"), ValidationContext())
       assert(result1.isValid)
-      val result2 = schema.validate(ujson.Str("6ba7b810-9dad-11d1-80b4-00c04fd430c8"), ValidationContext())
+      val result2 =
+        schema.validate(ujson.Str("6ba7b810-9dad-11d1-80b4-00c04fd430c8"), ValidationContext())
       assert(result2.isValid)
       val result3 = schema.validate(ujson.Str("not-a-uuid"), ValidationContext())
       assert(!result3.isValid)
       val result4 = schema.validate(ujson.Str("550e8400-e29b-41d4-a716"), ValidationContext())
       assert(!result4.isValid) // too short
-      val result5 = schema.validate(ujson.Str("550e8400-e29b-41d4-a716-446655440000-extra"), ValidationContext())
+      val result5 = schema.validate(
+        ujson.Str("550e8400-e29b-41d4-a716-446655440000-extra"),
+        ValidationContext()
+      )
       assert(!result5.isValid)
     }
 

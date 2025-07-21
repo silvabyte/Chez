@@ -31,7 +31,7 @@ case class AnyOfChez(
     // For anyOf, at least one schema must validate successfully
     var hasSuccess = false
     var allErrors = List.empty[chez.ValidationError]
-    
+
     schemas.foreach { schema =>
       val result = schema.validate(value, context)
       if (result.isValid) {

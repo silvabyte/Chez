@@ -6,12 +6,11 @@ import chezwiz.agent.{
   ChatRequest,
   ChatResponse,
   ObjectRequest,
-  RawObjectResponse,
+  ObjectResponse,
   Role,
   Usage,
   LLMError
 }
-import chezwiz.agent.ChezSchemaHelpers.toJsonValue
 
 class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
 
@@ -26,20 +25,21 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     "claude-3-haiku-20240307"
   )
 
-  override protected def buildHeaders(apiKey: String): Map[String, String] =
+  override protected def buildHeaders(apiKey: String): Map[String, String] = {
     Map(
       "x-api-key" -> apiKey,
       "Content-Type" -> "application/json",
       "anthropic-version" -> "2023-06-01"
     )
+  }
 
-  override protected def buildRequestBody(request: ChatRequest): ujson.Value =
+  override protected def buildRequestBody(request: ChatRequest): ujson.Value = {
     // Anthropic separates system message from user/assistant messages
     val (systemChatMessage, conversationChatMessages) =
       request.messages.partition(_.role == Role.System)
 
     val messages = ujson.Arr(
-      conversationChatMessages.map(msg =>
+      conversationChatMessages.map(msg => {
         ujson.Obj(
           "role" -> (msg.role match
             case Role.User => "user"
@@ -48,7 +48,7 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
               throw new IllegalStateException("System messages should be filtered out")),
           "content" -> msg.content
         )
-      )*
+      })*
     )
 
     val baseObj = ujson.Obj(
@@ -63,8 +63,9 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     request.temperature.foreach(temp => baseObj("temperature") = temp)
 
     baseObj
+  }
 
-  override protected def parseResponse(responseBody: String): Try[ChatResponse] =
+  override protected def parseResponse(responseBody: String): Try[ChatResponse] = {
     Try {
       // First try to parse as successful response (Anthropic returns OpenAI-compatible format)
       Try {
@@ -88,14 +89,15 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
       case ex: NoSuchElementException =>
         Failure(LLMError(s"Missing required field in Anthropic response: ${ex.getMessage}"))
     }
+  }
 
-  override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value =
+  override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value = {
     // Anthropic separates system message from user/assistant messages
     val (systemChatMessage, conversationChatMessages) =
       request.messages.partition(_.role == Role.System)
 
     val messages = ujson.Arr(
-      conversationChatMessages.map(msg =>
+      conversationChatMessages.map(msg => {
         ujson.Obj(
           "role" -> (msg.role match
             case Role.User => "user"
@@ -104,7 +106,7 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
               throw new IllegalStateException("System messages should be filtered out")),
           "content" -> msg.content
         )
-      )*
+      })*
     )
 
     // Add schema-based tool for structured output
@@ -113,7 +115,7 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
       "description" -> request.schema.description.getOrElse(
         "Generate a structured response according to the provided schema"
       ),
-      "input_schema" -> request.schema.toJsonValue
+      "input_schema" -> request.schema.toJsonSchema
     )
 
     val baseObj = ujson.Obj(
@@ -130,13 +132,15 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     request.temperature.foreach(temp => baseObj("temperature") = temp)
 
     baseObj
+  }
 
-  override protected def parseObjectResponse(responseBody: String): Try[RawObjectResponse] =
+  override protected def parseObjectResponse(responseBody: String)
+      : Try[ObjectResponse[ujson.Value]] = {
     Try {
       // First try to parse as successful response (Anthropic returns OpenAI-compatible format)
       Try {
         val openAIResponse = read[OpenAIResponse](responseBody)
-        openAIResponse.toRawObjectResponse
+        openAIResponse.toObjectResponse
       }.recoverWith {
         case _: upickle.core.AbortException | _: ujson.ParsingFailedException =>
           // If that fails, try to parse as error response
@@ -155,3 +159,4 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
       case ex: NoSuchElementException =>
         Failure(LLMError(s"Missing required field in Anthropic object response: ${ex.getMessage}"))
     }
+  }

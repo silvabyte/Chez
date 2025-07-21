@@ -65,14 +65,16 @@ case class ArrayChez[T <: Chez](
         // Min items validation
         minItems.foreach { min =>
           if (arrayValue.length < min) {
-            errors = chez.ValidationError.MinItemsViolation(min, arrayValue.length, context.path) :: errors
+            errors =
+              chez.ValidationError.MinItemsViolation(min, arrayValue.length, context.path) :: errors
           }
         }
 
         // Max items validation
         maxItems.foreach { max =>
           if (arrayValue.length > max) {
-            errors = chez.ValidationError.MaxItemsViolation(max, arrayValue.length, context.path) :: errors
+            errors =
+              chez.ValidationError.MaxItemsViolation(max, arrayValue.length, context.path) :: errors
           }
         }
 
@@ -97,7 +99,7 @@ case class ArrayChez[T <: Chez](
                 }
               }
             }
-            
+
             // Validate remaining items (beyond prefixItems) against the items schema
             arrayValue.zipWithIndex.drop(prefixes.length).foreach { case (item, index) =>
               val itemContext = context.withIndex(index)
@@ -106,7 +108,7 @@ case class ArrayChez[T <: Chez](
                 errors = itemResult.errors ++ errors
               }
             }
-            
+
           case None =>
             // Standard validation: validate each item against the items schema
             arrayValue.zipWithIndex.foreach { case (item, index) =>
@@ -124,13 +126,16 @@ case class ArrayChez[T <: Chez](
             val itemResult = containsSchema.validate(item, context)
             itemResult.isValid
           }
-          
+
           val minContainsCheck = minContains.forall(min => containsCount >= min)
           val maxContainsCheck = maxContains.forall(max => containsCount <= max)
-          
+
           if (!minContainsCheck || !maxContainsCheck) {
             errors = chez.ValidationError.ContainsViolation(
-              minContains, maxContains, containsCount, context.path
+              minContains,
+              maxContains,
+              containsCount,
+              context.path
             ) :: errors
           }
         }
@@ -146,14 +151,13 @@ case class ArrayChez[T <: Chez](
     }
   }
 
-
   /**
    * Get string representation of ujson.Value type for error messages
    */
   private def getValueType(value: ujson.Value): String = {
     value match {
       case _: ujson.Str => "string"
-      case _: ujson.Num => "number"  
+      case _: ujson.Num => "number"
       case _: ujson.Bool => "boolean"
       case ujson.Null => "null"
       case _: ujson.Arr => "array"

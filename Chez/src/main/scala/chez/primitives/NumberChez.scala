@@ -34,7 +34,6 @@ case class NumberChez(
     schema
   }
 
-
   /**
    * Validate a ujson.Value against this number schema
    */
@@ -55,42 +54,51 @@ case class NumberChez(
         // Minimum validation
         minimum.foreach { min =>
           if (numberValue < min) {
-            errors = chez.ValidationError.OutOfRange(Some(min), None, numberValue, context.path) :: errors
+            errors =
+              chez.ValidationError.OutOfRange(Some(min), None, numberValue, context.path) :: errors
           }
         }
 
         // Maximum validation
         maximum.foreach { max =>
           if (numberValue > max) {
-            errors = chez.ValidationError.OutOfRange(None, Some(max), numberValue, context.path) :: errors
+            errors =
+              chez.ValidationError.OutOfRange(None, Some(max), numberValue, context.path) :: errors
           }
         }
 
         // Exclusive minimum validation
         exclusiveMinimum.foreach { min =>
           if (numberValue <= min) {
-            errors = chez.ValidationError.OutOfRange(Some(min), None, numberValue, context.path) :: errors
+            errors =
+              chez.ValidationError.OutOfRange(Some(min), None, numberValue, context.path) :: errors
           }
         }
 
         // Exclusive maximum validation
         exclusiveMaximum.foreach { max =>
           if (numberValue >= max) {
-            errors = chez.ValidationError.OutOfRange(None, Some(max), numberValue, context.path) :: errors
+            errors =
+              chez.ValidationError.OutOfRange(None, Some(max), numberValue, context.path) :: errors
           }
         }
 
         // Multiple of validation
         multipleOf.foreach { mul =>
           if (numberValue % mul != 0) {
-            errors = chez.ValidationError.MultipleOfViolation(mul, numberValue, context.path) :: errors
+            errors =
+              chez.ValidationError.MultipleOfViolation(mul, numberValue, context.path) :: errors
           }
         }
 
         // Const validation
         const.foreach { c =>
           if (numberValue != c) {
-            errors = chez.ValidationError.TypeMismatch(c.toString, numberValue.toString, context.path) :: errors
+            errors = chez.ValidationError.TypeMismatch(
+              c.toString,
+              numberValue.toString,
+              context.path
+            ) :: errors
           }
         }
 
@@ -105,7 +113,6 @@ case class NumberChez(
         ValidationResult.invalid(error)
     }
   }
-
 
   /**
    * Get string representation of ujson.Value type for error messages
