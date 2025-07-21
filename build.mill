@@ -40,6 +40,7 @@ object CaskChez extends Shared {
 }
 
 object ChezWiz extends Shared {
+  override def moduleDeps: Seq[Shared] = Seq(Chez)
   override def mvnDeps = Task {
     super.mvnDeps() ++ Seq(
       mvn"com.outr::scribe:3.6.6",

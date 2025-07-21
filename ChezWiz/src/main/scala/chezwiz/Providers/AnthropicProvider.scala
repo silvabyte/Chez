@@ -6,13 +6,13 @@ import chezwiz.agent.{
   ChatRequest,
   ChatResponse,
   ObjectRequest,
-  ObjectResponse,
+  RawObjectResponse,
   Role,
   Usage,
   LLMError
 }
+import chezwiz.agent.ChezSchemaHelpers.toJsonValue
 
-//TODO: use Chez library here instead
 class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
 
   override val name: String = "Anthropic"
@@ -66,32 +66,22 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
 
   override protected def parseResponse(responseBody: String): Try[ChatResponse] =
     Try {
-      val json = ujson.read(responseBody)
-
-      if json.obj.contains("error") then
-        val error = json("error")
-        throw LLMError(
-          message = error("message").str,
-          code = error.obj.get("type").map(_.str)
-        )
-
-      val content = json("content")(0)("text").str
-      val stopReason = json.obj.get("stop_reason").map(_.str)
-
-      val usage = json.obj.get("usage").map { u =>
-        Usage(
-          promptTokens = u("input_tokens").num.toInt,
-          completionTokens = u("output_tokens").num.toInt,
-          totalTokens = u("input_tokens").num.toInt + u("output_tokens").num.toInt
-        )
-      }
-
-      ChatResponse(
-        content = content,
-        usage = usage,
-        model = json("model").str,
-        finishReason = stopReason
-      )
+      // First try to parse as successful response (Anthropic returns OpenAI-compatible format)
+      Try {
+        val openAIResponse = read[OpenAIResponse](responseBody)
+        openAIResponse.toChatResponse
+      }.recoverWith {
+        case _: upickle.core.AbortException | _: ujson.ParsingFailedException =>
+          // If that fails, try to parse as error response
+          Try {
+            val errorResponse = read[ErrorResponse](responseBody)
+            throw LLMError(
+              message = errorResponse.error.message,
+              code = errorResponse.error.code.orElse(errorResponse.error.`type`),
+              statusCode = None
+            )
+          }
+      }.get
     }.recoverWith {
       case ex: ujson.ParsingFailedException =>
         Failure(LLMError(s"Failed to parse Anthropic response: ${ex.getMessage}"))
@@ -123,7 +113,7 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
       "description" -> request.schema.description.getOrElse(
         "Generate a structured response according to the provided schema"
       ),
-      "input_schema" -> request.schema.schema
+      "input_schema" -> request.schema.toJsonValue
     )
 
     val baseObj = ujson.Obj(
@@ -141,40 +131,24 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
 
     baseObj
 
-  override protected def parseObjectResponse(responseBody: String): Try[ObjectResponse] =
+  override protected def parseObjectResponse(responseBody: String): Try[RawObjectResponse] =
     Try {
-      val json = ujson.read(responseBody)
-
-      if json.obj.contains("error") then
-        val error = json("error")
-        throw LLMError(
-          message = error("message").str,
-          code = error.obj.get("type").map(_.str)
-        )
-
-      // Extract tool use result for structured output
-      val content = json("content")
-      val toolUse = content.arr
-        .find(item => item.obj.contains("type") && item("type").str == "tool_use")
-        .getOrElse(throw LLMError("No tool_use found in Anthropic structured response"))
-
-      val objectContent = toolUse("input")
-      val stopReason = json.obj.get("stop_reason").map(_.str)
-
-      val usage = json.obj.get("usage").map { u =>
-        Usage(
-          promptTokens = u("input_tokens").num.toInt,
-          completionTokens = u("output_tokens").num.toInt,
-          totalTokens = u("input_tokens").num.toInt + u("output_tokens").num.toInt
-        )
-      }
-
-      ObjectResponse(
-        `object` = objectContent,
-        usage = usage,
-        model = json("model").str,
-        finishReason = stopReason
-      )
+      // First try to parse as successful response (Anthropic returns OpenAI-compatible format)
+      Try {
+        val openAIResponse = read[OpenAIResponse](responseBody)
+        openAIResponse.toRawObjectResponse
+      }.recoverWith {
+        case _: upickle.core.AbortException | _: ujson.ParsingFailedException =>
+          // If that fails, try to parse as error response
+          Try {
+            val errorResponse = read[ErrorResponse](responseBody)
+            throw LLMError(
+              message = errorResponse.error.message,
+              code = errorResponse.error.code.orElse(errorResponse.error.`type`),
+              statusCode = None
+            )
+          }
+      }.get
     }.recoverWith {
       case ex: ujson.ParsingFailedException =>
         Failure(LLMError(s"Failed to parse Anthropic object response: ${ex.getMessage}"))

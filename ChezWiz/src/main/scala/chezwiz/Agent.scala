@@ -1,6 +1,5 @@
 package chezwiz.agent
 
-import scala.concurrent.{Future, ExecutionContext}
 import scribe.Logging
 import chezwiz.agent.providers.LLMProvider
 import chezwiz.agent.{
@@ -10,10 +9,12 @@ import chezwiz.agent.{
   ObjectResponse,
   ChatMessage,
   Role,
-  LLMError,
-  JsonSchema
+  LLMError
 }
 import ujson.Value
+import upickle.default.*
+import chez.derivation.Schema
+import chez.Chez
 
 case class AgentConfig(
     name: String,
@@ -24,9 +25,7 @@ case class AgentConfig(
     maxTokens: Option[Int] = None
 )
 
-class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.empty)(implicit
-    val ec: ExecutionContext
-) extends Logging:
+class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.empty) extends Logging:
 
   private var history: Vector[ChatMessage] =
     if initialHistory.isEmpty then Vector(ChatMessage(Role.System, config.instructions))
@@ -36,7 +35,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
   def provider: LLMProvider = config.provider
   def model: String = config.model
 
-  def generateText(userChatMessage: String): Future[ChatResponse] =
+  def generateText(userChatMessage: String): ChatResponse =
     logger.info(s"Agent '${config.name}' generating text for: $userChatMessage")
 
     // Add user message to conversation history
@@ -51,26 +50,24 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       stream = false
     )
 
-    config.provider
-      .chat(request)
-      .map { response =>
-        // Add assistant response to conversation history
-        val assistantMsg = ChatMessage(Role.Assistant, response.content)
-        history = history :+ assistantMsg
+    try
+      val response = config.provider.chat(request)
+      
+      // Add assistant response to conversation history
+      val assistantMsg = ChatMessage(Role.Assistant, response.content)
+      history = history :+ assistantMsg
 
-        logger.info(s"Agent '${config.name}' generated response: ${response.content.take(100)}...")
-        response
-      }(ec)
-      .recover {
-        case ex: LLMError =>
-          logger.error(s"Agent '${config.name}' failed to generate text", ex)
-          throw ex
-        case ex =>
-          logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
-          throw LLMError(s"Unexpected error: ${ex.getMessage}")
-      }(ec)
+      logger.info(s"Agent '${config.name}' generated response: ${response.content.take(100)}...")
+      response
+    catch
+      case ex: LLMError =>
+        logger.error(s"Agent '${config.name}' failed to generate text", ex)
+        throw ex
+      case ex =>
+        logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
+        throw LLMError(s"Unexpected error: ${ex.getMessage}")
 
-  def generateTextWithoutHistory(userChatMessage: String): Future[ChatResponse] =
+  def generateTextWithoutHistory(userChatMessage: String): ChatResponse =
     logger.info(s"Agent '${config.name}' generating text without history for: $userChatMessage")
 
     val messages = List(
@@ -86,23 +83,25 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       stream = false
     )
 
-    config.provider
-      .chat(request)
-      .recover {
-        case ex: LLMError =>
-          logger.error(s"Agent '${config.name}' failed to generate text without history", ex)
-          throw ex
-        case ex =>
-          logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
-          throw LLMError(s"Unexpected error: ${ex.getMessage}")
-      }(ec)
+    try
+      config.provider.chat(request)
+    catch
+      case ex: LLMError =>
+        logger.error(s"Agent '${config.name}' failed to generate text without history", ex)
+        throw ex
+      case ex =>
+        logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
+        throw LLMError(s"Unexpected error: ${ex.getMessage}")
 
-  def generateObject(userChatMessage: String, schema: JsonSchema): Future[ObjectResponse] =
+  def generateObject[T: Schema: Reader](userChatMessage: String): ObjectResponse[T] =
     logger.info(s"Agent '${config.name}' generating structured object for: $userChatMessage")
 
     // Add user message to conversation history
     val userMsg = ChatMessage(Role.User, userChatMessage)
     history = history :+ userMsg
+
+    // Get the schema directly from the type parameter
+    val schema = summon[Schema[T]].schema
 
     val request = ObjectRequest(
       messages = history.toList,
@@ -113,29 +112,31 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       stream = false
     )
 
-    config.provider
-      .generateObject(request)
-      .map { response =>
-        // Add assistant response to conversation history (convert object to string representation)
-        val assistantMsg = ChatMessage(Role.Assistant, response.`object`.toString())
-        history = history :+ assistantMsg
+    try
+      val rawResponse = config.provider.generateObject(request)
+      val typedResponse = rawResponse.to[T]
+      
+      // Add assistant response to conversation history (convert object to string representation)
+      val assistantMsg = ChatMessage(Role.Assistant, rawResponse.`object`.toString())
+      history = history :+ assistantMsg
 
-        logger.info(s"Agent '${config.name}' generated structured object")
-        response
-      }(ec)
-      .recover {
-        case ex: LLMError =>
-          logger.error(s"Agent '${config.name}' failed to generate structured object", ex)
-          throw ex
-        case ex =>
-          logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
-          throw LLMError(s"Unexpected error: ${ex.getMessage}")
-      }(ec)
+      logger.info(s"Agent '${config.name}' generated structured object")
+      
+      typedResponse
+    catch
+      case ex: LLMError =>
+        logger.error(s"Agent '${config.name}' failed to generate structured object", ex)
+        throw ex
+      case ex: ujson.ParsingFailedException =>
+        logger.error(s"Agent '${config.name}' failed to parse structured object", ex)
+        throw LLMError(s"Failed to parse response as expected type: ${ex.getMessage}")
+      case ex =>
+        logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
+        throw LLMError(s"Unexpected error: ${ex.getMessage}")
 
-  def generateObjectWithoutHistory(
-      userChatMessage: String,
-      schema: JsonSchema
-  ): Future[ObjectResponse] =
+  def generateObjectWithoutHistory[T: Schema: Reader](
+      userChatMessage: String
+  ): ObjectResponse[T] =
     logger.info(
       s"Agent '${config.name}' generating structured object without history for: $userChatMessage"
     )
@@ -144,6 +145,9 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       ChatMessage(Role.System, config.instructions),
       ChatMessage(Role.User, userChatMessage)
     )
+
+    // Get the schema directly from the type parameter
+    val schema = summon[Schema[T]].schema
 
     val request = ObjectRequest(
       messages = messages,
@@ -154,19 +158,26 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       stream = false
     )
 
-    config.provider
-      .generateObject(request)
-      .recover {
-        case ex: LLMError =>
-          logger.error(
-            s"Agent '${config.name}' failed to generate structured object without history",
-            ex
-          )
-          throw ex
-        case ex =>
-          logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
-          throw LLMError(s"Unexpected error: ${ex.getMessage}")
-      }(ec)
+    try
+      val rawResponse = config.provider.generateObject(request)
+      val typedResponse = rawResponse.to[T]
+      logger.info(s"Agent '${config.name}' generated structured object")
+      
+      typedResponse
+    catch
+      case ex: LLMError =>
+        logger.error(
+          s"Agent '${config.name}' failed to generate structured object without history",
+          ex
+        )
+        throw ex
+      case ex: ujson.ParsingFailedException =>
+        logger.error(s"Agent '${config.name}' failed to parse structured object", ex)
+        throw LLMError(s"Failed to parse response as expected type: ${ex.getMessage}")
+      case ex =>
+        logger.error(s"Agent '${config.name}' encountered unexpected error", ex)
+        throw LLMError(s"Unexpected error: ${ex.getMessage}")
+
 
   def getConversationHistory: List[ChatMessage] = history.toList
 
@@ -189,6 +200,6 @@ object Agent:
       model: String,
       temperature: Option[Double] = None,
       maxTokens: Option[Int] = None
-  )(implicit ec: ExecutionContext): Agent =
+  ): Agent =
     val config = AgentConfig(name, instructions, provider, model, temperature, maxTokens)
     new Agent(config)

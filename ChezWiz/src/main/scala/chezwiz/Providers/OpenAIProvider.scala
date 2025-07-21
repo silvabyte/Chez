@@ -6,11 +6,12 @@ import chezwiz.agent.{
   ChatRequest,
   ChatResponse,
   ObjectRequest,
-  ObjectResponse,
+  RawObjectResponse,
   Role,
   Usage,
   LLMError
 }
+import chezwiz.agent.ChezSchemaHelpers.toJsonValue
 
 class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
 
@@ -57,34 +58,22 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
 
   override protected def parseResponse(responseBody: String): Try[ChatResponse] =
     Try {
-      val json = ujson.read(responseBody)
-
-      if json.obj.contains("error") then
-        val error = json("error")
-        throw LLMError(
-          message = error("message").str,
-          code = error.obj.get("code").map(_.str)
-        )
-
-      val choice = json("choices")(0)
-      val message = choice("message")
-      val content = message("content").str
-      val finishReason = choice.obj.get("finish_reason").map(_.str)
-
-      val usage = json.obj.get("usage").map { u =>
-        Usage(
-          promptTokens = u("prompt_tokens").num.toInt,
-          completionTokens = u("completion_tokens").num.toInt,
-          totalTokens = u("total_tokens").num.toInt
-        )
-      }
-
-      ChatResponse(
-        content = content,
-        usage = usage,
-        model = json("model").str,
-        finishReason = finishReason
-      )
+      // First try to parse as successful response
+      Try {
+        val openAIResponse = read[OpenAIResponse](responseBody)
+        openAIResponse.toChatResponse
+      }.recoverWith {
+        case _: upickle.core.AbortException | _: ujson.ParsingFailedException =>
+          // If that fails, try to parse as error response
+          Try {
+            val errorResponse = read[ErrorResponse](responseBody)
+            throw LLMError(
+              message = errorResponse.error.message,
+              code = errorResponse.error.code.orElse(errorResponse.error.`type`),
+              statusCode = None
+            )
+          }
+      }.get
     }.recoverWith {
       case ex: ujson.ParsingFailedException =>
         Failure(LLMError(s"Failed to parse OpenAI response: ${ex.getMessage}"))
@@ -155,7 +144,7 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
     )
 
     // Ensure the schema is OpenAI compliant
-    val compliantSchema = ensureOpenAICompliantSchema(request.schema.schema)
+    val compliantSchema = ensureOpenAICompliantSchema(request.schema.toJsonValue)
 
     val baseObj = ujson.Obj(
       "model" -> request.model,
@@ -176,42 +165,31 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
 
     baseObj
 
-  override protected def parseObjectResponse(responseBody: String): Try[ObjectResponse] =
+  override protected def parseObjectResponse(responseBody: String): Try[RawObjectResponse] =
     Try {
-      val json = ujson.read(responseBody)
-
-      if json.obj.contains("error") then
-        val error = json("error")
-        throw LLMError(
-          message = error("message").str,
-          code = error.obj.get("code").map(_.str)
-        )
-
-      val choice = json("choices")(0)
-      val message = choice("message")
-      val content = message("content").str
-      val finishReason = choice.obj.get("finish_reason").map(_.str)
-
-      // Parse the JSON object from the content
-      val objectContent = ujson.read(content)
-
-      val usage = json.obj.get("usage").map { u =>
-        Usage(
-          promptTokens = u("prompt_tokens").num.toInt,
-          completionTokens = u("completion_tokens").num.toInt,
-          totalTokens = u("total_tokens").num.toInt
-        )
-      }
-
-      ObjectResponse(
-        `object` = objectContent,
-        usage = usage,
-        model = json("model").str,
-        finishReason = finishReason
-      )
+      // First try to parse as successful response
+      Try {
+        val openAIResponse = read[OpenAIResponse](responseBody)
+        openAIResponse.toRawObjectResponse
+      }.recoverWith {
+        case _: upickle.core.AbortException | _: ujson.ParsingFailedException =>
+          // If that fails, try to parse as error response
+          Try {
+            val errorResponse = read[ErrorResponse](responseBody)
+            throw LLMError(
+              message = errorResponse.error.message,
+              code = errorResponse.error.code.orElse(errorResponse.error.`type`),
+              statusCode = None
+            )
+          }
+      }.get
     }.recoverWith {
       case ex: ujson.ParsingFailedException =>
-        Failure(LLMError(s"Failed to parse OpenAI object response: ${ex.getMessage}"))
+        Failure(LLMError(s"Failed to parse OpenAI response body: ${ex.getMessage}"))
       case ex: NoSuchElementException =>
-        Failure(LLMError(s"Missing required field in OpenAI object response: ${ex.getMessage}"))
+        Failure(LLMError(s"Missing required field in OpenAI response: ${ex.getMessage}"))
+      case ex: LLMError =>
+        Failure(ex) // Re-throw LLMErrors
+      case ex =>
+        Failure(LLMError(s"Unexpected error in parseObjectResponse: ${ex.getMessage}"))
     }
