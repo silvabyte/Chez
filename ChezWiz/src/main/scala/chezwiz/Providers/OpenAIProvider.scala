@@ -1,7 +1,6 @@
 package chezwiz.agent.providers
 
 import upickle.default.*
-import scala.util.{Try, Success, Failure}
 import chezwiz.agent.{
   ChatRequest,
   ChatResponse,
@@ -9,7 +8,7 @@ import chezwiz.agent.{
   ObjectResponse,
   Role,
   Usage,
-  LLMError
+  ChezError
 }
 
 class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
@@ -57,29 +56,34 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
     baseObj
   }
 
-  override protected def parseResponse(responseBody: String): Try[ChatResponse] = {
-    Try {
+  override protected def parseResponse(responseBody: String): Either[ChezError, ChatResponse] = {
+    try {
       // First try to parse as successful response
-      Try {
+      try {
         val openAIResponse = read[OpenAIResponse](responseBody)
-        openAIResponse.toChatResponse
-      }.recoverWith {
+        Right(openAIResponse.toChatResponse)
+      } catch {
         case _: upickle.core.AbortException | _: ujson.ParsingFailedException =>
           // If that fails, try to parse as error response
-          Try {
+          try {
             val errorResponse = read[ErrorResponse](responseBody)
-            throw LLMError(
+            Left(ChezError.ApiError(
               message = errorResponse.error.message,
               code = errorResponse.error.code.orElse(errorResponse.error.`type`),
               statusCode = None
-            )
+            ))
+          } catch {
+            case _: Exception =>
+              Left(ChezError.ParseError(s"Failed to parse OpenAI response: $responseBody"))
           }
-      }.get
-    }.recoverWith {
+      }
+    } catch {
       case ex: ujson.ParsingFailedException =>
-        Failure(LLMError(s"Failed to parse OpenAI response: ${ex.getMessage}"))
+        Left(ChezError.ParseError(s"Failed to parse OpenAI response: ${ex.getMessage}"))
       case ex: NoSuchElementException =>
-        Failure(LLMError(s"Missing required field in OpenAI response: ${ex.getMessage}"))
+        Left(ChezError.ParseError(s"Missing required field in OpenAI response: ${ex.getMessage}"))
+      case ex: Exception =>
+        Left(ChezError.ParseError(s"Unexpected error parsing OpenAI response: ${ex.getMessage}"))
     }
   }
 
@@ -170,32 +174,33 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
   }
 
   override protected def parseObjectResponse(responseBody: String)
-      : Try[ObjectResponse[ujson.Value]] = {
-    Try {
+      : Either[ChezError, ObjectResponse[ujson.Value]] = {
+    try {
       // First try to parse as successful response
-      Try {
+      try {
         val openAIResponse = read[OpenAIResponse](responseBody)
-        openAIResponse.toObjectResponse
-      }.recoverWith {
+        Right(openAIResponse.toObjectResponse)
+      } catch {
         case _: upickle.core.AbortException | _: ujson.ParsingFailedException =>
           // If that fails, try to parse as error response
-          Try {
+          try {
             val errorResponse = read[ErrorResponse](responseBody)
-            throw LLMError(
+            Left(ChezError.ApiError(
               message = errorResponse.error.message,
               code = errorResponse.error.code.orElse(errorResponse.error.`type`),
               statusCode = None
-            )
+            ))
+          } catch {
+            case _: Exception =>
+              Left(ChezError.ParseError(s"Failed to parse OpenAI object response: $responseBody"))
           }
-      }.get
-    }.recoverWith {
+      }
+    } catch {
       case ex: ujson.ParsingFailedException =>
-        Failure(LLMError(s"Failed to parse OpenAI response body: ${ex.getMessage}"))
+        Left(ChezError.ParseError(s"Failed to parse OpenAI response body: ${ex.getMessage}"))
       case ex: NoSuchElementException =>
-        Failure(LLMError(s"Missing required field in OpenAI response: ${ex.getMessage}"))
-      case ex: LLMError =>
-        Failure(ex) // Re-throw LLMErrors
-      case ex =>
-        Failure(LLMError(s"Unexpected error in parseObjectResponse: ${ex.getMessage}"))
+        Left(ChezError.ParseError(s"Missing required field in OpenAI response: ${ex.getMessage}"))
+      case ex: Exception =>
+        Left(ChezError.ParseError(s"Unexpected error in parseObjectResponse: ${ex.getMessage}"))
     }
   }

@@ -1,0 +1,30 @@
+version: 1
+release:
+  # Branch configuration
+  branch: main
+
+  # Version bump type
+  defaultBump: patch
+
+  # Changelog configuration
+  changelog:
+    enabled: true
+    template: conventional
+
+  # Pre-release checks
+  checks:
+    - type: compile
+      command: "make compile"
+
+  # Release actions actions
+  actions:
+    - type: custom
+      name: "mill"
+      command: make assembly
+    - type: git-tag
+    - type: commit-push
+    - type: github-release
+      assets:
+        - "out/Chez/assembly.dest/out.jar"
+        - "out/ChezWiz/assembly.dest/out.jar"
+        - "out/CaskChez/assembly.dest/out.jar"

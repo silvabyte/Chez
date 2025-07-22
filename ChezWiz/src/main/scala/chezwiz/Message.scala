@@ -59,11 +59,21 @@ case class ChatResponse(
     finishReason: Option[String] = None
 ) derives Schema, ReadWriter
 
-case class LLMError(
-    message: String,
-    code: Option[String] = None,
-    statusCode: Option[Int] = None
-) extends Exception(message) derives Schema, ReadWriter
+// Sealed trait hierarchy for all possible errors
+sealed trait ChezError derives Schema, ReadWriter
+
+object ChezError:
+  case class NetworkError(message: String, statusCode: Option[Int] = None) extends ChezError
+      derives Schema, ReadWriter
+  case class ParseError(message: String, cause: Option[String] = None) extends ChezError
+      derives Schema, ReadWriter
+  case class ModelNotSupported(model: String, provider: String, supportedModels: List[String])
+      extends ChezError derives Schema, ReadWriter
+  case class ApiError(message: String, code: Option[String] = None, statusCode: Option[Int] = None)
+      extends ChezError derives Schema, ReadWriter
+  case class SchemaConversionError(message: String, targetType: String) extends ChezError
+      derives Schema, ReadWriter
+  case class ConfigurationError(message: String) extends ChezError derives Schema, ReadWriter
 
 // Request for structured object generation
 case class ObjectRequest(
