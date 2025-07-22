@@ -1,7 +1,6 @@
 import utest.*
 import chezwiz.agent.*
 import chezwiz.agent.providers.*
-import scala.util.{Success, Failure}
 
 object ProviderSpec extends TestSuite:
 
@@ -14,8 +13,8 @@ object ProviderSpec extends TestSuite:
       assert(provider.supportedModels.contains("gpt-4o"))
       assert(provider.supportedModels.contains("gpt-4o-mini"))
       assert(provider.supportedModels.contains("gpt-3.5-turbo"))
-      assert(provider.validateModel("gpt-4o"))
-      assert(!provider.validateModel("unsupported-model"))
+      assert(provider.validateModel("gpt-4o").isRight)
+      assert(provider.validateModel("unsupported-model").isLeft)
     }
 
     test("Anthropic provider configuration") {
@@ -24,8 +23,8 @@ object ProviderSpec extends TestSuite:
       assert(provider.name == "Anthropic")
       assert(provider.supportedModels.contains("claude-3-5-sonnet-20241022"))
       assert(provider.supportedModels.contains("claude-3-5-haiku-20241022"))
-      assert(provider.validateModel("claude-3-5-haiku-20241022"))
-      assert(!provider.validateModel("unsupported-model"))
+      assert(provider.validateModel("claude-3-5-haiku-20241022").isRight)
+      assert(provider.validateModel("unsupported-model").isLeft)
     }
 
   }

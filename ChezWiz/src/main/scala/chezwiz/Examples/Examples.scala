@@ -23,9 +23,13 @@ object Examples extends App:
           model = "gpt-4o-mini"
         )
 
-        val response = agent.generateText("What is 2 + 2?")
-        println(s"Q: What is 2 + 2?")
-        println(s"A: ${response.content}")
+        agent.generateText("What is 2 + 2?") match {
+          case Right(response) =>
+            println(s"Q: What is 2 + 2?")
+            println(s"A: ${response.content}")
+          case Left(error) =>
+            println(s"Error: $error")
+        }
 
       case None =>
         println("OPENAI_API_KEY not found")
@@ -57,15 +61,18 @@ object Examples extends App:
           model = "gpt-4o"
         )
 
-        val response = agent.generateObject[Person](
+        agent.generateObject[Person](
           "Create a profile for Sarah, a 28-year-old software engineer who knows Python, React, and Docker"
-        )
-        val person = response.data
-
-        println(s"Name: ${person.name}")
-        println(s"Age: ${person.age}")
-        println(s"Profession: ${person.profession}")
-        println(s"Skills: ${person.skills.mkString(", ")}")
+        ) match {
+          case Right(response) =>
+            val person = response.data
+            println(s"Name: ${person.name}")
+            println(s"Age: ${person.age}")
+            println(s"Profession: ${person.profession}")
+            println(s"Skills: ${person.skills.mkString(", ")}")
+          case Left(error) =>
+            println(s"Error: $error")
+        }
 
       case None =>
         println("OPENAI_API_KEY not found")
@@ -85,15 +92,24 @@ object Examples extends App:
         )
 
         // First exchange
-        val response1 = agent.generateText("Hi, I'm Alex and I'm learning Scala")
-        println(s"Alex: Hi, I'm Alex and I'm learning Scala")
-        println(s"Bot: ${response1.content}")
+        agent.generateText("Hi, I'm Alex and I'm learning Scala") match {
+          case Right(response1) =>
+            println(s"Alex: Hi, I'm Alex and I'm learning Scala")
+            println(s"Bot: ${response1.content}")
 
-        // Second exchange - should remember Alex's name and context
-        val response2 =
-          agent.generateText("What's a good resource for learning functional programming?")
-        println(s"Alex: What's a good resource for learning functional programming?")
-        println(s"Bot: ${response2.content}")
+            // Second exchange - should remember Alex's name and context
+            agent.generateText(
+              "What's a good resource for learning functional programming?"
+            ) match {
+              case Right(response2) =>
+                println(s"Alex: What's a good resource for learning functional programming?")
+                println(s"Bot: ${response2.content}")
+              case Left(error) =>
+                println(s"Error: $error")
+            }
+          case Left(error) =>
+            println(s"Error: $error")
+        }
 
       case None =>
         println("OPENAI_API_KEY not found")
@@ -114,8 +130,12 @@ object Examples extends App:
           provider = new OpenAIProvider(key),
           model = "gpt-4o-mini"
         )
-        val response = openai.generateText(question)
-        println(s"OpenAI: ${response.content}")
+        openai.generateText(question) match {
+          case Right(response) =>
+            println(s"OpenAI: ${response.content}")
+          case Left(error) =>
+            println(s"OpenAI Error: $error")
+        }
       case None =>
         println("OPENAI_API_KEY not found")
 
@@ -128,8 +148,12 @@ object Examples extends App:
           provider = new AnthropicProvider(key),
           model = "claude-3-5-haiku-20241022"
         )
-        val response = anthropic.generateText(question)
-        println(s"Anthropic: ${response.content}")
+        anthropic.generateText(question) match {
+          case Right(response) =>
+            println(s"Anthropic: ${response.content}")
+          case Left(error) =>
+            println(s"Anthropic Error: $error")
+        }
       case None =>
         println("ANTHROPIC_API_KEY not found")
   }

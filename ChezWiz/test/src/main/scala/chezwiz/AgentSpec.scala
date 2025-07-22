@@ -2,7 +2,6 @@ import utest.*
 import chezwiz.agent.*
 import chezwiz.agent.providers.*
 import chezwiz.agent.providers.{OpenAIResponse, ErrorResponse}
-import scala.util.{Success, Failure}
 
 object AgentSpec extends TestSuite:
 
@@ -11,32 +10,33 @@ object AgentSpec extends TestSuite:
     override val name: String = "Mock"
     override val supportedModels: List[String] = List("mock-model-1", "mock-model-2")
 
-    override def chat(request: ChatRequest): ChatResponse = {
-      ChatResponse(
+    override def chat(request: ChatRequest): Either[ChezError, ChatResponse] = {
+      Right(ChatResponse(
         content = s"Mock response to: ${request.messages.last.content}",
         usage = Some(Usage(10, 20, 30)),
         model = request.model,
         finishReason = Some("stop")
-      )
+      ))
     }
 
-    override def generateObject(request: ObjectRequest): ObjectResponse[ujson.Value] = {
-      ObjectResponse[ujson.Value](
+    override def generateObject(request: ObjectRequest)
+        : Either[ChezError, ObjectResponse[ujson.Value]] = {
+      Right(ObjectResponse[ujson.Value](
         data = ujson.Obj("mock" -> "response"),
         usage = Some(Usage(10, 20, 30)),
         model = request.model,
         finishReason = Some("stop")
-      )
+      ))
     }
 
     override protected def buildHeaders(apiKey: String): Map[String, String] = Map.empty
     override protected def buildRequestBody(request: ChatRequest): ujson.Value = ujson.Obj()
     override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value = ujson.Obj()
-    override protected def parseResponse(responseBody: String): scala.util.Try[ChatResponse] =
-      scala.util.Success(ChatResponse("mock", None, "mock-model-1", Some("stop")))
+    override protected def parseResponse(responseBody: String): Either[ChezError, ChatResponse] =
+      Right(ChatResponse("mock", None, "mock-model-1", Some("stop")))
     override protected def parseObjectResponse(responseBody: String)
-        : scala.util.Try[ObjectResponse[ujson.Value]] = {
-      scala.util.Success(ObjectResponse[ujson.Value](
+        : Either[ChezError, ObjectResponse[ujson.Value]] = {
+      Right(ObjectResponse[ujson.Value](
         data = ujson.Obj("mock" -> "response"),
         usage = None,
         model = "mock-model-1",
@@ -69,10 +69,14 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      val response = agent.generateText("Hello")
-      assert(response.content == "Mock response to: Hello")
-      assert(response.model == "mock-model-1")
-      assert(response.usage.isDefined)
+      agent.generateText("Hello") match {
+        case Right(response) =>
+          assert(response.content == "Mock response to: Hello")
+          assert(response.model == "mock-model-1")
+          assert(response.usage.isDefined)
+        case Left(error) =>
+          throw new Exception(s"Unexpected error: $error")
+      }
     }
 
     test("Agent tracks conversation history") {
@@ -84,8 +88,15 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      agent.generateText("First message")
-      agent.generateText("Second message")
+      agent.generateText("First message") match {
+        case Right(_) => // Success
+        case Left(error) => throw new Exception(s"Unexpected error: $error")
+      }
+
+      agent.generateText("Second message") match {
+        case Right(_) => // Success
+        case Left(error) => throw new Exception(s"Unexpected error: $error")
+      }
 
       val history = agent.getConversationHistory
       assert(history.size == 5) // system + user1 + assistant1 + user2 + assistant2
@@ -107,7 +118,10 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      agent.generateText("Test message")
+      agent.generateText("Test message") match {
+        case Right(_) => // Success
+        case Left(error) => throw new Exception(s"Unexpected error: $error")
+      }
       assert(agent.getConversationHistory.size > 1)
 
       agent.clearHistory()
@@ -125,11 +139,11 @@ object AgentSpec extends TestSuite:
       )
 
       result match
-        case Success(agent) =>
+        case Right(agent) =>
           assert(agent.name == "OpenAI Test")
           assert(agent.model == "gpt-4o-mini")
           assert(agent.provider.name == "OpenAI")
-        case Failure(ex) => throw ex
+        case Left(error) => throw new Exception(s"Unexpected error: $error")
     }
 
     test("AgentFactory creates Anthropic agent successfully") {
@@ -141,11 +155,11 @@ object AgentSpec extends TestSuite:
       )
 
       result match
-        case Success(agent) =>
+        case Right(agent) =>
           assert(agent.name == "Anthropic Test")
           assert(agent.model == "claude-3-5-haiku-20241022")
           assert(agent.provider.name == "Anthropic")
-        case Failure(ex) => throw ex
+        case Left(error) => throw new Exception(s"Unexpected error: $error")
     }
 
     test("AgentFactory fails with unsupported model") {
@@ -157,8 +171,11 @@ object AgentSpec extends TestSuite:
       )
 
       result match
-        case Success(_) => throw new Exception("Should have failed")
-        case Failure(ex) => assert(ex.getMessage.contains("not supported by OpenAI provider"))
+        case Right(_) => throw new Exception("Should have failed")
+        case Left(ChezError.ModelNotSupported(model, provider, _)) =>
+          assert(model == "unsupported-model")
+          assert(provider == "OpenAI")
+        case Left(error) => throw new Exception(s"Expected ModelNotSupported but got: $error")
     }
 
     test("ChatMessage serialization works correctly") {

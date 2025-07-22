@@ -1,7 +1,6 @@
 package chezwiz.agent
 
 import chezwiz.agent.providers.{OpenAIProvider, AnthropicProvider}
-import scala.util.{Try, Success, Failure}
 
 object AgentFactory:
 
@@ -12,13 +11,13 @@ object AgentFactory:
       model: String,
       temperature: Option[Double] = None,
       maxTokens: Option[Int] = None
-  ): Try[Agent] = {
-    Try {
-      val provider = new OpenAIProvider(apiKey)
-      if !provider.validateModel(model) then
-        throw LLMError(s"Model '$model' not supported by OpenAI provider")
-
-      Agent(name, instructions, provider, model, temperature, maxTokens)
+  ): Either[ChezError, Agent] = {
+    val provider = new OpenAIProvider(apiKey)
+    provider.validateModel(model) match {
+      case Right(_) =>
+        Right(Agent(name, instructions, provider, model, temperature, maxTokens))
+      case Left(error) =>
+        Left(error)
     }
   }
 
@@ -29,12 +28,12 @@ object AgentFactory:
       model: String,
       temperature: Option[Double] = None,
       maxTokens: Option[Int] = None
-  ): Try[Agent] = {
-    Try {
-      val provider = new AnthropicProvider(apiKey)
-      if !provider.validateModel(model) then
-        throw LLMError(s"Model '$model' not supported by Anthropic provider")
-
-      Agent(name, instructions, provider, model, temperature, maxTokens)
+  ): Either[ChezError, Agent] = {
+    val provider = new AnthropicProvider(apiKey)
+    provider.validateModel(model) match {
+      case Right(_) =>
+        Right(Agent(name, instructions, provider, model, temperature, maxTokens))
+      case Left(error) =>
+        Left(error)
     }
   }

@@ -4,8 +4,8 @@
 # ============================================================================
 # BUILD & COMPILATION
 # ============================================================================
-
-# Compile all modules (Chez and CaskChez)
+#
+# Compile all modules 
 .PHONY: compile
 compile:
 	@echo "🔨 Compiling all modules..."
@@ -34,6 +34,8 @@ build: compile
 assembly:
 	@echo "📦 Creating assembly JAR..."
 	./mill Chez.assembly
+	./mill CaskChez.assembly
+	./mill ChezWiz.assembly
 
 # Clean build artifacts
 .PHONY: clean
@@ -229,30 +231,16 @@ examples:
 .PHONY: demo
 demo: examples
 
-# Show dependency tree for Chez module
-.PHONY: deps
-deps:
-	@echo "📦 Dependency tree for Chez module:"
-	./mill Chez.ivyDepsTree
-
-# Show dependency tree for CaskChez module
-.PHONY: deps-cask
-deps-cask:
-	@echo "📦 Dependency tree for CaskChez module:"
-	./mill CaskChez.ivyDepsTree
-
 # Format source code (requires scalafmt setup)
 .PHONY: format
 format:
 	@echo "🎨 Code formatting..."
-	@echo "ℹ️  Run: './mill mill.scalalib.scalafmt.ScalafmtModule/reformatAll __.sources' to format"
+	./mill mill.scalalib.scalafmt.ScalafmtModule/reformatAll
 
 # Run linting (compile warnings)
 .PHONY: lint
 lint: compile
 	@echo "🔍 Linting code..."
-	./mill Chez.compile
-	./mill CaskChez.compile
 
 
 # ============================================================================

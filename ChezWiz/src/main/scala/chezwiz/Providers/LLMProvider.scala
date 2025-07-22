@@ -1,21 +1,24 @@
 package chezwiz.agent.providers
 
-import scala.util.Try
-import chezwiz.agent.{ChatRequest, ChatResponse, ObjectRequest, ObjectResponse, LLMError}
+import chezwiz.agent.{ChatRequest, ChatResponse, ObjectRequest, ObjectResponse, ChezError}
 
 trait LLMProvider:
   def name: String
   def supportedModels: List[String]
 
-  def chat(request: ChatRequest): ChatResponse
-  def generateObject(request: ObjectRequest): ObjectResponse[ujson.Value]
-  def validateModel(model: String): Boolean = supportedModels.contains(model)
+  def chat(request: ChatRequest): Either[ChezError, ChatResponse]
+  def generateObject(request: ObjectRequest): Either[ChezError, ObjectResponse[ujson.Value]]
+  def validateModel(model: String): Either[ChezError.ModelNotSupported, Unit] = {
+    if supportedModels.contains(model) then Right(())
+    else Left(ChezError.ModelNotSupported(model, name, supportedModels))
+  }
 
   protected def buildHeaders(apiKey: String): Map[String, String]
   protected def buildRequestBody(request: ChatRequest): ujson.Value
   protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value
-  protected def parseResponse(responseBody: String): Try[ChatResponse]
-  protected def parseObjectResponse(responseBody: String): Try[ObjectResponse[ujson.Value]]
+  protected def parseResponse(responseBody: String): Either[ChezError, ChatResponse]
+  protected def parseObjectResponse(responseBody: String)
+      : Either[ChezError, ObjectResponse[ujson.Value]]
 
 abstract class BaseLLMProvider extends LLMProvider:
 
@@ -26,48 +29,48 @@ abstract class BaseLLMProvider extends LLMProvider:
       url: String,
       headers: Map[String, String],
       body: ujson.Value
-  ): String = {
-    val response = requests.post(
-      url = url,
-      headers = headers,
-      data = body.toString(),
-      readTimeout = 60000,
-      connectTimeout = 15000
-    )
-
-    if response.statusCode >= 400 then
-      val errorText = response.text()
-      throw LLMError(
-        message = s"HTTP ${response.statusCode}: $errorText",
-        code = None,
-        statusCode = Some(response.statusCode)
+  ): Either[ChezError, String] = {
+    try {
+      val response = requests.post(
+        url = url,
+        headers = headers,
+        data = body.toString(),
+        readTimeout = 60000,
+        connectTimeout = 15000
       )
 
-    response.text()
+      if response.statusCode >= 400 then
+        val errorText = response.text()
+        Left(ChezError.NetworkError(
+          message = s"HTTP ${response.statusCode}: $errorText",
+          statusCode = Some(response.statusCode)
+        ))
+      else {
+        Right(response.text())
+      }
+    } catch {
+      case ex: Exception =>
+        Left(ChezError.NetworkError(s"Network request failed: ${ex.getMessage}"))
+    }
   }
 
-  override def chat(request: ChatRequest): ChatResponse = {
-    if !validateModel(request.model) then
-      throw LLMError(s"Model '${request.model}' not supported by ${name}", None, None)
-
-    val headers = buildHeaders(apiKey)
-    val body = buildRequestBody(request)
-    val responseText = makeRequest(s"$baseUrl/chat/completions", headers, body)
-
-    parseResponse(responseText) match
-      case scala.util.Success(response) => response
-      case scala.util.Failure(ex) => throw ex
+  override def chat(request: ChatRequest): Either[ChezError, ChatResponse] = {
+    for {
+      _ <- validateModel(request.model)
+      headers = buildHeaders(apiKey)
+      body = buildRequestBody(request)
+      responseText <- makeRequest(s"$baseUrl/chat/completions", headers, body)
+      response <- parseResponse(responseText)
+    } yield response
   }
 
-  override def generateObject(request: ObjectRequest): ObjectResponse[ujson.Value] = {
-    if !validateModel(request.model) then
-      throw LLMError(s"Model '${request.model}' not supported by ${name}", None, None)
-
-    val headers = buildHeaders(apiKey)
-    val body = buildObjectRequestBody(request)
-    val responseText = makeRequest(s"$baseUrl/chat/completions", headers, body)
-
-    parseObjectResponse(responseText) match
-      case scala.util.Success(response) => response
-      case scala.util.Failure(ex) => throw ex
+  override def generateObject(request: ObjectRequest)
+      : Either[ChezError, ObjectResponse[ujson.Value]] = {
+    for {
+      _ <- validateModel(request.model)
+      headers = buildHeaders(apiKey)
+      body = buildObjectRequestBody(request)
+      responseText <- makeRequest(s"$baseUrl/chat/completions", headers, body)
+      response <- parseObjectResponse(responseText)
+    } yield response
   }
