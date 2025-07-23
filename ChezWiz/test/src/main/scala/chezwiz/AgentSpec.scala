@@ -2,8 +2,16 @@ import utest.*
 import chezwiz.agent.*
 import chezwiz.agent.providers.*
 import chezwiz.agent.providers.{OpenAIResponse, ErrorResponse}
+import chez.derivation.Schema
+import upickle.default.*
 
 object AgentSpec extends TestSuite:
+
+  // Test data class for structured generation
+  case class TestData(
+    name: String,
+    value: Int
+  ) derives Schema, ReadWriter
 
   // Mock LLM Provider for testing
   class MockLLMProvider extends LLMProvider:
@@ -22,7 +30,7 @@ object AgentSpec extends TestSuite:
     override def generateObject(request: ObjectRequest)
         : Either[ChezError, ObjectResponse[ujson.Value]] = {
       Right(ObjectResponse[ujson.Value](
-        data = ujson.Obj("mock" -> "response"),
+        data = ujson.Obj("name" -> "test", "value" -> 42),
         usage = Some(Usage(10, 20, 30)),
         model = request.model,
         finishReason = Some("stop")
@@ -37,7 +45,7 @@ object AgentSpec extends TestSuite:
     override protected def parseObjectResponse(responseBody: String)
         : Either[ChezError, ObjectResponse[ujson.Value]] = {
       Right(ObjectResponse[ujson.Value](
-        data = ujson.Obj("mock" -> "response"),
+        data = ujson.Obj("name" -> "test", "value" -> 42),
         usage = None,
         model = "mock-model-1",
         finishReason = Some("stop")
@@ -98,7 +106,7 @@ object AgentSpec extends TestSuite:
         case Left(error) => throw new Exception(s"Unexpected error: $error")
       }
 
-      val history = agent.getConversationHistory
+      val history = agent.getConversationHistory()
       assert(history.size == 5) // system + user1 + assistant1 + user2 + assistant2
       assert(history(0).role == Role.System)
       assert(history(1).role == Role.User)
@@ -122,10 +130,10 @@ object AgentSpec extends TestSuite:
         case Right(_) => // Success
         case Left(error) => throw new Exception(s"Unexpected error: $error")
       }
-      assert(agent.getConversationHistory.size > 1)
+      assert(agent.getConversationHistory().size > 1)
 
       agent.clearHistory()
-      val history = agent.getConversationHistory
+      val history = agent.getConversationHistory()
       assert(history.size == 1)
       assert(history(0).role == Role.System)
     }
@@ -202,5 +210,415 @@ object AgentSpec extends TestSuite:
       assert(parsed.temperature == Some(0.7))
       assert(parsed.maxTokens == Some(100))
       assert(parsed.messages.size == 1)
+    }
+
+    test("Scoped conversation history - full metadata") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      val metadata1 = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      ))
+
+      val metadata2 = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user2"), 
+        conversationId = Some("conv2")
+      ))
+
+      // Generate messages with first metadata scope
+      agent.generateText("Hello from user1", metadata1)
+      agent.generateText("Another message from user1", metadata1)
+
+      // Generate messages with second metadata scope
+      agent.generateText("Hello from user2", metadata2)
+
+      // Check that histories are isolated
+      val history1 = agent.getConversationHistory(metadata1)
+      val history2 = agent.getConversationHistory(metadata2)
+      val defaultHistory = agent.getConversationHistory()
+
+      assert(history1.size == 5) // system + 2 user + 2 assistant
+      assert(history2.size == 3) // system + 1 user + 1 assistant
+      assert(defaultHistory.size == 1) // only system message
+
+      // Verify content isolation
+      assert(history1(1).content == "Hello from user1")
+      assert(history1(3).content == "Another message from user1")
+      assert(history2(1).content == "Hello from user2")
+    }
+
+    test("Scoped conversation history - partial metadata") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      // Only tenant
+      val tenantOnly = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = None,
+        conversationId = None
+      ))
+
+      // Only user
+      val userOnly = Some(RequestMetadata(
+        tenantId = None,
+        userId = Some("user1"),
+        conversationId = None
+      ))
+
+      // Tenant and user, no conversation
+      val tenantUser = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = None
+      ))
+
+      agent.generateText("Message with tenant only", tenantOnly)
+      agent.generateText("Message with user only", userOnly)
+      agent.generateText("Message with tenant and user", tenantUser)
+
+      val history1 = agent.getConversationHistory(tenantOnly)
+      val history2 = agent.getConversationHistory(userOnly)
+      val history3 = agent.getConversationHistory(tenantUser)
+
+      assert(history1.size == 3) // system + user + assistant
+      assert(history2.size == 3) // system + user + assistant
+      assert(history3.size == 3) // system + user + assistant
+
+      // Verify all three are different scopes
+      assert(history1(1).content == "Message with tenant only")
+      assert(history2(1).content == "Message with user only")
+      assert(history3(1).content == "Message with tenant and user")
+    }
+
+    test("Clear specific scoped history") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      val metadata = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      ))
+
+      // Add messages to scoped history
+      agent.generateText("Test message 1", metadata)
+      agent.generateText("Test message 2", metadata)
+
+      // Also add to default history
+      agent.generateText("Default message")
+
+      assert(agent.getConversationHistory(metadata).size == 5) // system + 2 user + 2 assistant
+      assert(agent.getConversationHistory().size == 3) // system + user + assistant
+
+      // Clear only the scoped history
+      agent.clearHistory(metadata)
+
+      assert(agent.getConversationHistory(metadata).size == 1) // only system message
+      assert(agent.getConversationHistory().size == 3) // unchanged
+    }
+
+    test("Clear all histories") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      val metadata1 = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      ))
+
+      val metadata2 = Some(RequestMetadata(
+        tenantId = Some("tenant2"),
+        userId = Some("user2"),
+        conversationId = Some("conv2")
+      ))
+
+      // Add messages to multiple scopes
+      agent.generateText("Message 1", metadata1)
+      agent.generateText("Message 2", metadata2)
+      agent.generateText("Default message")
+
+      // Verify all have messages
+      assert(agent.getConversationHistory(metadata1).size > 1)
+      assert(agent.getConversationHistory(metadata2).size > 1)
+      assert(agent.getConversationHistory().size > 1)
+
+      // Clear all histories
+      agent.clearAllHistories()
+
+      // Verify all are reset
+      assert(agent.getConversationHistory(metadata1).size == 1) // only system
+      assert(agent.getConversationHistory(metadata2).size == 1) // only system
+      assert(agent.getConversationHistory().size == 1) // only system
+    }
+
+    test("Add chat message with metadata") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      val metadata = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      ))
+
+      // Manually add messages to scoped history
+      agent.addChatMessage(ChatMessage(Role.User, "Manual message 1"), metadata)
+      agent.addChatMessage(ChatMessage(Role.Assistant, "Manual response 1"), metadata)
+
+      // Also add to default
+      agent.addChatMessage(ChatMessage(Role.User, "Default manual message"))
+
+      val scopedHistory = agent.getConversationHistory(metadata)
+      val defaultHistory = agent.getConversationHistory()
+
+      assert(scopedHistory.size == 3) // system + manually added user + assistant
+      assert(scopedHistory(1).content == "Manual message 1")
+      assert(scopedHistory(2).content == "Manual response 1")
+
+      assert(defaultHistory.size == 2) // system + manually added user
+      assert(defaultHistory(1).content == "Default manual message")
+    }
+
+    test("generateTextWithoutHistory respects metadata scoping") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      val metadata = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      ))
+
+      // First add some history
+      agent.generateText("Message with history", metadata)
+      assert(agent.getConversationHistory(metadata).size == 3) // system + user + assistant
+
+      // Now generate without history (should not affect the scoped history)
+      agent.generateTextWithoutHistory("Message without history", metadata) match {
+        case Right(response) => 
+          assert(response.content == "Mock response to: Message without history")
+        case Left(error) => 
+          throw new Exception(s"Unexpected error: $error")
+      }
+
+      // History should remain unchanged
+      assert(agent.getConversationHistory(metadata).size == 3)
+    }
+
+    test("RequestMetadata serialization") {
+      val metadata = RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      )
+
+      val json = upickle.default.write(metadata)
+      val parsed = upickle.default.read[RequestMetadata](json)
+
+      assert(parsed.tenantId == Some("tenant1"))
+      assert(parsed.userId == Some("user1"))
+      assert(parsed.conversationId == Some("conv1"))
+
+      // Test with None values
+      val partialMetadata = RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = None,
+        conversationId = None
+      )
+
+      val json2 = upickle.default.write(partialMetadata)
+      val parsed2 = upickle.default.read[RequestMetadata](json2)
+
+      assert(parsed2.tenantId == Some("tenant1"))
+      assert(parsed2.userId == None)
+      assert(parsed2.conversationId == None)
+    }
+
+    test("ChatRequest with metadata serialization") {
+      val metadata = RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      )
+
+      val request = ChatRequest(
+        messages = List(ChatMessage(Role.User, "Test")),
+        model = "gpt-4o-mini",
+        temperature = Some(0.7),
+        maxTokens = Some(100),
+        metadata = Some(metadata)
+      )
+
+      val json = upickle.default.write(request)
+      val parsed = upickle.default.read[ChatRequest](json)
+
+      assert(parsed.metadata.isDefined)
+      assert(parsed.metadata.get.tenantId == Some("tenant1"))
+      assert(parsed.metadata.get.userId == Some("user1"))
+      assert(parsed.metadata.get.conversationId == Some("conv1"))
+    }
+
+    test("generateObject with metadata scoping") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      val metadata1 = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      ))
+
+      val metadata2 = Some(RequestMetadata(
+        tenantId = Some("tenant2"),
+        userId = Some("user2"),
+        conversationId = Some("conv2")
+      ))
+
+      // Generate objects with different metadata
+      agent.generateObject[TestData]("Generate object 1", metadata1) match {
+        case Right(response) =>
+          assert(response.data.name == "test")
+          assert(response.data.value == 42)
+        case Left(error) =>
+          throw new Exception(s"Unexpected error: $error")
+      }
+      
+      agent.generateObject[TestData]("Generate object 2", metadata2) match {
+        case Right(response) =>
+          assert(response.data.name == "test")
+        case Left(error) =>
+          throw new Exception(s"Unexpected error: $error")
+      }
+
+      // Check that histories are isolated
+      val history1 = agent.getConversationHistory(metadata1)
+      val history2 = agent.getConversationHistory(metadata2)
+      
+      assert(history1.size == 3) // system + user + assistant
+      assert(history2.size == 3) // system + user + assistant
+      
+      assert(history1(1).content == "Generate object 1")
+      assert(history2(1).content == "Generate object 2")
+    }
+
+    test("generateObjectWithoutHistory with metadata") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      val metadata = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      ))
+
+      // First add some history
+      agent.generateText("Message with history", metadata)
+      assert(agent.getConversationHistory(metadata).size == 3)
+
+      // Generate object without history
+      agent.generateObjectWithoutHistory[TestData]("Generate without history", metadata) match {
+        case Right(response) =>
+          assert(response.data.name == "test")
+          assert(response.data.value == 42)
+        case Left(error) =>
+          throw new Exception(s"Unexpected error: $error")
+      }
+
+      // History should remain unchanged
+      assert(agent.getConversationHistory(metadata).size == 3)
+    }
+
+    test("Scope key behavior matches documentation") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      // Test different metadata combinations to ensure they create different scopes
+      val fullScope = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      ))
+
+      val sameScopeKey = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv1")
+      ))
+
+      val differentConv = Some(RequestMetadata(
+        tenantId = Some("tenant1"),
+        userId = Some("user1"),
+        conversationId = Some("conv2")
+      ))
+
+      // Add messages with same scope key
+      agent.generateText("Message 1", fullScope)
+      agent.generateText("Message 2", sameScopeKey)
+      
+      // Add message with different conversation
+      agent.generateText("Different conv", differentConv)
+
+      // Same scope key should share history
+      val history1 = agent.getConversationHistory(fullScope)
+      val history2 = agent.getConversationHistory(sameScopeKey)
+      val history3 = agent.getConversationHistory(differentConv)
+
+      assert(history1.size == 5) // system + 2 users + 2 assistants
+      assert(history2.size == 5) // should be same as history1
+      assert(history3.size == 3) // system + 1 user + 1 assistant
+
+      // Verify the messages are in the correct history
+      assert(history1(1).content == "Message 1")
+      assert(history1(3).content == "Message 2")
+      assert(history3(1).content == "Different conv")
     }
   }
