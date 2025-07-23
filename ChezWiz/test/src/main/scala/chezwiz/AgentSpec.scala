@@ -9,8 +9,8 @@ object AgentSpec extends TestSuite:
 
   // Test data class for structured generation
   case class TestData(
-    name: String,
-    value: Int
+      name: String,
+      value: Int
   ) derives Schema, ReadWriter
 
   // Mock LLM Provider for testing
@@ -229,7 +229,7 @@ object AgentSpec extends TestSuite:
 
       val metadata2 = Some(RequestMetadata(
         tenantId = Some("tenant1"),
-        userId = Some("user2"), 
+        userId = Some("user2"),
         conversationId = Some("conv2")
       ))
 
@@ -429,9 +429,9 @@ object AgentSpec extends TestSuite:
 
       // Now generate without history (should not affect the scoped history)
       agent.generateTextWithoutHistory("Message without history", metadata) match {
-        case Right(response) => 
+        case Right(response) =>
           assert(response.content == "Mock response to: Message without history")
-        case Left(error) => 
+        case Left(error) =>
           throw new Exception(s"Unexpected error: $error")
       }
 
@@ -521,7 +521,7 @@ object AgentSpec extends TestSuite:
         case Left(error) =>
           throw new Exception(s"Unexpected error: $error")
       }
-      
+
       agent.generateObject[TestData]("Generate object 2", metadata2) match {
         case Right(response) =>
           assert(response.data.name == "test")
@@ -532,10 +532,10 @@ object AgentSpec extends TestSuite:
       // Check that histories are isolated
       val history1 = agent.getConversationHistory(metadata1)
       val history2 = agent.getConversationHistory(metadata2)
-      
+
       assert(history1.size == 3) // system + user + assistant
       assert(history2.size == 3) // system + user + assistant
-      
+
       assert(history1(1).content == "Generate object 1")
       assert(history2(1).content == "Generate object 2")
     }
@@ -603,7 +603,7 @@ object AgentSpec extends TestSuite:
       // Add messages with same scope key
       agent.generateText("Message 1", fullScope)
       agent.generateText("Message 2", sameScopeKey)
-      
+
       // Add message with different conversation
       agent.generateText("Different conv", differentConv)
 
