@@ -19,8 +19,8 @@ release:
   # Release actions actions
   actions:
     - type: custom
-      name: "mill"
-      command: make assembly
+      name: "assembly"
+      command: "make assembly"
     - type: git-tag
     - type: commit-push
     - type: github-release

@@ -12,6 +12,15 @@ object Role:
   case object User extends Role
   case object Assistant extends Role
 
+case class RequestMetadata(
+    @Schema.description("Unique identifier for the conversation")
+    conversationId: Option[String] = None,
+    @Schema.description("Unique identifier for the user")
+    userId: Option[String] = None,
+    @Schema.description("Unique identifier for the tenant/organization")
+    tenantId: Option[String] = None
+) derives Schema, ReadWriter
+
 case class ChatMessage(
     @Schema.description("The role of the message sender")
     role: Role,
@@ -33,7 +42,9 @@ case class ChatRequest(
     maxTokens: Option[Int] = None,
     @Schema.description("Whether to stream the response")
     @Schema.default(false)
-    stream: Boolean = false
+    stream: Boolean = false,
+    @Schema.description("Optional metadata for request scoping")
+    metadata: Option[RequestMetadata] = None
 ) derives Schema, ReadWriter
 
 case class Usage(
@@ -92,7 +103,9 @@ case class ObjectRequest(
     maxTokens: Option[Int] = None,
     @Schema.description("Whether to stream the response")
     @Schema.default(false)
-    stream: Boolean = false
+    stream: Boolean = false,
+    @Schema.description("Optional metadata for request scoping")
+    metadata: Option[RequestMetadata] = None
 )
 
 // Response containing structured object (type-safe)
