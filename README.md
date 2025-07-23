@@ -8,7 +8,8 @@
 ## Modules
 
 - **[Chez](./docs/chez.md)**: Core JSON Schema generation, validation, and derivation library
-- **[CaskChez](./docs/caskchez.md)**: Cask HTTP framework integration with automatic request/response validation
+- **[CaskChez](./docs/caskchez.md)**: Cask HTTP framework integration with automatic request/response validation  
+- **[ChezWiz](./docs/chezwiz.md)**: Type-safe LLM agent library with multi-provider support and scoped conversation management
 
 ## Quick Start
 
@@ -47,6 +48,17 @@ def createUser(validatedRequest: ValidatedRequest) = {
     case Left(error) => handleError(error)
   }
 }
+
+// LLM agents with structured generation
+val agent = AgentFactory.createOpenAIAgent(
+  name = "DataAgent",
+  instructions = "Generate structured data based on user requests.",
+  apiKey = "your-api-key",
+  model = "gpt-4o"
+).toOption.get
+
+// Generate structured data with conversation history
+val response = agent.generateObject[User]("Create a user profile for a software engineer")
 ```
 
 ## Installation
@@ -66,6 +78,7 @@ def ivyDeps = Agg(
 
 - **[Chez Core Library](./docs/chez.md)** - Schema creation, validation, composition, and annotation-based derivation
 - **[CaskChez HTTP Integration](./docs/caskchez.md)** - HTTP framework integration, automatic validation, and OpenAPI generation
+- **[ChezWiz LLM Agents](./docs/chezwiz.md)** - Type-safe LLM agents, structured generation, and scoped conversation management
 
 ## Examples
 
@@ -86,7 +99,10 @@ make test                 # Run all tests
 ✅ **Automatic HTTP request/response validation**  
 ✅ **OpenAPI specification generation**  
 ✅ **Zero boilerplate validation**  
-✅ **Comprehensive validation for body, query, params, headers**
+✅ **Comprehensive validation for body, query, params, headers**  
+✅ **Type-safe LLM agents with multi-provider support**  
+✅ **Structured LLM response generation**  
+✅ **Scoped conversation management (tenant/user/conversation)**
 
 ## License
 
