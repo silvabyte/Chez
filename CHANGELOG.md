@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.2] - 2025-07-24
+
+* feat: add agent request metadata (#2)
+* chore: release v0.1.1
+
 ## [0.1.1] - 2025-07-22
 
 * feat: add either and release automation (#1)
