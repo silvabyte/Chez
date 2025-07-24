@@ -644,7 +644,7 @@ object AgentSpec extends TestSuite:
     // Test hook that tracks method calls
     class TestHook extends PreRequestHook with PostResponseHook with PreObjectRequestHook
         with PostObjectResponseHook with ErrorHook with HistoryHook with ScopeChangeHook {
-      
+
       var preRequestCalls: List[PreRequestContext] = List.empty
       var postResponseCalls: List[PostResponseContext] = List.empty
       var preObjectRequestCalls: List[PreObjectRequestContext] = List.empty
@@ -821,16 +821,20 @@ object AgentSpec extends TestSuite:
           Left(ChezError.NetworkError("Simulated network error", Some(500)))
         }
 
-        override def generateObject(request: ObjectRequest): Either[ChezError, ObjectResponse[ujson.Value]] = {
+        override def generateObject(request: ObjectRequest)
+            : Either[ChezError, ObjectResponse[ujson.Value]] = {
           Left(ChezError.ApiError("Simulated API error", Some("TEST_ERROR"), Some(400)))
         }
 
         override protected def buildHeaders(apiKey: String): Map[String, String] = Map.empty
         override protected def buildRequestBody(request: ChatRequest): ujson.Value = ujson.Obj()
-        override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value = ujson.Obj()
-        override protected def parseResponse(responseBody: String): Either[ChezError, ChatResponse] = 
+        override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value =
+          ujson.Obj()
+        override protected def parseResponse(responseBody: String)
+            : Either[ChezError, ChatResponse] =
           Right(ChatResponse("mock", None, "error-model", Some("stop")))
-        override protected def parseObjectResponse(responseBody: String): Either[ChezError, ObjectResponse[ujson.Value]] = 
+        override protected def parseObjectResponse(responseBody: String)
+            : Either[ChezError, ObjectResponse[ujson.Value]] =
           Right(ObjectResponse[ujson.Value](ujson.Obj(), None, "error-model", Some("stop")))
       }
 
@@ -851,7 +855,7 @@ object AgentSpec extends TestSuite:
 
       // Test error in generateText
       agent.generateText("This will fail", defaultMetadata)
-      
+
       assert(testHook.errorCalls.size == 1)
       assert(testHook.errorCalls.head.agentName == "Error Agent")
       assert(testHook.errorCalls.head.operation == "generateText")
@@ -860,7 +864,7 @@ object AgentSpec extends TestSuite:
       // Test error in generateObject
       testHook.reset()
       agent.generateObject[TestData]("This will also fail", defaultMetadata)
-      
+
       assert(testHook.errorCalls.size == 1)
       assert(testHook.errorCalls.head.operation == "generateObject")
       assert(testHook.errorCalls.head.error.isInstanceOf[ChezError.ApiError])
@@ -869,7 +873,7 @@ object AgentSpec extends TestSuite:
     test("Multiple hooks are executed in order") {
       val hook1 = new TestHook()
       val hook2 = new TestHook()
-      
+
       val hooks = HookRegistry.empty
         .addPreRequestHook(hook1)
         .addPreRequestHook(hook2)
@@ -935,7 +939,7 @@ object AgentSpec extends TestSuite:
     test("HookRegistry utility methods work correctly") {
       val hook1 = new TestHook()
       val hook2 = new TestHook()
-      
+
       // Empty registry
       val emptyRegistry = HookRegistry.empty
       assert(!emptyRegistry.hasAnyHooks)
@@ -975,7 +979,13 @@ object AgentSpec extends TestSuite:
       metrics.recordSuccess(agentName, model, "generateObject", 200, 75, metadata)
 
       metrics.recordRequestStart(agentName, model, "generateText", metadata)
-      metrics.recordError(agentName, model, "generateText", ChezError.NetworkError("Test error", Some(500)), metadata)
+      metrics.recordError(
+        agentName,
+        model,
+        "generateText",
+        ChezError.NetworkError("Test error", Some(500)),
+        metadata
+      )
 
       // Get snapshot
       val snapshot = metrics.getSnapshot(agentName)
@@ -987,7 +997,7 @@ object AgentSpec extends TestSuite:
       assert(snap.successfulRequests == 2)
       assert(snap.failedRequests == 1)
       assert(snap.averageDuration == 150.0) // (100 + 200) / 2
-      assert(snap.successRate == 2.0/3.0)
+      assert(snap.successRate == 2.0 / 3.0)
 
       // Check operation metrics
       assert(snap.textGenerations.count == 2)
@@ -1010,7 +1020,7 @@ object AgentSpec extends TestSuite:
     test("MetricsHook integrates with agent operations") {
       val metrics = new DefaultAgentMetrics()
       val metricsHook = new MetricsHook(metrics)
-      
+
       val hooks = HookRegistry.empty
         .addPreRequestHook(metricsHook)
         .addPostResponseHook(metricsHook)
@@ -1064,7 +1074,7 @@ object AgentSpec extends TestSuite:
         case Right((agent, metrics)) =>
           assert(agent.name == "FactoryTestAgent")
           assert(agent.model == "gpt-4o-mini")
-          
+
           val metadata = RequestMetadata(
             tenantId = Some("factory-tenant"),
             userId = Some("factory-user"),
@@ -1074,8 +1084,8 @@ object AgentSpec extends TestSuite:
           // This would normally make a real API call, but our test setup prevents that
           // The important thing is that the agent was created with metrics hooks
           val snapshot = metrics.getSnapshot("FactoryTestAgent")
-          // Snapshot might be None initially if no operations have been performed
-          // But the metrics system should be ready to track operations
+        // Snapshot might be None initially if no operations have been performed
+        // But the metrics system should be ready to track operations
 
         case Left(error) =>
           // Expected with test API key - the important thing is the factory method works
@@ -1093,11 +1103,28 @@ object AgentSpec extends TestSuite:
         failedRequests = 5,
         averageDuration = 250.0,
         successRate = 0.95,
-        textGenerations = OperationMetrics(count = 80, successCount = 76, errorCount = 4, totalDuration = 20000, totalTokens = 1000),
-        objectGenerations = OperationMetrics(count = 20, successCount = 19, errorCount = 1, totalDuration = 5000, totalTokens = 500),
+        textGenerations = OperationMetrics(
+          count = 80,
+          successCount = 76,
+          errorCount = 4,
+          totalDuration = 20000,
+          totalTokens = 1000
+        ),
+        objectGenerations = OperationMetrics(
+          count = 20,
+          successCount = 19,
+          errorCount = 1,
+          totalDuration = 5000,
+          totalTokens = 500
+        ),
         modelMetrics = Map("gpt-4o" -> ModelMetrics(requestCount = 100, totalTokens = 1500)),
-        scopeMetrics = Map("tenant1:user1:conv1" -> ScopeMetrics("tenant1:user1:conv1", requestCount = 50, messageCount = 45)),
-        errorMetrics = Map("NetworkError" -> ErrorMetrics("NetworkError", 3, 1001000, "Connection failed")),
+        scopeMetrics = Map("tenant1:user1:conv1" -> ScopeMetrics(
+          "tenant1:user1:conv1",
+          requestCount = 50,
+          messageCount = 45
+        )),
+        errorMetrics =
+          Map("NetworkError" -> ErrorMetrics("NetworkError", 3, 1001000, "Connection failed")),
         recentRequestRate = 10.5,
         recentErrorRate = 0.5
       )
@@ -1124,7 +1151,7 @@ object AgentSpec extends TestSuite:
       val metrics = new DefaultAgentMetrics()
       val agentName = "ConcurrentTestAgent"
       val model = "test-model"
-      
+
       // Simulate concurrent operations
       val threads = (1 to 10).map { i =>
         new Thread(() => {
@@ -1133,7 +1160,7 @@ object AgentSpec extends TestSuite:
             userId = Some(s"user$i"),
             conversationId = Some(s"conv$i")
           )
-          
+
           for (j <- 1 to 10) {
             metrics.recordRequestStart(agentName, model, "generateText", metadata)
             metrics.recordSuccess(agentName, model, "generateText", j * 10, j * 5, metadata)

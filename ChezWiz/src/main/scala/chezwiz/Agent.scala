@@ -90,7 +90,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     ))
 
     val result = config.provider.chat(request)
-    
+
     // Execute post-response hooks
     config.hooks.executePostResponseHooks(PostResponseContext(
       agentName = config.name,
@@ -155,7 +155,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     ))
 
     val result = config.provider.chat(request)
-    
+
     // Execute post-response hooks
     config.hooks.executePostResponseHooks(PostResponseContext(
       agentName = config.name,
@@ -223,7 +223,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     ))
 
     val result = config.provider.generateObject(request)
-    
+
     // Execute post-object-response hooks
     config.hooks.executePostObjectResponseHooks(PostObjectResponseContext(
       agentName = config.name,
@@ -340,7 +340,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     ))
 
     val result = config.provider.generateObject(request)
-    
+
     // Execute post-object-response hooks
     config.hooks.executePostObjectResponseHooks(PostObjectResponseContext(
       agentName = config.name,
@@ -422,7 +422,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     val scopeKey = createScopeKey(metadata)
     scopedHistories =
       scopedHistories.updated(scopeKey, Vector(ChatMessage(Role.System, config.instructions)))
-    
+
     // Execute history hooks
     config.hooks.executeHistoryHooks(HistoryContext(
       agentName = config.name,
@@ -436,7 +436,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
   def clearAllHistories(): Unit = {
     logger.info(s"Agent '${config.name}' clearing all conversation histories")
     scopedHistories = Map.empty
-    
+
     // Execute history hooks (use empty metadata for clearAll operation)
     config.hooks.executeHistoryHooks(HistoryContext(
       agentName = config.name,
@@ -451,7 +451,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     val currentHistory = getHistory(metadata)
     val newHistory = currentHistory :+ message
     updateHistory(metadata, newHistory)
-    
+
     // Execute history hooks
     config.hooks.executeHistoryHooks(HistoryContext(
       agentName = config.name,

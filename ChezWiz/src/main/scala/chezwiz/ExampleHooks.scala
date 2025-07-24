@@ -33,10 +33,10 @@ class MetricsCollectorHook extends PreRequestHook with PostResponseHook with Err
 
   override def onPostResponse(context: PostResponseContext): Unit = {
     context.response match {
-      case Right(_) => 
+      case Right(_) =>
         successCount.incrementAndGet()
         totalDuration.addAndGet(context.duration)
-      case Left(_) => 
+      case Left(_) =>
         errorCount.incrementAndGet()
     }
   }
@@ -77,28 +77,35 @@ class MetricsCollectorHook extends PreRequestHook with PostResponseHook with Err
 // ============================================================================
 
 /** Comprehensive logging hook for requests, responses, and operations */
-class LoggingHook extends PreRequestHook with PostResponseHook with PreObjectRequestHook 
+class LoggingHook extends PreRequestHook with PostResponseHook with PreObjectRequestHook
     with PostObjectResponseHook with ErrorHook with HistoryHook {
 
   override def onPreRequest(context: PreRequestContext): Unit = {
-    println(s"[${Instant.ofEpochMilli(context.timestamp)}] PRE-REQUEST: Agent '${context.agentName}' " +
-      s"using model '${context.model}' with ${context.request.messages.size} messages " +
-      s"(tenant: ${context.metadata.tenantId.getOrElse("_")}, " +
-      s"user: ${context.metadata.userId.getOrElse("_")}, " +
-      s"conversation: ${context.metadata.conversationId.getOrElse("_")})")
+    println(
+      s"[${Instant.ofEpochMilli(context.timestamp)}] PRE-REQUEST: Agent '${context.agentName}' " +
+        s"using model '${context.model}' with ${context.request.messages.size} messages " +
+        s"(tenant: ${context.metadata.tenantId.getOrElse("_")}, " +
+        s"user: ${context.metadata.userId.getOrElse("_")}, " +
+        s"conversation: ${context.metadata.conversationId.getOrElse("_")})"
+    )
   }
 
   override def onPostResponse(context: PostResponseContext): Unit = {
     val status = context.response match {
-      case Right(response) => s"SUCCESS (${context.duration}ms, ${response.usage.map(_.totalTokens).getOrElse(0)} tokens)"
+      case Right(response) =>
+        s"SUCCESS (${context.duration}ms, ${response.usage.map(_.totalTokens).getOrElse(0)} tokens)"
       case Left(error) => s"ERROR (${context.duration}ms): $error"
     }
-    println(s"[${Instant.ofEpochMilli(context.responseTimestamp)}] POST-RESPONSE: Agent '${context.agentName}' - $status")
+    println(
+      s"[${Instant.ofEpochMilli(context.responseTimestamp)}] POST-RESPONSE: Agent '${context.agentName}' - $status"
+    )
   }
 
   override def onPreObjectRequest(context: PreObjectRequestContext): Unit = {
-    println(s"[${Instant.ofEpochMilli(context.timestamp)}] PRE-OBJECT-REQUEST: Agent '${context.agentName}' " +
-      s"generating ${context.targetType} with ${context.request.messages.size} messages")
+    println(
+      s"[${Instant.ofEpochMilli(context.timestamp)}] PRE-OBJECT-REQUEST: Agent '${context.agentName}' " +
+        s"generating ${context.targetType} with ${context.request.messages.size} messages"
+    )
   }
 
   override def onPostObjectResponse(context: PostObjectResponseContext): Unit = {
@@ -106,7 +113,9 @@ class LoggingHook extends PreRequestHook with PostResponseHook with PreObjectReq
       case Right(response) => s"SUCCESS (${context.duration}ms, generated ${context.targetType})"
       case Left(error) => s"ERROR (${context.duration}ms): $error"
     }
-    println(s"[${Instant.ofEpochMilli(context.responseTimestamp)}] POST-OBJECT-RESPONSE: Agent '${context.agentName}' - $status")
+    println(
+      s"[${Instant.ofEpochMilli(context.responseTimestamp)}] POST-OBJECT-RESPONSE: Agent '${context.agentName}' - $status"
+    )
   }
 
   override def onError(context: ErrorContext): Unit = {
@@ -143,9 +152,9 @@ case class Span(
   def isComplete: Boolean = endTime.isDefined
 }
 
-class TracingHook extends PreRequestHook with PostResponseHook with PreObjectRequestHook 
+class TracingHook extends PreRequestHook with PostResponseHook with PreObjectRequestHook
     with PostObjectResponseHook with ErrorHook {
-  
+
   private val activeSpans = mutable.Map[String, Span]()
   private val completedSpans = mutable.ArrayBuffer[Span]()
 
@@ -173,7 +182,9 @@ class TracingHook extends PreRequestHook with PostResponseHook with PreObjectReq
 
   override def onPostResponse(context: PostResponseContext): Unit = {
     // Find the corresponding span (simplified - in real tracing you'd use trace context)
-    activeSpans.values.find(span => span.operationName == "generateText" && !span.isComplete).foreach { span =>
+    activeSpans.values.find(span =>
+      span.operationName == "generateText" && !span.isComplete
+    ).foreach { span =>
       val status = context.response match {
         case Right(response) => "success"
         case Left(_) => "error"
@@ -183,7 +194,9 @@ class TracingHook extends PreRequestHook with PostResponseHook with PreObjectReq
         status = status,
         attributes = span.attributes ++ Map(
           "duration.ms" -> context.duration.toString,
-          "tokens.total" -> context.response.toOption.flatMap(_.usage.map(_.totalTokens.toString)).getOrElse("0")
+          "tokens.total" -> context.response.toOption.flatMap(
+            _.usage.map(_.totalTokens.toString)
+          ).getOrElse("0")
         )
       )
       activeSpans.remove(span.spanId)
@@ -211,7 +224,9 @@ class TracingHook extends PreRequestHook with PostResponseHook with PreObjectReq
   }
 
   override def onPostObjectResponse(context: PostObjectResponseContext): Unit = {
-    activeSpans.values.find(span => span.operationName == "generateObject" && !span.isComplete).foreach { span =>
+    activeSpans.values.find(span =>
+      span.operationName == "generateObject" && !span.isComplete
+    ).foreach { span =>
       val status = context.response match {
         case Right(_) => "success"
         case Left(_) => "error"
@@ -249,7 +264,9 @@ class TracingHook extends PreRequestHook with PostResponseHook with PreObjectReq
   def printTraces(): Unit = {
     println("=== Completed Traces ===")
     completedSpans.foreach { span =>
-      println(s"Trace ${span.traceId.take(8)}: ${span.operationName} - ${span.duration}ms (${span.status})")
+      println(
+        s"Trace ${span.traceId.take(8)}: ${span.operationName} - ${span.duration}ms (${span.status})"
+      )
       span.attributes.foreach { case (key, value) => println(s"  $key: $value") }
       println()
     }
@@ -269,7 +286,7 @@ class ErrorMonitoringHook extends ErrorHook {
     errors += context
     val errorType = context.error.getClass.getSimpleName
     errorCounts.getOrElseUpdate(errorType, new AtomicLong(0)).incrementAndGet()
-    
+
     // In a real implementation, you might send alerts here
     if (shouldAlert(context)) {
       sendAlert(context)
@@ -286,7 +303,9 @@ class ErrorMonitoringHook extends ErrorHook {
   }
 
   private def sendAlert(context: ErrorContext): Unit = {
-    println(s"🚨 ALERT: Error in agent '${context.agentName}' operation '${context.operation}': ${context.error}")
+    println(
+      s"🚨 ALERT: Error in agent '${context.agentName}' operation '${context.operation}': ${context.error}"
+    )
   }
 
   def getErrorCount: Int = errors.size
@@ -333,13 +352,14 @@ class ConversationAnalyticsHook extends PostResponseHook with HistoryHook {
   override def onPostResponse(context: PostResponseContext): Unit = {
     val scopeKey = getScopeKey(context.metadata)
     val stats = conversationStats.getOrElseUpdate(scopeKey, ConversationStats())
-    
+
     context.response match {
       case Right(response) =>
         stats.messageCount += 1
         stats.totalTokens += response.usage.map(_.totalTokens).getOrElse(0)
         // Update average response time
-        val newAvg = (stats.averageResponseTime * (stats.messageCount - 1) + context.duration) / stats.messageCount
+        val newAvg =
+          (stats.averageResponseTime * (stats.messageCount - 1) + context.duration) / stats.messageCount
         stats.averageResponseTime = newAvg
         stats.lastActivity = context.responseTimestamp
       case Left(_) =>
@@ -362,21 +382,22 @@ class ConversationAnalyticsHook extends PostResponseHook with HistoryHook {
   def printAnalytics(): Unit = {
     println("=== Conversation Analytics ===")
     println(s"Active Conversations: ${conversationStats.size}")
-    
+
     if (conversationStats.nonEmpty) {
       val totalMessages = conversationStats.values.map(_.messageCount).sum
       val totalTokens = conversationStats.values.map(_.totalTokens).sum
-      val avgResponseTime = conversationStats.values.map(_.averageResponseTime).sum / conversationStats.size
-      
+      val avgResponseTime =
+        conversationStats.values.map(_.averageResponseTime).sum / conversationStats.size
+
       println(s"Total Messages: $totalMessages")
       println(s"Total Tokens: $totalTokens")
       println(s"Average Response Time: ${avgResponseTime.round}ms")
-      
+
       // Top active conversations
       val topConversations = conversationStats.toSeq
         .sortBy(-_._2.messageCount)
         .take(5)
-      
+
       println("Top Active Conversations:")
       topConversations.foreach { case (scope, stats) =>
         println(s"  $scope: ${stats.messageCount} messages, ${stats.totalTokens} tokens")
@@ -390,7 +411,7 @@ class ConversationAnalyticsHook extends PostResponseHook with HistoryHook {
 // ============================================================================
 
 object HookExamples {
-  
+
   /** Example showing how to set up multiple hooks on an agent */
   def createAgentWithHooks(): Unit = {
     // Create hook instances
@@ -432,23 +453,23 @@ object HookExamples {
     agentResult match {
       case Right(agent) =>
         println("Agent created with comprehensive monitoring hooks!")
-        
+
         // Example usage that would trigger hooks
         val metadata = RequestMetadata(
           tenantId = Some("demo-company"),
           userId = Some("demo-user"),
           conversationId = Some("demo-conversation")
         )
-        
-        // This would trigger all the hooks
-        // agent.generateText("Hello, how are you?", metadata)
-        
-        // Print metrics after some usage
-        // metrics.printMetrics()
-        // tracing.printTraces()
-        // errorMonitoring.printErrorSummary()
-        // analytics.printAnalytics()
-        
+
+      // This would trigger all the hooks
+      // agent.generateText("Hello, how are you?", metadata)
+
+      // Print metrics after some usage
+      // metrics.printMetrics()
+      // tracing.printTraces()
+      // errorMonitoring.printErrorSummary()
+      // analytics.printAnalytics()
+
       case Left(error) =>
         println(s"Failed to create agent: $error")
     }
