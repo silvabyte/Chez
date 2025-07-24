@@ -372,7 +372,7 @@ object HookSpec extends TestSuite:
 
     test("HookRegistry can add and execute hooks of all types") {
       val testHook = new TestHook()
-      
+
       val registry = HookRegistry.empty
         .addPreRequestHook(testHook)
         .addPostResponseHook(testHook)
@@ -451,7 +451,7 @@ object HookSpec extends TestSuite:
 
       // Generate text and verify duration is positive
       agent.generateText("Test timing", defaultMetadata)
-      
+
       assert(testHook.postResponseCalls.size == 1)
       val context = testHook.postResponseCalls.head
       assert(context.duration >= 0)
@@ -528,8 +528,10 @@ object HookSpec extends TestSuite:
 
         override protected def buildHeaders(apiKey: String): Map[String, String] = Map.empty
         override protected def buildRequestBody(request: ChatRequest): ujson.Value = ujson.Obj()
-        override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value = ujson.Obj()
-        override protected def parseResponse(responseBody: String): Either[ChezError, ChatResponse] =
+        override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value =
+          ujson.Obj()
+        override protected def parseResponse(responseBody: String)
+            : Either[ChezError, ChatResponse] =
           Right(ChatResponse("", None, "error-model", None))
         override protected def parseObjectResponse(responseBody: String)
             : Either[ChezError, ObjectResponse[ujson.Value]] =

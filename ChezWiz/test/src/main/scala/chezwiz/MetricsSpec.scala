@@ -507,8 +507,10 @@ object MetricsSpec extends TestSuite:
 
         override protected def buildHeaders(apiKey: String): Map[String, String] = Map.empty
         override protected def buildRequestBody(request: ChatRequest): ujson.Value = ujson.Obj()
-        override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value = ujson.Obj()
-        override protected def parseResponse(responseBody: String): Either[ChezError, ChatResponse] =
+        override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value =
+          ujson.Obj()
+        override protected def parseResponse(responseBody: String)
+            : Either[ChezError, ChatResponse] =
           Right(ChatResponse("", None, "error-model", None))
         override protected def parseObjectResponse(responseBody: String)
             : Either[ChezError, ObjectResponse[ujson.Value]] =
