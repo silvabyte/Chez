@@ -407,7 +407,10 @@ object AgentSpec extends TestSuite:
         userId = Some("different-user"),
         conversationId = Some("different-conv")
       )
-      agent.addChatMessage(ChatMessage(Role.User, "Different scope manual message"), differentMetadata)
+      agent.addChatMessage(
+        ChatMessage(Role.User, "Different scope manual message"),
+        differentMetadata
+      )
 
       val scopedHistory = agent.getConversationHistory(metadata)
       val differentHistory = agent.getConversationHistory(differentMetadata)
