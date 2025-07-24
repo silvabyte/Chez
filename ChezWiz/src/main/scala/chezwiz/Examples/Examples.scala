@@ -10,6 +10,13 @@ import upickle.default.*
  */
 object Examples extends App:
 
+  // Example metadata for scoped conversations
+  val exampleMetadata = RequestMetadata(
+    tenantId = Some("demo-company"),
+    userId = Some("demo-user"),
+    conversationId = Some("demo-conversation")
+  )
+
   // Example 1: Simple text generation
   def textGeneration(): Unit = {
     println("=== Text Generation ===")
@@ -23,7 +30,7 @@ object Examples extends App:
           model = "gpt-4o-mini"
         )
 
-        agent.generateText("What is 2 + 2?") match {
+        agent.generateText("What is 2 + 2?", exampleMetadata) match {
           case Right(response) =>
             println(s"Q: What is 2 + 2?")
             println(s"A: ${response.content}")
@@ -62,7 +69,8 @@ object Examples extends App:
         )
 
         agent.generateObject[Person](
-          "Create a profile for Sarah, a 28-year-old software engineer who knows Python, React, and Docker"
+          "Create a profile for Sarah, a 28-year-old software engineer who knows Python, React, and Docker",
+          exampleMetadata
         ) match {
           case Right(response) =>
             val person = response.data
@@ -91,15 +99,23 @@ object Examples extends App:
           model = "gpt-4o-mini"
         )
 
+        // Create conversation-specific metadata
+        val conversationMetadata = RequestMetadata(
+          tenantId = Some("demo-company"),
+          userId = Some("alex"),
+          conversationId = Some("learning-session")
+        )
+
         // First exchange
-        agent.generateText("Hi, I'm Alex and I'm learning Scala") match {
+        agent.generateText("Hi, I'm Alex and I'm learning Scala", conversationMetadata) match {
           case Right(response1) =>
             println(s"Alex: Hi, I'm Alex and I'm learning Scala")
             println(s"Bot: ${response1.content}")
 
             // Second exchange - should remember Alex's name and context
             agent.generateText(
-              "What's a good resource for learning functional programming?"
+              "What's a good resource for learning functional programming?",
+              conversationMetadata
             ) match {
               case Right(response2) =>
                 println(s"Alex: What's a good resource for learning functional programming?")
@@ -130,7 +146,7 @@ object Examples extends App:
           provider = new OpenAIProvider(key),
           model = "gpt-4o-mini"
         )
-        openai.generateText(question) match {
+        openai.generateText(question, exampleMetadata) match {
           case Right(response) =>
             println(s"OpenAI: ${response.content}")
           case Left(error) =>
@@ -148,7 +164,7 @@ object Examples extends App:
           provider = new AnthropicProvider(key),
           model = "claude-3-5-haiku-20241022"
         )
-        anthropic.generateText(question) match {
+        anthropic.generateText(question, exampleMetadata) match {
           case Right(response) =>
             println(s"Anthropic: ${response.content}")
           case Left(error) =>

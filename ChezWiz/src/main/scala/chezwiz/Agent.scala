@@ -9,7 +9,8 @@ import chezwiz.agent.{
   ObjectResponse,
   ChatMessage,
   Role,
-  ChezError
+  ChezError,
+  RequestMetadata
 }
 import ujson.Value
 import upickle.default.*
@@ -28,35 +29,61 @@ case class AgentConfig(
 class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.empty)
     extends Logging:
 
-  private var history: Vector[ChatMessage] = {
-    if initialHistory.isEmpty then Vector(ChatMessage(Role.System, config.instructions))
-    else initialHistory
+  // Scoped history storage: Map[ScopeKey, Vector[ChatMessage]]
+  private var scopedHistories: Map[String, Vector[ChatMessage]] = Map.empty
+
+  private def createScopeKey(metadata: RequestMetadata): String = {
+    val parts = List(
+      metadata.tenantId.getOrElse("_"),
+      metadata.userId.getOrElse("_"),
+      metadata.conversationId.getOrElse("_")
+    )
+    parts.mkString(":")
+  }
+
+  private def getHistory(metadata: RequestMetadata): Vector[ChatMessage] = {
+    val scopeKey = createScopeKey(metadata)
+    scopedHistories.getOrElse(scopeKey, Vector(ChatMessage(Role.System, config.instructions)))
+  }
+
+  private def updateHistory(
+      metadata: RequestMetadata,
+      newHistory: Vector[ChatMessage]
+  ): Unit = {
+    val scopeKey = createScopeKey(metadata)
+    scopedHistories = scopedHistories.updated(scopeKey, newHistory)
   }
 
   def name: String = config.name
   def provider: LLMProvider = config.provider
   def model: String = config.model
 
-  def generateText(userChatMessage: String): Either[ChezError, ChatResponse] = {
+  def generateText(
+      userChatMessage: String,
+      metadata: RequestMetadata
+  ): Either[ChezError, ChatResponse] = {
     logger.info(s"Agent '${config.name}' generating text for: $userChatMessage")
 
-    // Add user message to conversation history
+    // Get scoped history and add user message
+    var currentHistory = getHistory(metadata)
     val userMsg = ChatMessage(Role.User, userChatMessage)
-    history = history :+ userMsg
+    currentHistory = currentHistory :+ userMsg
 
     val request = ChatRequest(
-      messages = history.toList,
+      messages = currentHistory.toList,
       model = config.model,
       temperature = config.temperature,
       maxTokens = config.maxTokens,
-      stream = false
+      stream = false,
+      metadata = Some(metadata)
     )
 
     config.provider.chat(request) match {
       case Right(response) =>
-        // Add assistant response to conversation history
+        // Add assistant response to scoped conversation history
         val assistantMsg = ChatMessage(Role.Assistant, response.content)
-        history = history :+ assistantMsg
+        currentHistory = currentHistory :+ assistantMsg
+        updateHistory(metadata, currentHistory)
         logger.info(s"Agent '${config.name}' generated response: ${response.content.take(100)}...")
         Right(response)
       case Left(error) =>
@@ -65,7 +92,10 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     }
   }
 
-  def generateTextWithoutHistory(userChatMessage: String): Either[ChezError, ChatResponse] = {
+  def generateTextWithoutHistory(
+      userChatMessage: String,
+      metadata: RequestMetadata
+  ): Either[ChezError, ChatResponse] = {
     logger.info(s"Agent '${config.name}' generating text without history for: $userChatMessage")
 
     val messages = List(
@@ -78,7 +108,8 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       model = config.model,
       temperature = config.temperature,
       maxTokens = config.maxTokens,
-      stream = false
+      stream = false,
+      metadata = Some(metadata)
     )
 
     config.provider.chat(request) match {
@@ -91,24 +122,29 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     }
   }
 
-  def generateObject[T: Schema: Reader: scala.reflect.ClassTag](userChatMessage: String)
+  def generateObject[T: Schema: Reader: scala.reflect.ClassTag](
+      userChatMessage: String,
+      metadata: RequestMetadata
+  )
       : Either[ChezError, ObjectResponse[T]] = {
     logger.info(s"Agent '${config.name}' generating structured object for: $userChatMessage")
 
-    // Add user message to conversation history
+    // Get scoped history and add user message
+    var currentHistory = getHistory(metadata)
     val userMsg = ChatMessage(Role.User, userChatMessage)
-    history = history :+ userMsg
+    currentHistory = currentHistory :+ userMsg
 
     // Get the schema directly from the type parameter
     val schema = summon[Schema[T]].schema
 
     val request = ObjectRequest(
-      messages = history.toList,
+      messages = currentHistory.toList,
       model = config.model,
       schema = schema,
       temperature = config.temperature,
       maxTokens = config.maxTokens,
-      stream = false
+      stream = false,
+      metadata = Some(metadata)
     )
 
     config.provider.generateObject(request) match {
@@ -121,9 +157,10 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
             finishReason = jsonResponse.finishReason
           )
 
-          // Add assistant response to conversation history (convert object to string representation)
+          // Add assistant response to scoped conversation history (convert object to string representation)
           val assistantMsg = ChatMessage(Role.Assistant, jsonResponse.data.toString())
-          history = history :+ assistantMsg
+          currentHistory = currentHistory :+ assistantMsg
+          updateHistory(metadata, currentHistory)
 
           logger.info(s"Agent '${config.name}' generated structured object")
           Right(typedResponse)
@@ -150,7 +187,8 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
   }
 
   def generateObjectWithoutHistory[T: Schema: Reader: scala.reflect.ClassTag](
-      userChatMessage: String
+      userChatMessage: String,
+      metadata: RequestMetadata
   ): Either[ChezError, ObjectResponse[T]] = {
     logger.info(
       s"Agent '${config.name}' generating structured object without history for: $userChatMessage"
@@ -170,7 +208,8 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       schema = schema,
       temperature = config.temperature,
       maxTokens = config.maxTokens,
-      stream = false
+      stream = false,
+      metadata = Some(metadata)
     )
 
     config.provider.generateObject(request) match {
@@ -208,15 +247,25 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     }
   }
 
-  def getConversationHistory: List[ChatMessage] = history.toList
+  def getConversationHistory(metadata: RequestMetadata): List[ChatMessage] =
+    getHistory(metadata).toList
 
-  def clearHistory(): Unit = {
+  def clearHistory(metadata: RequestMetadata): Unit = {
     logger.info(s"Agent '${config.name}' clearing conversation history")
-    history = Vector(ChatMessage(Role.System, config.instructions))
+    val scopeKey = createScopeKey(metadata)
+    scopedHistories =
+      scopedHistories.updated(scopeKey, Vector(ChatMessage(Role.System, config.instructions)))
   }
 
-  def addChatMessage(message: ChatMessage): Unit =
-    history = history :+ message
+  def clearAllHistories(): Unit = {
+    logger.info(s"Agent '${config.name}' clearing all conversation histories")
+    scopedHistories = Map.empty
+  }
+
+  def addChatMessage(message: ChatMessage, metadata: RequestMetadata): Unit = {
+    val currentHistory = getHistory(metadata)
+    updateHistory(metadata, currentHistory :+ message)
+  }
 
   def withSystemChatMessage(systemChatMessage: String): Agent = {
     val newConfig = config.copy(instructions = systemChatMessage)
