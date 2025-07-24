@@ -44,18 +44,27 @@ val anthropicAgent = AgentFactory.createAnthropicAgent(
 
 ### Text Generation
 
+All ChezWiz methods require metadata for conversation scoping:
+
 ```scala
+// Create metadata for your conversation scope
+val metadata = RequestMetadata(
+  tenantId = Some("acme-corp"),
+  userId = Some("john-doe"),
+  conversationId = Some("support-chat-123")
+)
+
 // Simple text generation with conversation history
-val response1 = agent.generateText("What is the capital of France?")
-val response2 = agent.generateText("What's the population of that city?")
+val response1 = agent.generateText("What is the capital of France?", metadata)
+val response2 = agent.generateText("What's the population of that city?", metadata)
 
 // Text generation without history (stateless)
-val response3 = agent.generateTextWithoutHistory("Translate 'hello' to Spanish")
+val response3 = agent.generateTextWithoutHistory("Translate 'hello' to Spanish", metadata)
 
 response1 match {
   case Right(chatResponse) =>
     println(s"Response: ${chatResponse.content}")
-    chatResponse.usage.foreach(u => println(s"Tokens used: ${u.totalTokens}"))
+    chatResponse.usage.foreach(u => println(s"Tokens used: ${u.totalTokens}")
   case Left(error) =>
     println(s"Error: $error")
 }
@@ -87,7 +96,8 @@ case class WeatherReport(
 
 // Generate structured data
 val weatherResponse = agent.generateObject[WeatherReport](
-  "What's the current weather in Tokyo? Respond with structured data."
+  "What's the current weather in Tokyo? Respond with structured data.",
+  metadata
 )
 
 weatherResponse match {
@@ -109,22 +119,22 @@ ChezWiz supports multi-tenant conversation scoping using metadata to isolate con
 import chezwiz.agent.RequestMetadata
 
 // Create metadata for scoping
-val metadata = Some(RequestMetadata(
+val metadata = RequestMetadata(
   tenantId = Some("acme-corp"),
   userId = Some("john-doe"),
   conversationId = Some("support-chat-123")
-))
+)
 
 // Each scope maintains separate conversation history
 val response1 = agent.generateText("Hello, I need help with my account", metadata)
 val response2 = agent.generateText("What was my previous question?", metadata)
 
 // Different scope = different conversation
-val otherMetadata = Some(RequestMetadata(
+val otherMetadata = RequestMetadata(
   tenantId = Some("acme-corp"),
   userId = Some("jane-smith"),
   conversationId = Some("sales-inquiry-456")
-))
+)
 
 val response3 = agent.generateText("Hello, I'm interested in your products", otherMetadata)
 ```
@@ -135,17 +145,17 @@ You can provide partial metadata - missing fields are filled with `"_"`:
 
 ```scala
 // Only tenant and user, no specific conversation
-val metadata = Some(RequestMetadata(
+val metadata = RequestMetadata(
   tenantId = Some("acme-corp"),
   userId = Some("john-doe"),
   conversationId = None  // Will use "_"
-))
+)
 
 // Only user scoping
-val userOnlyMetadata = Some(RequestMetadata(
+val userOnlyMetadata = RequestMetadata(
   userId = Some("john-doe")
   // tenantId and conversationId will be "_"
-))
+)
 ```
 
 ### History Management
@@ -299,7 +309,21 @@ case class Person(
 
 // Generate complex structured data
 val personResponse = agent.generateObject[Person](
-  "Create a person profile for a software engineer in San Francisco"
+  "Create a person profile for a software engineer in San Francisco",
+  metadata
 )
 ```
 
+## Best Practices
+
+1. **Always provide metadata** - All ChezWiz methods require `RequestMetadata` for conversation scoping
+2. **Use scoped conversations** for multi-tenant applications to ensure data isolation
+3. **Handle errors gracefully** using the comprehensive error types
+4. **Set appropriate temperature and token limits** based on your use case
+5. **Use structured generation** when you need predictable output formats
+6. **Clear conversation history** when starting new logical conversations
+7. **Monitor token usage** to manage costs effectively
+
+## Examples
+
+See the [Examples.scala](../ChezWiz/src/main/scala/chezwiz/Examples/Examples.scala) file for more comprehensive usage examples.

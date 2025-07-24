@@ -13,6 +13,13 @@ object AgentSpec extends TestSuite:
       value: Int
   ) derives Schema, ReadWriter
 
+  // Default test metadata
+  val defaultMetadata = RequestMetadata(
+    tenantId = Some("test-tenant"),
+    userId = Some("test-user"),
+    conversationId = Some("test-conversation")
+  )
+
   // Mock LLM Provider for testing
   class MockLLMProvider extends LLMProvider:
     override val name: String = "Mock"
@@ -77,7 +84,7 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      agent.generateText("Hello") match {
+      agent.generateText("Hello", defaultMetadata) match {
         case Right(response) =>
           assert(response.content == "Mock response to: Hello")
           assert(response.model == "mock-model-1")
@@ -96,17 +103,17 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      agent.generateText("First message") match {
+      agent.generateText("First message", defaultMetadata) match {
         case Right(_) => // Success
         case Left(error) => throw new Exception(s"Unexpected error: $error")
       }
 
-      agent.generateText("Second message") match {
+      agent.generateText("Second message", defaultMetadata) match {
         case Right(_) => // Success
         case Left(error) => throw new Exception(s"Unexpected error: $error")
       }
 
-      val history = agent.getConversationHistory()
+      val history = agent.getConversationHistory(defaultMetadata)
       assert(history.size == 5) // system + user1 + assistant1 + user2 + assistant2
       assert(history(0).role == Role.System)
       assert(history(1).role == Role.User)
@@ -126,14 +133,14 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      agent.generateText("Test message") match {
+      agent.generateText("Test message", defaultMetadata) match {
         case Right(_) => // Success
         case Left(error) => throw new Exception(s"Unexpected error: $error")
       }
-      assert(agent.getConversationHistory().size > 1)
+      assert(agent.getConversationHistory(defaultMetadata).size > 1)
 
-      agent.clearHistory()
-      val history = agent.getConversationHistory()
+      agent.clearHistory(defaultMetadata)
+      val history = agent.getConversationHistory(defaultMetadata)
       assert(history.size == 1)
       assert(history(0).role == Role.System)
     }
@@ -221,17 +228,17 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      val metadata1 = Some(RequestMetadata(
+      val metadata1 = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = Some("conv1")
-      ))
+      )
 
-      val metadata2 = Some(RequestMetadata(
+      val metadata2 = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user2"),
         conversationId = Some("conv2")
-      ))
+      )
 
       // Generate messages with first metadata scope
       agent.generateText("Hello from user1", metadata1)
@@ -243,11 +250,9 @@ object AgentSpec extends TestSuite:
       // Check that histories are isolated
       val history1 = agent.getConversationHistory(metadata1)
       val history2 = agent.getConversationHistory(metadata2)
-      val defaultHistory = agent.getConversationHistory()
 
       assert(history1.size == 5) // system + 2 user + 2 assistant
       assert(history2.size == 3) // system + 1 user + 1 assistant
-      assert(defaultHistory.size == 1) // only system message
 
       // Verify content isolation
       assert(history1(1).content == "Hello from user1")
@@ -265,25 +270,25 @@ object AgentSpec extends TestSuite:
       )
 
       // Only tenant
-      val tenantOnly = Some(RequestMetadata(
+      val tenantOnly = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = None,
         conversationId = None
-      ))
+      )
 
       // Only user
-      val userOnly = Some(RequestMetadata(
+      val userOnly = RequestMetadata(
         tenantId = None,
         userId = Some("user1"),
         conversationId = None
-      ))
+      )
 
       // Tenant and user, no conversation
-      val tenantUser = Some(RequestMetadata(
+      val tenantUser = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = None
-      ))
+      )
 
       agent.generateText("Message with tenant only", tenantOnly)
       agent.generateText("Message with user only", userOnly)
@@ -312,27 +317,32 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      val metadata = Some(RequestMetadata(
+      val metadata = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = Some("conv1")
-      ))
+      )
 
       // Add messages to scoped history
       agent.generateText("Test message 1", metadata)
       agent.generateText("Test message 2", metadata)
 
-      // Also add to default history
-      agent.generateText("Default message")
+      // Also add to different scope
+      val differentMetadata = RequestMetadata(
+        tenantId = Some("different-tenant"),
+        userId = Some("different-user"),
+        conversationId = Some("different-conv")
+      )
+      agent.generateText("Different scope message", differentMetadata)
 
       assert(agent.getConversationHistory(metadata).size == 5) // system + 2 user + 2 assistant
-      assert(agent.getConversationHistory().size == 3) // system + user + assistant
+      assert(agent.getConversationHistory(differentMetadata).size == 3) // system + user + assistant
 
       // Clear only the scoped history
       agent.clearHistory(metadata)
 
       assert(agent.getConversationHistory(metadata).size == 1) // only system message
-      assert(agent.getConversationHistory().size == 3) // unchanged
+      assert(agent.getConversationHistory(differentMetadata).size == 3) // unchanged
     }
 
     test("Clear all histories") {
@@ -344,27 +354,25 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      val metadata1 = Some(RequestMetadata(
+      val metadata1 = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = Some("conv1")
-      ))
+      )
 
-      val metadata2 = Some(RequestMetadata(
+      val metadata2 = RequestMetadata(
         tenantId = Some("tenant2"),
         userId = Some("user2"),
         conversationId = Some("conv2")
-      ))
+      )
 
       // Add messages to multiple scopes
       agent.generateText("Message 1", metadata1)
       agent.generateText("Message 2", metadata2)
-      agent.generateText("Default message")
 
       // Verify all have messages
       assert(agent.getConversationHistory(metadata1).size > 1)
       assert(agent.getConversationHistory(metadata2).size > 1)
-      assert(agent.getConversationHistory().size > 1)
 
       // Clear all histories
       agent.clearAllHistories()
@@ -372,7 +380,6 @@ object AgentSpec extends TestSuite:
       // Verify all are reset
       assert(agent.getConversationHistory(metadata1).size == 1) // only system
       assert(agent.getConversationHistory(metadata2).size == 1) // only system
-      assert(agent.getConversationHistory().size == 1) // only system
     }
 
     test("Add chat message with metadata") {
@@ -384,28 +391,33 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      val metadata = Some(RequestMetadata(
+      val metadata = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = Some("conv1")
-      ))
+      )
 
       // Manually add messages to scoped history
       agent.addChatMessage(ChatMessage(Role.User, "Manual message 1"), metadata)
       agent.addChatMessage(ChatMessage(Role.Assistant, "Manual response 1"), metadata)
 
-      // Also add to default
-      agent.addChatMessage(ChatMessage(Role.User, "Default manual message"))
+      // Also add to different scope
+      val differentMetadata = RequestMetadata(
+        tenantId = Some("different-tenant"),
+        userId = Some("different-user"),
+        conversationId = Some("different-conv")
+      )
+      agent.addChatMessage(ChatMessage(Role.User, "Different scope manual message"), differentMetadata)
 
       val scopedHistory = agent.getConversationHistory(metadata)
-      val defaultHistory = agent.getConversationHistory()
+      val differentHistory = agent.getConversationHistory(differentMetadata)
 
       assert(scopedHistory.size == 3) // system + manually added user + assistant
       assert(scopedHistory(1).content == "Manual message 1")
       assert(scopedHistory(2).content == "Manual response 1")
 
-      assert(defaultHistory.size == 2) // system + manually added user
-      assert(defaultHistory(1).content == "Default manual message")
+      assert(differentHistory.size == 2) // system + manually added user
+      assert(differentHistory(1).content == "Different scope manual message")
     }
 
     test("generateTextWithoutHistory respects metadata scoping") {
@@ -417,11 +429,11 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      val metadata = Some(RequestMetadata(
+      val metadata = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = Some("conv1")
-      ))
+      )
 
       // First add some history
       agent.generateText("Message with history", metadata)
@@ -501,17 +513,17 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      val metadata1 = Some(RequestMetadata(
+      val metadata1 = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = Some("conv1")
-      ))
+      )
 
-      val metadata2 = Some(RequestMetadata(
+      val metadata2 = RequestMetadata(
         tenantId = Some("tenant2"),
         userId = Some("user2"),
         conversationId = Some("conv2")
-      ))
+      )
 
       // Generate objects with different metadata
       agent.generateObject[TestData]("Generate object 1", metadata1) match {
@@ -549,11 +561,11 @@ object AgentSpec extends TestSuite:
         model = "mock-model-1"
       )
 
-      val metadata = Some(RequestMetadata(
+      val metadata = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = Some("conv1")
-      ))
+      )
 
       // First add some history
       agent.generateText("Message with history", metadata)
@@ -582,23 +594,23 @@ object AgentSpec extends TestSuite:
       )
 
       // Test different metadata combinations to ensure they create different scopes
-      val fullScope = Some(RequestMetadata(
+      val fullScope = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = Some("conv1")
-      ))
+      )
 
-      val sameScopeKey = Some(RequestMetadata(
+      val sameScopeKey = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = Some("conv1")
-      ))
+      )
 
-      val differentConv = Some(RequestMetadata(
+      val differentConv = RequestMetadata(
         tenantId = Some("tenant1"),
         userId = Some("user1"),
         conversationId = Some("conv2")
-      ))
+      )
 
       // Add messages with same scope key
       agent.generateText("Message 1", fullScope)

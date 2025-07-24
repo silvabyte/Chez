@@ -32,44 +32,26 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
   // Scoped history storage: Map[ScopeKey, Vector[ChatMessage]]
   private var scopedHistories: Map[String, Vector[ChatMessage]] = Map.empty
 
-  // Default history for backward compatibility (when no metadata is provided)
-  private var defaultHistory: Vector[ChatMessage] = {
-    if initialHistory.isEmpty then Vector(ChatMessage(Role.System, config.instructions))
-    else initialHistory
+  private def createScopeKey(metadata: RequestMetadata): String = {
+    val parts = List(
+      metadata.tenantId.getOrElse("_"),
+      metadata.userId.getOrElse("_"),
+      metadata.conversationId.getOrElse("_")
+    )
+    parts.mkString(":")
   }
 
-  private def createScopeKey(metadata: Option[RequestMetadata]): String = {
-    metadata match {
-      case None => "default"
-      case Some(meta) =>
-        val parts = List(
-          meta.tenantId.getOrElse("_"),
-          meta.userId.getOrElse("_"),
-          meta.conversationId.getOrElse("_")
-        )
-        parts.mkString(":")
-    }
-  }
-
-  private def getHistory(metadata: Option[RequestMetadata]): Vector[ChatMessage] = {
+  private def getHistory(metadata: RequestMetadata): Vector[ChatMessage] = {
     val scopeKey = createScopeKey(metadata)
-    if (scopeKey == "default") {
-      defaultHistory
-    } else {
-      scopedHistories.getOrElse(scopeKey, Vector(ChatMessage(Role.System, config.instructions)))
-    }
+    scopedHistories.getOrElse(scopeKey, Vector(ChatMessage(Role.System, config.instructions)))
   }
 
   private def updateHistory(
-      metadata: Option[RequestMetadata],
+      metadata: RequestMetadata,
       newHistory: Vector[ChatMessage]
   ): Unit = {
     val scopeKey = createScopeKey(metadata)
-    if (scopeKey == "default") {
-      defaultHistory = newHistory
-    } else {
-      scopedHistories = scopedHistories.updated(scopeKey, newHistory)
-    }
+    scopedHistories = scopedHistories.updated(scopeKey, newHistory)
   }
 
   def name: String = config.name
@@ -78,7 +60,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
 
   def generateText(
       userChatMessage: String,
-      metadata: Option[RequestMetadata] = None
+      metadata: RequestMetadata
   ): Either[ChezError, ChatResponse] = {
     logger.info(s"Agent '${config.name}' generating text for: $userChatMessage")
 
@@ -93,7 +75,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       temperature = config.temperature,
       maxTokens = config.maxTokens,
       stream = false,
-      metadata = metadata
+      metadata = Some(metadata)
     )
 
     config.provider.chat(request) match {
@@ -112,7 +94,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
 
   def generateTextWithoutHistory(
       userChatMessage: String,
-      metadata: Option[RequestMetadata] = None
+      metadata: RequestMetadata
   ): Either[ChezError, ChatResponse] = {
     logger.info(s"Agent '${config.name}' generating text without history for: $userChatMessage")
 
@@ -127,7 +109,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       temperature = config.temperature,
       maxTokens = config.maxTokens,
       stream = false,
-      metadata = metadata
+      metadata = Some(metadata)
     )
 
     config.provider.chat(request) match {
@@ -142,7 +124,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
 
   def generateObject[T: Schema: Reader: scala.reflect.ClassTag](
       userChatMessage: String,
-      metadata: Option[RequestMetadata] = None
+      metadata: RequestMetadata
   )
       : Either[ChezError, ObjectResponse[T]] = {
     logger.info(s"Agent '${config.name}' generating structured object for: $userChatMessage")
@@ -162,7 +144,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       temperature = config.temperature,
       maxTokens = config.maxTokens,
       stream = false,
-      metadata = metadata
+      metadata = Some(metadata)
     )
 
     config.provider.generateObject(request) match {
@@ -206,7 +188,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
 
   def generateObjectWithoutHistory[T: Schema: Reader: scala.reflect.ClassTag](
       userChatMessage: String,
-      metadata: Option[RequestMetadata] = None
+      metadata: RequestMetadata
   ): Either[ChezError, ObjectResponse[T]] = {
     logger.info(
       s"Agent '${config.name}' generating structured object without history for: $userChatMessage"
@@ -227,7 +209,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       temperature = config.temperature,
       maxTokens = config.maxTokens,
       stream = false,
-      metadata = metadata
+      metadata = Some(metadata)
     )
 
     config.provider.generateObject(request) match {
@@ -265,27 +247,22 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     }
   }
 
-  def getConversationHistory(metadata: Option[RequestMetadata] = None): List[ChatMessage] =
+  def getConversationHistory(metadata: RequestMetadata): List[ChatMessage] =
     getHistory(metadata).toList
 
-  def clearHistory(metadata: Option[RequestMetadata] = None): Unit = {
+  def clearHistory(metadata: RequestMetadata): Unit = {
     logger.info(s"Agent '${config.name}' clearing conversation history")
     val scopeKey = createScopeKey(metadata)
-    if (scopeKey == "default") {
-      defaultHistory = Vector(ChatMessage(Role.System, config.instructions))
-    } else {
-      scopedHistories =
-        scopedHistories.updated(scopeKey, Vector(ChatMessage(Role.System, config.instructions)))
-    }
+    scopedHistories =
+      scopedHistories.updated(scopeKey, Vector(ChatMessage(Role.System, config.instructions)))
   }
 
   def clearAllHistories(): Unit = {
     logger.info(s"Agent '${config.name}' clearing all conversation histories")
-    defaultHistory = Vector(ChatMessage(Role.System, config.instructions))
     scopedHistories = Map.empty
   }
 
-  def addChatMessage(message: ChatMessage, metadata: Option[RequestMetadata] = None): Unit = {
+  def addChatMessage(message: ChatMessage, metadata: RequestMetadata): Unit = {
     val currentHistory = getHistory(metadata)
     updateHistory(metadata, currentHistory :+ message)
   }
