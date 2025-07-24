@@ -528,7 +528,7 @@ class DefaultAgentMetrics extends AgentMetrics {
 // ============================================================================
 
 /** Hook that integrates with AgentMetrics for automatic collection */
-class MetricsHook(metrics: AgentMetrics) extends PreRequestHook with PostResponseHook
+class MetricsHook(metrics: AgentMetrics) extends AgentHook with PreRequestHook with PostResponseHook
     with PreObjectRequestHook with PostObjectResponseHook with ErrorHook with HistoryHook {
 
   override def onPreRequest(context: PreRequestContext): Unit = {

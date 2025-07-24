@@ -96,38 +96,41 @@ case class ScopeChangeContext(
 // Hook Trait Interfaces
 // ============================================================================
 
+/** Base trait for all agent hooks */
+trait AgentHook
+
 /** Hook executed before sending requests to LLM providers */
-trait PreRequestHook {
+trait PreRequestHook extends AgentHook {
   def onPreRequest(context: PreRequestContext): Unit
 }
 
 /** Hook executed after receiving responses from LLM providers */
-trait PostResponseHook {
+trait PostResponseHook extends AgentHook {
   def onPostResponse(context: PostResponseContext): Unit
 }
 
 /** Hook executed before sending object generation requests to LLM providers */
-trait PreObjectRequestHook {
+trait PreObjectRequestHook extends AgentHook {
   def onPreObjectRequest(context: PreObjectRequestContext): Unit
 }
 
 /** Hook executed after receiving object generation responses from LLM providers */
-trait PostObjectResponseHook {
+trait PostObjectResponseHook extends AgentHook {
   def onPostObjectResponse(context: PostObjectResponseContext): Unit
 }
 
 /** Hook executed when errors occur */
-trait ErrorHook {
+trait ErrorHook extends AgentHook {
   def onError(context: ErrorContext): Unit
 }
 
 /** Hook executed when conversation history changes */
-trait HistoryHook {
+trait HistoryHook extends AgentHook {
   def onHistoryChange(context: HistoryContext): Unit
 }
 
 /** Hook executed when conversation scope changes */
-trait ScopeChangeHook {
+trait ScopeChangeHook extends AgentHook {
   def onScopeChange(context: ScopeChangeContext): Unit
 }
 

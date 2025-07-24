@@ -320,6 +320,8 @@ ChezWiz provides a comprehensive hook system that allows you to inject custom lo
 
 ### Available Hook Types
 
+All hooks extend the base `AgentHook` trait:
+
 - **PreRequestHook** - Before sending requests to LLM providers
 - **PostResponseHook** - After receiving responses from LLM providers  
 - **PreObjectRequestHook** - Before sending object generation requests
@@ -334,7 +336,7 @@ ChezWiz provides a comprehensive hook system that allows you to inject custom lo
 import chezwiz.agent.*
 
 // Create a simple logging hook
-class LoggingHook extends PreRequestHook with PostResponseHook with ErrorHook {
+class LoggingHook extends AgentHook with PreRequestHook with PostResponseHook with ErrorHook {
   override def onPreRequest(context: PreRequestContext): Unit = {
     println(s"[${context.agentName}] Starting request with ${context.request.messages.size} messages")
   }
@@ -373,7 +375,7 @@ val agent = AgentFactory.createOpenAIAgent(
 ```scala
 import java.util.concurrent.atomic.AtomicLong
 
-class MetricsHook extends PreRequestHook with PostResponseHook with ErrorHook {
+class MetricsHook extends AgentHook with PreRequestHook with PostResponseHook with ErrorHook {
   private val requestCount = new AtomicLong(0)
   private val successCount = new AtomicLong(0) 
   private val errorCount = new AtomicLong(0)
@@ -429,7 +431,7 @@ case class Span(
   attributes: Map[String, String] = Map.empty
 )
 
-class TracingHook extends PreRequestHook with PostResponseHook {
+class TracingHook extends AgentHook with PreRequestHook with PostResponseHook {
   private val spans = mutable.ArrayBuffer[Span]()
 
   override def onPreRequest(context: PreRequestContext): Unit = {
@@ -464,7 +466,7 @@ class TracingHook extends PreRequestHook with PostResponseHook {
 ### History Analytics Hook
 
 ```scala
-class HistoryAnalyticsHook extends HistoryHook {
+class HistoryAnalyticsHook extends AgentHook with HistoryHook {
   private val operationCounts = mutable.Map[HistoryOperation, Int]()
 
   override def onHistoryChange(context: HistoryContext): Unit = {
@@ -543,7 +545,7 @@ Hooks are designed to be safe and non-intrusive:
 
 ```scala
 // Even if this hook always fails, the agent will continue working
-class FailingHook extends PreRequestHook {
+class FailingHook extends AgentHook with PreRequestHook {
   override def onPreRequest(context: PreRequestContext): Unit = {
     throw new RuntimeException("This hook always fails!")
   }
@@ -742,7 +744,7 @@ val jsonData = snapshot.toJson
 
 ```scala
 // Add custom hooks alongside automatic metrics
-class CustomAlertHook extends ErrorHook {
+class CustomAlertHook extends AgentHook with ErrorHook {
   override def onError(context: ErrorContext): Unit = {
     if (context.error.isInstanceOf[ChezError.NetworkError]) {
       // Send alert to your monitoring system
