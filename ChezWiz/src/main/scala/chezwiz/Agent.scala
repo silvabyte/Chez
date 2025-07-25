@@ -483,6 +483,16 @@ object Agent:
       idGenerator: () => String = () => UUID.randomUUID().toString
   ): Agent = {
     val generatedId = idGenerator()
-    val config = AgentConfig(generatedId, name, instructions, provider, model, temperature, maxTokens, hooks, idGenerator)
+    val config = AgentConfig(
+      generatedId,
+      name,
+      instructions,
+      provider,
+      model,
+      temperature,
+      maxTokens,
+      hooks,
+      idGenerator
+    )
     new Agent(config)
   }
