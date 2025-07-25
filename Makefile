@@ -151,10 +151,10 @@ quick-test:
 # ChezWiz AI Agent examples
 
 # Runs all ChezWiz examples
-.PHONY: example-wiz-all
-example-wiz-all:
+.PHONY: example-wiz
+example-wiz:
 	@echo "🚀 Running All ChezWiz examples..."
-	./mill ChezWhiz.runMain chezwiz.examples.AllExamples
+	./mill ChezWiz.runMain chezwiz.agent.examples.Examples
 
 # Run basic usage example showing core functionality
 .PHONY: example-basic

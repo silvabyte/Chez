@@ -7,10 +7,8 @@ import upickle.default.*
 import java.util.concurrent.atomic.AtomicLong
 import scala.collection.mutable
 
-/**
- * Terse, focused examples showing ChezWiz capabilities building upon each other
- */
-object Examples extends App:
+object Examples extends App {
+  Config.initialize(sys.env.getOrElse("ENV_DIR", os.pwd.toString))
 
   val metadata = RequestMetadata(
     tenantId = Some("demo"),
@@ -18,23 +16,25 @@ object Examples extends App:
     conversationId = Some("example")
   )
 
-  // Example 1: Basic text generation
+// Example 1: Basic text generation
   def basic(): Unit = {
     println("=== Basic Text Generation ===")
 
-    sys.env.get("OPENAI_API_KEY") match {
-      case Some(key) =>
-        val agent =
-          Agent("Assistant", "Give concise answers", new OpenAIProvider(key), "gpt-4o-mini")
-        agent.generateText("What is 2 + 2?", metadata) match {
-          case Right(response) => println(s"Answer: ${response.content}")
-          case Left(error) => println(s"Error: $error")
-        }
-      case None => println("OPENAI_API_KEY not found")
+    val agent = {
+      Agent(
+        "Assistant",
+        "Give concise answers",
+        new OpenAIProvider(Config.OPENAI_API_KEY),
+        "gpt-4o-mini"
+      )
+    }
+    agent.generateText("What is 2 + 2?", metadata) match {
+      case Right(response) => println(s"Answer: ${response.content}")
+      case Left(error) => println(s"Error: $error")
     }
   }
 
-  // Example 2: Structured data (builds on basic text)
+// Example 2: Structured data (builds on basic text)
   def structured(): Unit = {
     println("\n=== Structured Data Generation ===")
 
@@ -44,87 +44,93 @@ object Examples extends App:
         @Schema.description("Time in minutes") @Schema.minimum(1) minutes: Int
     ) derives Schema, ReadWriter
 
-    sys.env.get("OPENAI_API_KEY") match {
-      case Some(key) =>
-        val agent =
-          Agent("Planner", "Create structured task data", new OpenAIProvider(key), "gpt-4o")
-        agent.generateObject[Task](
-          "Create a task for reviewing code with high priority",
-          metadata
-        ) match {
-          case Right(response) =>
-            val task = response.data
-            println(s"Task: ${task.task} (${task.priority}, ${task.minutes}min)")
-          case Left(error) => println(s"Error: $error")
-        }
-      case None => println("OPENAI_API_KEY not found")
+    val agent = {
+      Agent(
+        "Planner",
+        "Create structured task data",
+        new OpenAIProvider(Config.OPENAI_API_KEY),
+        "gpt-4o"
+      )
+    }
+    agent.generateObject[Task](
+      "Create a task for reviewing code with high priority",
+      metadata
+    ) match {
+      case Right(response) =>
+        val task = response.data
+        println(s"Task: ${task.task} (${task.priority}, ${task.minutes}min)")
+      case Left(error) => println(s"Error: $error")
     }
   }
 
-  // Example 3: Conversation memory (builds on previous concepts)
+// Example 3: Conversation memory (builds on previous concepts)
   def conversation(): Unit = {
     println("\n=== Conversation with Memory ===")
 
-    sys.env.get("OPENAI_API_KEY") match {
-      case Some(key) =>
-        val agent =
-          Agent("Bot", "Remember context across messages", new OpenAIProvider(key), "gpt-4o-mini")
+    val agent = {
+      Agent(
+        "Bot",
+        "Remember context across messages",
+        new OpenAIProvider(Config.OPENAI_API_KEY),
+        "gpt-4o-mini"
+      )
+    }
 
-        val chatMetadata = RequestMetadata(
-          tenantId = Some("demo"),
-          userId = Some("alice"),
-          conversationId = Some("chat-1")
-        )
+    val chatMetadata = RequestMetadata(
+      tenantId = Some("demo"),
+      userId = Some("alice"),
+      conversationId = Some("chat-1")
+    )
 
-        // First message
-        agent.generateText("Hi, I'm Alice learning Scala", chatMetadata) match {
-          case Right(r1) =>
-            println(s"Alice: Hi, I'm Alice learning Scala")
-            println(s"Bot: ${r1.content.take(100)}...")
+    // First message
+    agent.generateText("Hi, I'm Alice learning Scala", chatMetadata) match {
+      case Right(r1) =>
+        println(s"Alice: Hi, I'm Alice learning Scala")
+        println(s"Bot: ${r1.content.take(100)}...")
 
-            // Second message - bot should remember Alice's name
-            agent.generateText("What should I learn first?", chatMetadata) match {
-              case Right(r2) => println(s"Bot: ${r2.content.take(100)}...")
-              case Left(error) => println(s"Error: $error")
-            }
+        // Second message - bot should remember Alice's name
+        agent.generateText("What should I learn first?", chatMetadata) match {
+          case Right(r2) => println(s"Bot: ${r2.content.take(100)}...")
           case Left(error) => println(s"Error: $error")
         }
-      case None => println("OPENAI_API_KEY not found")
+      case Left(error) => println(s"Error: $error")
     }
   }
 
-  // Example 4: Multi-provider support (builds on all previous)
+// Example 4: Multi-provider support (builds on all previous)
   def multiProvider(): Unit = {
     println("\n=== Multiple AI Providers ===")
 
     val question = "Explain recursion in one sentence"
 
     // Try OpenAI
-    sys.env.get("OPENAI_API_KEY").foreach { key =>
-      val openai =
-        Agent("OpenAI", "Brief technical answers", new OpenAIProvider(key), "gpt-4o-mini")
-      openai.generateText(question, metadata) match {
-        case Right(response) => println(s"OpenAI: ${response.content}")
-        case Left(error) => println(s"OpenAI Error: $error")
-      }
+    val openai = {
+      Agent(
+        "OpenAI",
+        "Brief technical answers",
+        new OpenAIProvider(Config.OPENAI_API_KEY),
+        "gpt-4o-mini"
+      )
+    }
+    openai.generateText(question, metadata) match {
+      case Right(response) => println(s"OpenAI: ${response.content}")
+      case Left(error) => println(s"OpenAI Error: $error")
     }
 
     // Try Anthropic
-    sys.env.get("ANTHROPIC_API_KEY").foreach { key =>
-      val claude = Agent(
-        "Claude",
-        "Brief technical answers",
-        new AnthropicProvider(key),
-        "claude-3-5-haiku-20241022"
-      )
-      claude.generateText(question, metadata) match {
-        case Right(response) => println(s"Claude: ${response.content}")
-        case Left(error) => println(s"Claude Error: $error")
-      }
+    val claude = Agent(
+      "Claude",
+      "Brief technical answers",
+      new AnthropicProvider(Config.ANTHROPIC_API_KEY),
+      "claude-3-5-haiku-20241022"
+    )
+    claude.generateText(question, metadata) match {
+      case Right(response) => println(s"Claude: ${response.content}")
+      case Left(error) => println(s"Claude Error: $error")
     }
   }
 
-  // Example 5: Monitoring with hooks (builds on everything above)
+// Example 5: Monitoring with hooks (builds on everything above)
   def monitoring(): Unit = {
     println("\n=== Agent Monitoring & Hooks ===")
 
@@ -157,85 +163,77 @@ object Examples extends App:
         println(s"[${ctx.agentName}] Completed in ${ctx.duration}ms")
     }
 
-    sys.env.get("OPENAI_API_KEY") match {
-      case Some(key) =>
-        val metrics = new MetricsHook()
-        val logging = new LogHook()
+    val metrics = new MetricsHook()
+    val logging = new LogHook()
 
-        val hooks = HookRegistry.empty
-          .addPreRequestHook(metrics)
-          .addPostResponseHook(metrics)
-          .addErrorHook(metrics)
-          .addPreRequestHook(logging)
-          .addPostResponseHook(logging)
+    val hooks = HookRegistry.empty
+      .addPreRequestHook(metrics)
+      .addPostResponseHook(metrics)
+      .addErrorHook(metrics)
+      .addPreRequestHook(logging)
+      .addPostResponseHook(logging)
 
-        AgentFactory.createOpenAIAgent(
-          "Monitored",
-          "You are monitored",
-          key,
-          "gpt-4o-mini",
-          hooks = hooks
-        ) match {
-          case Right(agent) =>
-            println("✅ Agent with monitoring created")
+    AgentFactory.createOpenAIAgent(
+      "Monitored",
+      "You are monitored",
+      Config.OPENAI_API_KEY,
+      "gpt-4o-mini",
+      hooks = hooks
+    ) match {
+      case Right(agent) =>
+        println("✅ Agent with monitoring created")
 
-            // Run a few operations to generate metrics
-            List(
-              "Hello, how are you?",
-              "What's the weather like?",
-              "Tell me a joke"
-            ).foreach { msg =>
-              agent.generateText(msg, metadata) match {
-                case Right(response) => println(s"Response: ${response.content.take(50)}...")
-                case Left(error) => println(s"Error: $error")
-              }
-            }
-
-            println(s"\n📊 Final Metrics: ${metrics.stats}")
-
-          case Left(error) => println(s"Failed to create monitored agent: $error")
+        // Run a few operations to generate metrics
+        List(
+          "Hello, how are you?",
+          "What's the weather like?",
+          "Tell me a joke"
+        ).foreach { msg =>
+          agent.generateText(msg, metadata) match {
+            case Right(response) => println(s"Response: ${response.content.take(50)}...")
+            case Left(error) => println(s"Error: $error")
+          }
         }
-      case None => println("OPENAI_API_KEY not found")
+
+        println(s"\n📊 Final Metrics: ${metrics.stats}")
+
+      case Left(error) => println(s"Failed to create monitored agent: $error")
     }
   }
 
-  // Example 6: Built-in metrics system (most advanced)
+// Example 6: Built-in metrics system (most advanced)
   def builtInMetrics(): Unit = {
     println("\n=== Built-in Metrics System ===")
 
-    sys.env.get("OPENAI_API_KEY") match {
-      case Some(key) =>
-        // Use factory method for automatic metrics
-        MetricsFactory.createOpenAIAgentWithMetrics(
-          "Production",
-          "Production agent with metrics",
-          key,
-          "gpt-4o-mini"
-        ) match {
-          case Right((agent, metrics)) =>
-            println("✅ Agent with built-in metrics created")
+    // Use factory method for automatic metrics
+    MetricsFactory.createOpenAIAgentWithMetrics(
+      "Production",
+      "Production agent with metrics",
+      Config.OPENAI_API_KEY,
+      "gpt-4o-mini"
+    ) match {
+      case Right((agent, metrics)) =>
+        println("✅ Agent with built-in metrics created")
 
-            // Run operations with different metadata scopes
-            val users = List("alice", "bob", "charlie")
-            users.foreach { user =>
-              val userMetadata = RequestMetadata(
-                tenantId = Some("company"),
-                userId = Some(user),
-                conversationId = Some(s"session-$user")
-              )
+        // Run operations with different metadata scopes
+        val users = List("alice", "bob", "charlie")
+        users.foreach { user =>
+          val userMetadata = RequestMetadata(
+            tenantId = Some("company"),
+            userId = Some(user),
+            conversationId = Some(s"session-$user")
+          )
 
-              agent.generateText(s"Hello from $user", userMetadata)
-            }
-
-            // Print comprehensive metrics
-            metrics.getSnapshot("Production").foreach { snapshot =>
-              println(s"\n📈 Production Metrics:")
-              println(snapshot.summary)
-            }
-
-          case Left(error) => println(s"Failed to create production agent: $error")
+          agent.generateText(s"Hello from $user", userMetadata)
         }
-      case None => println("OPENAI_API_KEY not found")
+
+        // Print comprehensive metrics
+        metrics.getSnapshot("Production").foreach { snapshot =>
+          println(s"\n📈 Production Metrics:")
+          println(snapshot.summary)
+        }
+
+      case Left(error) => println(s"Failed to create production agent: $error")
     }
   }
 
@@ -250,3 +248,4 @@ object Examples extends App:
   println("\n=== Examples Complete ===")
   println("💡 Each example builds on the previous, showing progressive ChezWiz capabilities")
   println("🔧 Set OPENAI_API_KEY and/or ANTHROPIC_API_KEY to see real results")
+}

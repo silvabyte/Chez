@@ -16,15 +16,18 @@ import ujson.Value
 import upickle.default.*
 import chez.derivation.Schema
 import chez.Chez
+import java.util.UUID
 
 case class AgentConfig(
+    id: String,
     name: String,
     instructions: String,
     provider: LLMProvider,
     model: String,
     temperature: Option[Double] = None,
     maxTokens: Option[Int] = None,
-    hooks: HookRegistry = HookRegistry.empty
+    hooks: HookRegistry = HookRegistry.empty,
+    idGenerator: () => String = () => UUID.randomUUID().toString
 )
 
 class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.empty)
@@ -55,6 +58,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     scopedHistories = scopedHistories.updated(scopeKey, newHistory)
   }
 
+  def id: String = config.id
   def name: String = config.name
   def provider: LLMProvider = config.provider
   def model: String = config.model
@@ -475,8 +479,10 @@ object Agent:
       model: String,
       temperature: Option[Double] = None,
       maxTokens: Option[Int] = None,
-      hooks: HookRegistry = HookRegistry.empty
+      hooks: HookRegistry = HookRegistry.empty,
+      idGenerator: () => String = () => UUID.randomUUID().toString
   ): Agent = {
-    val config = AgentConfig(name, instructions, provider, model, temperature, maxTokens, hooks)
+    val generatedId = idGenerator()
+    val config = AgentConfig(generatedId, name, instructions, provider, model, temperature, maxTokens, hooks, idGenerator)
     new Agent(config)
   }
