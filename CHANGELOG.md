@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.3] - 2025-07-25
+
+* feat: Add hooks and metrics system to ChezWiz (#3)
+* chore: release v0.1.2
+
 ## [0.1.2] - 2025-07-24
 
 * feat: add agent request metadata (#2)
