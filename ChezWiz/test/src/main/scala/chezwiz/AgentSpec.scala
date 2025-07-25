@@ -87,7 +87,9 @@ object AgentSpec extends TestSuite:
       // ID should be generated
       assert(agent.id.nonEmpty)
       // ID should be a valid UUID format
-      assert(agent.id.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"))
+      assert(agent.id.matches(
+        "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      ))
     }
 
     test("Agent ID generation - custom generator") {
@@ -128,12 +130,12 @@ object AgentSpec extends TestSuite:
       )
 
       val initialId = agent.id
-      
+
       // Perform various operations
       agent.generateText("Test message", defaultMetadata)
       agent.clearHistory(defaultMetadata)
       agent.addChatMessage(ChatMessage(Role.User, "Another message"), defaultMetadata)
-      
+
       // ID should remain the same
       assert(agent.id == initialId)
     }
