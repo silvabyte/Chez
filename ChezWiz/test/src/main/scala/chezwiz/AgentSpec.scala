@@ -75,6 +75,69 @@ object AgentSpec extends TestSuite:
       assert(agent.provider.name == "Mock")
     }
 
+    test("Agent ID generation - default UUID") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful test assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      // ID should be generated
+      assert(agent.id.nonEmpty)
+      // ID should be a valid UUID format
+      assert(agent.id.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"))
+    }
+
+    test("Agent ID generation - custom generator") {
+      val mockProvider = new MockLLMProvider()
+      var counter = 0
+      val customIdGenerator = () => {
+        counter += 1
+        s"custom-agent-$counter"
+      }
+
+      val agent1 = Agent(
+        name = "Test Agent 1",
+        instructions = "You are a helpful test assistant",
+        provider = mockProvider,
+        model = "mock-model-1",
+        idGenerator = customIdGenerator
+      )
+
+      val agent2 = Agent(
+        name = "Test Agent 2",
+        instructions = "You are a helpful test assistant",
+        provider = mockProvider,
+        model = "mock-model-1",
+        idGenerator = customIdGenerator
+      )
+
+      assert(agent1.id == "custom-agent-1")
+      assert(agent2.id == "custom-agent-2")
+    }
+
+    test("Agent ID persists throughout agent lifecycle") {
+      val mockProvider = new MockLLMProvider()
+      val agent = Agent(
+        name = "Test Agent",
+        instructions = "You are a helpful test assistant",
+        provider = mockProvider,
+        model = "mock-model-1"
+      )
+
+      val initialId = agent.id
+      
+      // Perform various operations
+      agent.generateText("Test message", defaultMetadata)
+      agent.clearHistory(defaultMetadata)
+      agent.addChatMessage(ChatMessage(Role.User, "Another message"), defaultMetadata)
+      
+      // ID should remain the same
+      assert(agent.id == initialId)
+    }
+
     test("Agent generates text response") {
       val mockProvider = new MockLLMProvider()
       val agent = Agent(
