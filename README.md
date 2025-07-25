@@ -49,16 +49,48 @@ def createUser(validatedRequest: ValidatedRequest) = {
   }
 }
 
-// LLM agents with structured generation
+// LLM agents with structured generation and hooks for observability
+import chezwiz.agent.*
+
+// Simple logging hook for monitoring
+class LoggingHook extends PreRequestHook with PostResponseHook {
+  override def onPreRequest(context: PreRequestContext): Unit = 
+    println(s"[${context.agentName}] Starting request...")
+  override def onPostResponse(context: PostResponseContext): Unit = 
+    println(s"[${context.agentName}] Completed in ${context.duration}ms")
+}
+
+val hooks = HookRegistry.empty
+  .addPreRequestHook(new LoggingHook())
+  .addPostResponseHook(new LoggingHook())
+
 val agent = AgentFactory.createOpenAIAgent(
   name = "DataAgent",
   instructions = "Generate structured data based on user requests.",
   apiKey = "your-api-key",
+  model = "gpt-4o",
+  hooks = hooks
+).toOption.get
+
+// Generate structured data with conversation history and automatic metrics
+val metadata = RequestMetadata(
+  tenantId = Some("my-org"),
+  userId = Some("user-123"),
+  conversationId = Some("data-session")
+)
+val response = agent.generateObject[User]("Create a user profile for a software engineer", metadata)
+
+// Get comprehensive metrics - all automatically collected
+val (metricsAgent, metrics) = MetricsFactory.createOpenAIAgentWithMetrics(
+  name = "ProductionAgent",
+  instructions = "Production agent with built-in observability",
+  apiKey = "your-api-key",
   model = "gpt-4o"
 ).toOption.get
 
-// Generate structured data with conversation history
-val response = agent.generateObject[User]("Create a user profile for a software engineer")
+// Export metrics for monitoring systems
+println(metrics.getSnapshot("ProductionAgent").get.toPrometheusFormat)
+println(metrics.getSnapshot("ProductionAgent").get.summary)
 ```
 
 ## Installation
@@ -102,7 +134,9 @@ make test                 # Run all tests
 ✅ **Comprehensive validation for body, query, params, headers**  
 ✅ **Type-safe LLM agents with multi-provider support**  
 ✅ **Structured LLM response generation**  
-✅ **Scoped conversation management (tenant/user/conversation)**
+✅ **Scoped conversation management (tenant/user/conversation)**  
+✅ **Comprehensive hook system for observability and custom logic**  
+✅ **Built-in metrics system with Prometheus and JSON export**
 
 ## License
 

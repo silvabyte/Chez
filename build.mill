@@ -1,6 +1,104 @@
 import mill._, scalalib._
+import scala.util.{Try, Success, Failure}
 
-trait Shared extends ScalaModule {
+case class GitHubDependency(
+    owner: String,
+    repo: String,
+    modules: Option[Vector[String]] = Some(Vector.empty),
+    version: String = "main"
+)
+
+//This lets me use gh repos directly for my deps
+//and side step 3rd party package repos
+trait GitHubDepsModule extends ScalaModule {
+  def githubDeps: Seq[GitHubDependency] = Seq()
+
+  def downloadAndBuildGitHubDeps = Task {
+    val depsDir = Task.dest / "github-deps"
+    os.makeDir.all(depsDir)
+
+    githubDeps.flatMap { dep =>
+      val repoDir = depsDir / s"${dep.owner}-${dep.repo}"
+
+      // Clone or update repo
+      if (!os.exists(repoDir)) {
+        os.proc("git", "clone", s"https://github.com/${dep.owner}/${dep.repo}.git", repoDir).call()
+      } else {
+        os.proc("git", "fetch", "origin").call(cwd = repoDir)
+      }
+
+      // Checkout specific version
+      os.proc("git", "checkout", dep.version).call(cwd = repoDir)
+
+      // Build the project (assuming it uses Mill)
+      if (os.exists(repoDir / "build.mill")) {
+        // Use ./mill script if available, otherwise try system mill
+        val millCmd = if (os.exists(repoDir / "mill")) "./mill" else "mill"
+
+        Try {
+          os.proc(millCmd, "__.assembly").call(cwd = repoDir)
+        } match {
+          case Success(_) =>
+          case Failure(e) =>
+            // Fallback: try individual module assemblies
+            val modules = {
+              os.proc(millCmd, "resolve", "_").call(cwd = repoDir).out.text().split('\n')
+                .filter(_.nonEmpty).map(_.trim).toSeq
+            }
+
+            modules.find(!_.contains(".")).foreach { module =>
+              os.proc(millCmd, s"$module.assembly").call(cwd = repoDir)
+            }
+        }
+
+        // Find the generated JAR
+        val outDir = repoDir / "out"
+        val jarFiles = os.walk(outDir)
+          .filter(_.ext == "jar")
+          .filter(p => p.toString.contains("assembly.dest") && !p.toString.contains("test"))
+
+        if (jarFiles.nonEmpty) {
+          // Handle multiple modules: create separate JARs for each specified module
+          dep.modules match {
+            case Some(modules) if modules.nonEmpty =>
+              // Find JAR files for each specified module
+              modules.map { moduleName =>
+                val moduleJarFiles =
+                  jarFiles.filter(_.toString.contains(s"/$moduleName/assembly.dest"))
+                if (moduleJarFiles.nonEmpty) {
+                  val jarFile = moduleJarFiles.head
+                  val targetJar =
+                    Task.dest / s"${dep.owner}-${dep.repo}-$moduleName-${dep.version}.jar"
+                  os.copy(jarFile, targetJar, replaceExisting = true)
+                  PathRef(targetJar)
+                } else {
+                  throw new Exception(
+                    s"No assembly JAR found for module $moduleName in ${dep.owner}/${dep.repo}"
+                  )
+                }
+              }.toSeq
+            case _ =>
+              // No specific modules, use first available JAR
+              val jarFile = jarFiles.head
+              val targetJar = Task.dest / s"${dep.owner}-${dep.repo}-${dep.version}.jar"
+              os.copy(jarFile, targetJar, replaceExisting = true)
+              Seq(PathRef(targetJar))
+          }
+        } else {
+          throw new Exception(s"No assembly JAR found for ${dep.owner}/${dep.repo}")
+        }
+      } else {
+        throw new Exception(s"No build.mill found in ${dep.owner}/${dep.repo}")
+      }
+    }
+  }
+
+  override def unmanagedClasspath = Task {
+    super.unmanagedClasspath() ++ downloadAndBuildGitHubDeps()
+  }
+}
+
+trait Shared extends GitHubDepsModule {
   def scalaVersion = "3.6.2"
 
   def mvnDeps = Task {
@@ -9,6 +107,10 @@ trait Shared extends ScalaModule {
       mvn"com.lihaoyi::os-lib:0.11.3"
     )
   }
+
+  override def githubDeps = Seq(
+    GitHubDependency("silvabyte", "ScalaDotEnv", Some(Vector("DotEnv")), "v0.1.1")
+  )
 
   object test extends ScalaTests {
     def mvnDeps = Task {
