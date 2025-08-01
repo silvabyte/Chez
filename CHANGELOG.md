@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.4] - 2025-08-01
+
+* feat: Add LM Studio and Custom Endpoint Provider Support (#4)
+* chore: release v0.1.3
+
 ## [0.1.3] - 2025-07-25
 
 * feat: Add hooks and metrics system to ChezWiz (#3)
