@@ -38,7 +38,7 @@ abstract class BaseLLMProvider extends LLMProvider:
   ): Either[ChezError, String] = {
     httpVersion match {
       case HttpVersion.Http11 =>
-        LocalNetworkHttpClient.post(url, headers, body.toString(), readTimeout = 60000)
+        Http11Client.post(url, headers, body.toString(), readTimeout = 60000)
 
       case HttpVersion.Http2 =>
         Try {
