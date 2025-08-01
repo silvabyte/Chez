@@ -44,7 +44,7 @@ val anthropicAgent = AgentFactory.createAnthropicAgent(
 )
 ```
 
-For custom endpoints and local LLMs, see the [Custom Endpoints Guide](custom-endpoints.md).
+For custom providers and local LLMs, see the [Custom Providers Guide](custom-providers.md).
 
 ### Text Generation
 

@@ -1,7 +1,7 @@
 package chezwiz.agent.examples
 
 import chezwiz.agent.{Agent, AgentFactory, RequestMetadata}
-import chezwiz.agent.providers.{CustomEndpointProvider, HttpVersion}
+import chezwiz.agent.providers.{LMStudioProvider, CustomEndpointProvider, HttpVersion}
 import scribe.Logging
 
 object LMStudioExample extends App with Logging:
@@ -23,11 +23,10 @@ object LMStudioExample extends App with Logging:
     logger.info(s"LM Studio URL: $lmStudioUrl")
     logger.info(s"LM Studio Model: $modelId")
 
-    // LM Studio uses HTTP/1.1 for compatibility with local servers
-    val provider = CustomEndpointProvider.forLMStudio(
+    // Create LM Studio provider
+    val provider = LMStudioProvider(
       baseUrl = lmStudioUrl,
       modelId = modelId
-      // httpVersion defaults to Http11 for LM Studio
     )
 
     val agent = Agent(
@@ -60,7 +59,7 @@ object LMStudioExample extends App with Logging:
     val lmStudioUrl = Config.get("LM_STUDIO_URL", "http://localhost:1234/v1")
     val modelId = Config.get("LM_STUDIO_MODEL", "local-model")
 
-    val provider = CustomEndpointProvider.forLMStudio(
+    val provider = LMStudioProvider(
       baseUrl = lmStudioUrl,
       modelId = modelId
     )
@@ -87,6 +86,34 @@ object LMStudioExample extends App with Logging:
     }
   }
 
+  // Example 3: Using any OpenAI-compatible endpoint
+  def exampleOpenAICompatible(): Unit = {
+    logger.info("Example 3: OpenAI-compatible endpoint")
+
+    val provider = CustomEndpointProvider(
+      baseUrl = "https://api.example.com/v1",
+      apiKey = sys.env.getOrElse("CUSTOM_API_KEY", ""),
+      supportedModels = List("gpt-3.5-turbo", "gpt-4"),
+      customHeaders = Map("X-Custom-Header" -> "value")
+    )
+
+    val agent = Agent(
+      name = "CustomAPIAgent",
+      instructions = "You are a helpful assistant.",
+      provider = provider,
+      model = "gpt-3.5-turbo"
+    )
+
+    val metadata = RequestMetadata()
+
+    agent.generateText("What is the weather like?", metadata) match {
+      case Right(response) =>
+        logger.info(s"Response: ${response.content}")
+      case Left(error) =>
+        logger.error(s"Error: $error")
+    }
+  }
+
   // Example 4: Using custom provider directly
   def exampleCustomProvider(): Unit = {
     logger.info("Example 4: Using custom provider directly")
@@ -95,7 +122,7 @@ object LMStudioExample extends App with Logging:
     val lmStudioUrl = Config.get("LM_STUDIO_URL", "http://localhost:1234/v1")
     val modelId = Config.get("LM_STUDIO_MODEL", "local-model")
 
-    val lmStudioProvider = CustomEndpointProvider.forLMStudio(
+    val lmStudioProvider = LMStudioProvider(
       baseUrl = lmStudioUrl,
       modelId = modelId
     )
@@ -135,7 +162,7 @@ object LMStudioExample extends App with Logging:
     val lmStudioUrl = Config.get("LM_STUDIO_URL", "http://localhost:1234/v1")
     val modelId = Config.get("LM_STUDIO_MODEL", "local-model")
 
-    val provider = CustomEndpointProvider.forLMStudio(
+    val provider = LMStudioProvider(
       baseUrl = lmStudioUrl,
       modelId = modelId
     )
@@ -173,31 +200,23 @@ object LMStudioExample extends App with Logging:
     val lmStudioUrl = Config.get("LM_STUDIO_URL", "http://localhost:1234/v1")
     val modelId = Config.get("LM_STUDIO_MODEL", "local-model")
 
-    // LM Studio with explicit HTTP/1.1 (default for forLMStudio)
-    val lmStudioProvider = CustomEndpointProvider.forLMStudio(
+    // LM Studio provider (automatically uses HTTP/1.1)
+    val lmStudioProvider = LMStudioProvider(
       baseUrl = lmStudioUrl,
-      modelId = modelId,
-      httpVersion = HttpVersion.Http11 // Explicit, but this is the default
+      modelId = modelId
     )
 
-    // LM Studio forced to use HTTP/2 (not recommended for local servers)
-    val lmStudioHttp2 = CustomEndpointProvider.forLMStudio(
-      baseUrl = lmStudioUrl,
-      modelId = modelId,
-      httpVersion = HttpVersion.Http2 // Override default
-    )
-
-    // OpenAI-compatible endpoint with explicit HTTP/2 (default)
-    val openAICompatible = CustomEndpointProvider.forOpenAICompatible(
+    // Custom OpenAI-compatible endpoint with HTTP/2 (default)
+    val openAICompatible = CustomEndpointProvider(
       baseUrl = "https://api.example.com/v1",
       apiKey = "your-api-key",
       httpVersion = HttpVersion.Http2 // Explicit, but this is the default
     )
 
-    // Custom endpoint with HTTP/1.1 for compatibility
-    val customProvider = new CustomEndpointProvider(
+    // Custom endpoint with HTTP/1.1 for local network
+    val customProvider = CustomEndpointProvider(
       baseUrl = "http://192.168.1.100:8080/v1",
-      requiresAuthentication = false,
+      apiKey = "", // No auth for local endpoint
       httpVersion = HttpVersion.Http11 // Use HTTP/1.1 for local network
     )
 

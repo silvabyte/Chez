@@ -11,15 +11,21 @@ import chezwiz.agent.{
   ChezError
 }
 
+/**
+ * Provider for custom OpenAI-compatible endpoints.
+ * 
+ * @param apiKey API key for authentication
+ * @param baseUrl Base URL of the API endpoint
+ * @param supportedModels List of supported models (empty = allow any)
+ * @param customHeaders Additional headers to include in requests
+ * @param httpVersion HTTP protocol version to use
+ */
 class CustomEndpointProvider(
-    protected val apiKey: String = "",
+    protected val apiKey: String,
     override protected val baseUrl: String,
     override val supportedModels: List[String] = List.empty,
-    val useOpenAIFormat: Boolean = true,
-    val requiresAuthentication: Boolean = true,
     val customHeaders: Map[String, String] = Map.empty,
-    override val httpVersion: HttpVersion = HttpVersion.Http2,
-    val useJsonSchemaFormat: Boolean = false // Use json_schema format for structured output
+    override val httpVersion: HttpVersion = HttpVersion.Http2
 ) extends BaseLLMProvider:
 
   override val name: String = s"CustomEndpoint($baseUrl)"
@@ -27,7 +33,7 @@ class CustomEndpointProvider(
   override protected def buildHeaders(apiKey: String): Map[String, String] = {
     val baseHeaders = Map("Content-Type" -> "application/json")
 
-    val authHeaders = if (requiresAuthentication && apiKey.nonEmpty) {
+    val authHeaders = if (apiKey.nonEmpty) {
       Map("Authorization" -> s"Bearer $apiKey")
     } else {
       Map.empty
@@ -37,14 +43,7 @@ class CustomEndpointProvider(
   }
 
   override protected def buildRequestBody(request: ChatRequest): ujson.Value = {
-    // TODO: use case class and pattern match vs this nyucky amatuer hour stuff
-    if (useOpenAIFormat) {
-      buildOpenAICompatibleRequestBody(request)
-    } else {
-      throw new NotImplementedError(
-        "Custom request format not yet implemented. Use useOpenAIFormat=true"
-      )
-    }
+    buildOpenAICompatibleRequestBody(request)
   }
 
   private def buildOpenAICompatibleRequestBody(request: ChatRequest): ujson.Value = {
@@ -73,13 +72,7 @@ class CustomEndpointProvider(
   }
 
   override protected def parseResponse(responseBody: String): Either[ChezError, ChatResponse] = {
-    if (useOpenAIFormat) {
-      parseOpenAICompatibleResponse(responseBody)
-    } else {
-      throw new NotImplementedError(
-        "Custom response format not yet implemented. Use useOpenAIFormat=true"
-      )
-    }
+    parseOpenAICompatibleResponse(responseBody)
   }
 
   private def parseOpenAICompatibleResponse(responseBody: String)
@@ -117,13 +110,7 @@ class CustomEndpointProvider(
   }
 
   override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value = {
-    if (useOpenAIFormat) {
-      buildOpenAICompatibleObjectRequestBody(request)
-    } else {
-      throw new NotImplementedError(
-        "Custom object request format not yet implemented. Use useOpenAIFormat=true"
-      )
-    }
+    buildOpenAICompatibleObjectRequestBody(request)
   }
 
   private def buildOpenAICompatibleObjectRequestBody(request: ObjectRequest): ujson.Value = {
@@ -145,23 +132,10 @@ class CustomEndpointProvider(
       "stream" -> request.stream
     )
 
-    // Add response_format for structured output
-    if (useJsonSchemaFormat) {
-      // LM Studio and other providers that support json_schema format
-      baseObj("response_format") = ujson.Obj(
-        "type" -> "json_schema",
-        "json_schema" -> ujson.Obj(
-          "name" -> "structured_output",
-          "strict" -> "true",
-          "schema" -> request.schema.toJsonSchema
-        )
-      )
-    } else {
-      // Standard OpenAI json_object format
-      baseObj("response_format") = ujson.Obj(
-        "type" -> "json_object"
-      )
-    }
+    // Standard OpenAI json_object format
+    baseObj("response_format") = ujson.Obj(
+      "type" -> "json_object"
+    )
 
     request.temperature.foreach(temp => baseObj("temperature") = temp)
     request.maxTokens.foreach(tokens => baseObj("max_tokens") = tokens)
@@ -171,13 +145,7 @@ class CustomEndpointProvider(
 
   override protected def parseObjectResponse(responseBody: String)
       : Either[ChezError, ObjectResponse[ujson.Value]] = {
-    if (useOpenAIFormat) {
-      parseOpenAICompatibleObjectResponse(responseBody)
-    } else {
-      throw new NotImplementedError(
-        "Custom object response format not yet implemented. Use useOpenAIFormat=true"
-      )
-    }
+    parseOpenAICompatibleObjectResponse(responseBody)
   }
 
   private def parseOpenAICompatibleObjectResponse(responseBody: String)
@@ -225,39 +193,27 @@ class CustomEndpointProvider(
   }
 
 object CustomEndpointProvider:
-  def forLMStudio(
-      baseUrl: String,
-      modelId: String = "local-model",
-      httpVersion: HttpVersion = HttpVersion.Http11
-  ): CustomEndpointProvider = {
-    new CustomEndpointProvider(
-      apiKey = "",
-      baseUrl = baseUrl,
-      supportedModels = List(modelId),
-      useOpenAIFormat = true,
-      requiresAuthentication = false,
-      customHeaders = Map.empty,
-      httpVersion = httpVersion,
-      useJsonSchemaFormat = true // LM Studio supports json_schema format
-    )
-  }
-
-  def forOpenAICompatible(
+  /**
+   * Create a provider for any OpenAI-compatible API endpoint
+   * 
+   * @param baseUrl Base URL of the API endpoint
+   * @param apiKey API key for authentication
+   * @param supportedModels List of supported models (empty = allow any)
+   * @param customHeaders Additional headers to include in requests
+   * @param httpVersion HTTP protocol version to use
+   */
+  def apply(
       baseUrl: String,
       apiKey: String,
       supportedModels: List[String] = List.empty,
       customHeaders: Map[String, String] = Map.empty,
-      httpVersion: HttpVersion = HttpVersion.Http2,
-      useJsonSchemaFormat: Boolean = false
+      httpVersion: HttpVersion = HttpVersion.Http2
   ): CustomEndpointProvider = {
     new CustomEndpointProvider(
       apiKey = apiKey,
       baseUrl = baseUrl,
       supportedModels = supportedModels,
-      useOpenAIFormat = true,
-      requiresAuthentication = true,
       customHeaders = customHeaders,
-      httpVersion = httpVersion,
-      useJsonSchemaFormat = useJsonSchemaFormat
+      httpVersion = httpVersion
     )
   }

@@ -6,33 +6,35 @@ import utest._
 
 object CustomEndpointProviderSpec extends TestSuite:
   val tests = Tests {
-    test("CustomEndpointProvider - create provider for LM Studio") {
-      val provider = CustomEndpointProvider.forLMStudio(
-        baseUrl = "http://localhost:1234/v1",
-        modelId = "test-model"
+    test("CustomEndpointProvider - create with basic settings") {
+      val provider = CustomEndpointProvider(
+        baseUrl = "https://api.example.com/v1",
+        apiKey = "test-key"
       )
 
       assert(provider.name.contains("CustomEndpoint"))
-      assert(provider.supportedModels.contains("test-model"))
-      assert(provider.validateModel("test-model") == Right(()))
-      assert(provider.httpVersion == HttpVersion.Http11) // Default for LM Studio
+      assert(provider.supportedModels.isEmpty) // Default allows any model
+      assert(provider.validateModel("any-model") == Right(()))
+      assert(provider.httpVersion == HttpVersion.Http2) // Default
     }
 
-    test("CustomEndpointProvider - create provider with custom base URL") {
+    test("CustomEndpointProvider - create with custom settings") {
       val customUrl = "http://localhost:8080/v1"
-      val provider = CustomEndpointProvider.forLMStudio(
+      val provider = CustomEndpointProvider(
         baseUrl = customUrl,
-        modelId = "custom-model",
-        httpVersion = HttpVersion.Http2
+        apiKey = "custom-key",
+        supportedModels = List("model1", "model2"),
+        httpVersion = HttpVersion.Http11
       )
 
       assert(provider.name.contains(customUrl))
-      assert(provider.supportedModels.contains("custom-model"))
-      assert(provider.httpVersion == HttpVersion.Http2)
+      assert(provider.supportedModels.contains("model1"))
+      assert(provider.supportedModels.contains("model2"))
+      assert(provider.httpVersion == HttpVersion.Http11)
     }
 
-    test("CustomEndpointProvider - create OpenAI-compatible provider with API key") {
-      val provider = CustomEndpointProvider.forOpenAICompatible(
+    test("CustomEndpointProvider - create with supported models") {
+      val provider = CustomEndpointProvider(
         baseUrl = "https://api.example.com/v1",
         apiKey = "test-key",
         supportedModels = List("model1", "model2")
@@ -42,43 +44,33 @@ object CustomEndpointProviderSpec extends TestSuite:
       assert(provider.supportedModels.contains("model2"))
       assert(provider.validateModel("model1") == Right(()))
       assert(provider.validateModel("model3").isLeft)
-      assert(provider.httpVersion == HttpVersion.Http2) // Default for OpenAI-compatible
     }
 
     test("CustomEndpointProvider - create provider with custom headers") {
       val provider = new CustomEndpointProvider(
         apiKey = "test-api-key",
         baseUrl = "https://api.test.com/v1",
-        requiresAuthentication = true,
-        customHeaders = Map("X-Custom" -> "value"),
-        useJsonSchemaFormat = false
+        customHeaders = Map("X-Custom" -> "value")
       )
 
-      assert(provider.requiresAuthentication == true)
       assert(provider.customHeaders.contains("X-Custom"))
       assert(provider.customHeaders("X-Custom") == "value")
     }
 
-    test("CustomEndpointProvider - create non-authenticated endpoint") {
+    test("CustomEndpointProvider - empty API key") {
       val provider = new CustomEndpointProvider(
         apiKey = "",
-        baseUrl = "http://localhost:1234/v1",
-        requiresAuthentication = false
-      )
-
-      assert(provider.requiresAuthentication == false)
-    }
-
-    test("CustomEndpointProvider - use OpenAI format by default") {
-      val provider = CustomEndpointProvider.forLMStudio(
         baseUrl = "http://localhost:1234/v1"
       )
 
-      assert(provider.useOpenAIFormat == true)
+      // Empty API key should be allowed
+      assert(provider.name.contains("CustomEndpoint"))
     }
+
 
     test("CustomEndpointProvider - validate models correctly when supportedModels is empty") {
       val provider = new CustomEndpointProvider(
+        apiKey = "test-key",
         baseUrl = "http://localhost:1234/v1",
         supportedModels = List.empty
       )
@@ -90,6 +82,7 @@ object CustomEndpointProviderSpec extends TestSuite:
 
     test("CustomEndpointProvider - validate models correctly when supportedModels is specified") {
       val provider = new CustomEndpointProvider(
+        apiKey = "test-key",
         baseUrl = "http://localhost:1234/v1",
         supportedModels = List("model1", "model2")
       )
@@ -102,60 +95,21 @@ object CustomEndpointProviderSpec extends TestSuite:
       }
     }
 
-    test("CustomEndpointProvider companion object - provide convenient factory methods") {
-      val lmStudioProvider = CustomEndpointProvider.forLMStudio(
-        baseUrl = "http://localhost:1234/v1"
-      )
-      assert(lmStudioProvider.requiresAuthentication == false)
-      assert(lmStudioProvider.useOpenAIFormat == true)
-      assert(lmStudioProvider.httpVersion == HttpVersion.Http11)
-
-      val openAICompatProvider = CustomEndpointProvider.forOpenAICompatible(
-        baseUrl = "https://api.test.com/v1",
-        apiKey = "key",
-        supportedModels = List("gpt-4")
-      )
-      assert(openAICompatProvider.requiresAuthentication == true)
-      assert(openAICompatProvider.useOpenAIFormat == true)
-      assert(openAICompatProvider.httpVersion == HttpVersion.Http2)
-    }
 
     test("CustomEndpointProvider - allow configuring HTTP version") {
-      // LM Studio with HTTP/2
-      val lmStudioHttp2 = CustomEndpointProvider.forLMStudio(
-        baseUrl = "http://localhost:1234/v1",
+      val http2Provider = CustomEndpointProvider(
+        baseUrl = "https://api.example.com/v1",
+        apiKey = "key",
         httpVersion = HttpVersion.Http2
       )
-      assert(lmStudioHttp2.httpVersion == HttpVersion.Http2)
+      assert(http2Provider.httpVersion == HttpVersion.Http2)
 
-      // OpenAI-compatible with HTTP/1.1
-      val openAIWithHttp11 = CustomEndpointProvider.forOpenAICompatible(
-        baseUrl = "https://api.example.com/v1",
+      val http11Provider = CustomEndpointProvider(
+        baseUrl = "http://localhost:8080/v1",
         apiKey = "key",
         httpVersion = HttpVersion.Http11
       )
-      assert(openAIWithHttp11.httpVersion == HttpVersion.Http11)
+      assert(http11Provider.httpVersion == HttpVersion.Http11)
     }
 
-    test("CustomEndpointProvider - LM Studio uses json_schema format") {
-      val lmStudioProvider = CustomEndpointProvider.forLMStudio(
-        baseUrl = "http://localhost:1234/v1"
-      )
-      assert(lmStudioProvider.useJsonSchemaFormat == true)
-    }
-
-    test("CustomEndpointProvider - OpenAI compatible can use json_schema format") {
-      val defaultProvider = CustomEndpointProvider.forOpenAICompatible(
-        baseUrl = "https://api.example.com/v1",
-        apiKey = "key"
-      )
-      assert(defaultProvider.useJsonSchemaFormat == false)
-
-      val jsonSchemaProvider = CustomEndpointProvider.forOpenAICompatible(
-        baseUrl = "https://api.example.com/v1",
-        apiKey = "key",
-        useJsonSchemaFormat = true
-      )
-      assert(jsonSchemaProvider.useJsonSchemaFormat == true)
-    }
   }
