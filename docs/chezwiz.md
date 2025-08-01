@@ -4,13 +4,15 @@
 
 ## Features
 
-✅ **Multi-provider LLM support** (OpenAI, Anthropic)  
+✅ **Multi-provider LLM support** (OpenAI, Anthropic, Custom Endpoints)  
+✅ **Custom endpoint support** for local LLMs (LM Studio, Ollama) and OpenAI-compatible APIs  
 ✅ **Type-safe structured object generation**  
 ✅ **Scoped conversation history** (tenant/user/conversation isolation)  
 ✅ **Built-in JSON schema validation** via Chez integration  
 ✅ **Conversation persistence and management**  
 ✅ **Error handling with comprehensive error types**  
-✅ **Configurable temperature and token limits**
+✅ **Configurable temperature and token limits**  
+✅ **Hooks and metrics** for request/response monitoring
 
 ## Quick Start
 
@@ -41,6 +43,8 @@ val anthropicAgent = AgentFactory.createAnthropicAgent(
   temperature = Some(0.5)
 )
 ```
+
+For custom endpoints and local LLMs, see the [Custom Endpoints Guide](custom-endpoints.md).
 
 ### Text Generation
 

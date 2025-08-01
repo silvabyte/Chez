@@ -156,6 +156,16 @@ example-wiz:
 	@echo "🚀 Running All ChezWiz examples..."
 	./mill ChezWiz.runMain chezwiz.agent.examples.Examples
 
+# Run LM Studio integration example
+.PHONY: example-lm-studio
+example-lm-studio:
+	@echo "🤖 Running LM Studio integration example..."
+	@echo "ℹ️  Set LM_STUDIO_URL and LM_STUDIO_MODEL environment variables to configure"
+	@echo "ℹ️  Default: LM_STUDIO_URL=http://localhost:1234/v1"
+	@echo "ℹ️  Default: LM_STUDIO_MODEL=local-model"
+	@echo ""
+	./mill ChezWiz.runMain chezwiz.agent.examples.LMStudioExample
+
 # Run basic usage example showing core functionality
 .PHONY: example-basic
 example-basic:
@@ -256,7 +266,7 @@ info:
 	@echo "🔸 Build Tool: Mill"
 	@echo "🔸 Test Framework: utest"
 	@echo "🔸 Main Dependencies: upickle, os-lib, cask, requests"
-	@echo "🔸 Modules: Chez (core), CaskChez (web framework integration)"
+	@echo "🔸 Modules: Chez (core), CaskChez (web framework), ChezWiz (AI agents)"
 	@echo ""
 	@echo "🧪 Available Test Commands:"
 	@echo "  make test                 - Run all tests"
