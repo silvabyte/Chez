@@ -55,7 +55,7 @@ object LMStudioExample extends App with Logging:
   // Example 2: Using LM Studio with custom endpoint URL
   def exampleCustomEndpoint(): Unit = {
     logger.info("Example 2: Custom LM Studio endpoint")
-    
+
     // Get URL from environment variable or use default
     val lmStudioUrl = Config.get("LM_STUDIO_URL", "http://localhost:1234/v1")
     val modelId = Config.get("LM_STUDIO_MODEL", "local-model")
@@ -177,28 +177,28 @@ object LMStudioExample extends App with Logging:
     val lmStudioProvider = CustomEndpointProvider.forLMStudio(
       baseUrl = lmStudioUrl,
       modelId = modelId,
-      httpVersion = HttpVersion.Http11  // Explicit, but this is the default
+      httpVersion = HttpVersion.Http11 // Explicit, but this is the default
     )
 
     // LM Studio forced to use HTTP/2 (not recommended for local servers)
     val lmStudioHttp2 = CustomEndpointProvider.forLMStudio(
       baseUrl = lmStudioUrl,
       modelId = modelId,
-      httpVersion = HttpVersion.Http2  // Override default
+      httpVersion = HttpVersion.Http2 // Override default
     )
 
     // OpenAI-compatible endpoint with explicit HTTP/2 (default)
     val openAICompatible = CustomEndpointProvider.forOpenAICompatible(
       baseUrl = "https://api.example.com/v1",
       apiKey = "your-api-key",
-      httpVersion = HttpVersion.Http2  // Explicit, but this is the default
+      httpVersion = HttpVersion.Http2 // Explicit, but this is the default
     )
 
     // Custom endpoint with HTTP/1.1 for compatibility
     val customProvider = new CustomEndpointProvider(
       baseUrl = "http://192.168.1.100:8080/v1",
       requiresAuthentication = false,
-      httpVersion = HttpVersion.Http11  // Use HTTP/1.1 for local network
+      httpVersion = HttpVersion.Http11 // Use HTTP/1.1 for local network
     )
 
     logger.info(s"LM Studio provider HTTP version: ${lmStudioProvider.httpVersion}")

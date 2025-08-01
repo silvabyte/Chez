@@ -39,7 +39,7 @@ abstract class BaseLLMProvider extends LLMProvider:
     httpVersion match {
       case HttpVersion.Http11 =>
         LocalNetworkHttpClient.post(url, headers, body.toString(), readTimeout = 60000)
-      
+
       case HttpVersion.Http2 =>
         Try {
           val session = requests.Session(proxy = null)
@@ -50,18 +50,19 @@ abstract class BaseLLMProvider extends LLMProvider:
             readTimeout = 60000,
             connectTimeout = 15000
           )
-          
+
           if response.statusCode >= 400 then
             val errorText = response.text()
             Left(ChezError.NetworkError(
               message = s"HTTP ${response.statusCode}: $errorText",
               statusCode = Some(response.statusCode)
             ))
-          else
+          else {
             Right(response.text())
+          }
         } match {
           case Success(result) => result
-          case Failure(ex) => 
+          case Failure(ex) =>
             Left(ChezError.NetworkError(s"Network request failed: ${ex.getMessage}"))
         }
     }

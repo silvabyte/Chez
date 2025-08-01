@@ -19,7 +19,7 @@ class CustomEndpointProvider(
     val requiresAuthentication: Boolean = true,
     val customHeaders: Map[String, String] = Map.empty,
     override val httpVersion: HttpVersion = HttpVersion.Http2,
-    val useJsonSchemaFormat: Boolean = false  // Use json_schema format for structured output
+    val useJsonSchemaFormat: Boolean = false // Use json_schema format for structured output
 ) extends BaseLLMProvider:
 
   override val name: String = s"CustomEndpoint($baseUrl)"
@@ -238,7 +238,7 @@ object CustomEndpointProvider:
       requiresAuthentication = false,
       customHeaders = Map.empty,
       httpVersion = httpVersion,
-      useJsonSchemaFormat = true  // LM Studio supports json_schema format
+      useJsonSchemaFormat = true // LM Studio supports json_schema format
     )
   }
 
