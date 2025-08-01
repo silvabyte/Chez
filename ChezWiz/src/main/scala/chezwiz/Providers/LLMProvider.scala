@@ -1,10 +1,16 @@
 package chezwiz.agent.providers
 
 import chezwiz.agent.{ChatRequest, ChatResponse, ObjectRequest, ObjectResponse, ChezError}
+import scala.util.{Try, Success, Failure}
+
+enum HttpVersion:
+  case Http11
+  case Http2
 
 trait LLMProvider:
   def name: String
   def supportedModels: List[String]
+  def httpVersion: HttpVersion = HttpVersion.Http2
 
   def chat(request: ChatRequest): Either[ChezError, ChatResponse]
   def generateObject(request: ObjectRequest): Either[ChezError, ObjectResponse[ujson.Value]]
@@ -30,27 +36,35 @@ abstract class BaseLLMProvider extends LLMProvider:
       headers: Map[String, String],
       body: ujson.Value
   ): Either[ChezError, String] = {
-    try {
-      val response = requests.post(
-        url = url,
-        headers = headers,
-        data = body.toString(),
-        readTimeout = 60000,
-        connectTimeout = 15000
-      )
+    httpVersion match {
+      case HttpVersion.Http11 =>
+        Http11Client.post(url, headers, body.toString(), readTimeout = 60000)
 
-      if response.statusCode >= 400 then
-        val errorText = response.text()
-        Left(ChezError.NetworkError(
-          message = s"HTTP ${response.statusCode}: $errorText",
-          statusCode = Some(response.statusCode)
-        ))
-      else {
-        Right(response.text())
-      }
-    } catch {
-      case ex: Exception =>
-        Left(ChezError.NetworkError(s"Network request failed: ${ex.getMessage}"))
+      case HttpVersion.Http2 =>
+        Try {
+          val session = requests.Session(proxy = null)
+          val response = session.post(
+            url = url,
+            headers = headers,
+            data = body.toString(),
+            readTimeout = 60000,
+            connectTimeout = 15000
+          )
+
+          if response.statusCode >= 400 then
+            val errorText = response.text()
+            Left(ChezError.NetworkError(
+              message = s"HTTP ${response.statusCode}: $errorText",
+              statusCode = Some(response.statusCode)
+            ))
+          else {
+            Right(response.text())
+          }
+        } match {
+          case Success(result) => result
+          case Failure(ex) =>
+            Left(ChezError.NetworkError(s"Network request failed: ${ex.getMessage}"))
+        }
     }
   }
 

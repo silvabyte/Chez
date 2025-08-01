@@ -20,4 +20,21 @@ object Config {
     .getOrElse(throw new IllegalStateException("Config not initialized"))
     .get("ANTHROPIC_API_KEY")
     .getOrElse(throw new IllegalStateException("ANTHROPIC_API_KEY not set"))
+
+  // Generic get method for any config value
+  def get(key: String, default: String = ""): String = {
+    dotenv
+      .flatMap(_.get(key))
+      .getOrElse(default)
+  }
+
+  // Get integer config value
+  def getInt(key: String, default: Int = 0): Int = {
+    dotenv
+      .flatMap(_.get(key))
+      .map(_.toIntOption.getOrElse(default))
+      .getOrElse(default)
+  }
+  def getLong(key: String, default: Long = 0) =
+    dotenv.flatMap(_.get(key)).map(_.toLongOption.getOrElse(default)).getOrElse(default)
 }
