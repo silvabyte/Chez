@@ -14,7 +14,7 @@ import chezwiz.agent.{
 /**
  * Provider for LM Studio local LLM server.
  * LM Studio runs OpenAI-compatible API locally without authentication.
- * 
+ *
  * @param baseUrl The base URL of the LM Studio server (e.g., "http://localhost:1234/v1")
  * @param modelId The model ID to use (defaults to "local-model")
  */
@@ -24,13 +24,13 @@ class LMStudioProvider(
 ) extends BaseLLMProvider:
 
   override val name: String = s"LMStudio($baseUrl)"
-  
+
   // LM Studio doesn't require API key
   protected val apiKey: String = ""
-  
+
   // LM Studio runs locally, so HTTP/1.1 is more reliable
   override val httpVersion: HttpVersion = HttpVersion.Http11
-  
+
   // Allow any model by default, or restrict to the specified model
   override val supportedModels: List[String] = List(modelId)
 
@@ -176,12 +176,12 @@ class LMStudioProvider(
 object LMStudioProvider:
   /**
    * Create a new LM Studio provider
-   * 
+   *
    * @param baseUrl The base URL of the LM Studio server (e.g., "http://localhost:1234/v1")
    * @param modelId The model ID to use (defaults to "local-model")
    */
   def apply(
       baseUrl: String = "http://localhost:1234/v1",
       modelId: String = "local-model"
-  ): LMStudioProvider = 
+  ): LMStudioProvider =
     new LMStudioProvider(baseUrl, modelId)

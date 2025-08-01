@@ -8,7 +8,7 @@ object LMStudioProviderSpec extends TestSuite:
   val tests = Tests {
     test("LMStudioProvider - create with default settings") {
       val provider = LMStudioProvider()
-      
+
       assert(provider.name.contains("LMStudio"))
       assert(provider.modelId == "local-model")
       assert(provider.supportedModels.contains("local-model"))
@@ -18,12 +18,12 @@ object LMStudioProviderSpec extends TestSuite:
     test("LMStudioProvider - create with custom URL and model") {
       val customUrl = "http://192.168.1.100:8080/v1"
       val customModel = "mistral-7b-instruct"
-      
+
       val provider = LMStudioProvider(
         baseUrl = customUrl,
         modelId = customModel
       )
-      
+
       assert(provider.name.contains(customUrl))
       assert(provider.modelId == customModel)
       assert(provider.supportedModels.contains(customModel))
@@ -31,7 +31,7 @@ object LMStudioProviderSpec extends TestSuite:
 
     test("LMStudioProvider - no authentication required") {
       val provider = LMStudioProvider()
-      
+
       // Provider should work without API key
       assert(provider.name.contains("LMStudio"))
       // No need to test internal implementation details
@@ -44,7 +44,7 @@ object LMStudioProviderSpec extends TestSuite:
 
     test("LMStudioProvider - validates any model") {
       val provider = LMStudioProvider(modelId = "specific-model")
-      
+
       // Should allow any model, not just the specified one
       assert(provider.validateModel("specific-model") == Right(()))
       assert(provider.validateModel("any-other-model") == Right(()))
@@ -53,7 +53,7 @@ object LMStudioProviderSpec extends TestSuite:
 
     test("LMStudioProvider - supports structured output") {
       val provider = LMStudioProvider()
-      
+
       // Just verify provider is configured for structured output
       assert(provider.name.contains("LMStudio"))
       // LM Studio provider should support json_schema format for structured output
@@ -61,7 +61,7 @@ object LMStudioProviderSpec extends TestSuite:
 
     test("LMStudioProvider - chat request creation") {
       val provider = LMStudioProvider()
-      
+
       val request = ChatRequest(
         messages = List(
           ChatMessage(Role.System, "You are a helpful assistant"),
@@ -72,7 +72,7 @@ object LMStudioProviderSpec extends TestSuite:
         maxTokens = Some(500),
         stream = false
       )
-      
+
       // Verify request structure
       assert(request.model == "local-model")
       assert(request.temperature == Some(0.7))

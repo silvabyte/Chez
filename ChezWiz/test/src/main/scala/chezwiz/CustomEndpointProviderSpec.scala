@@ -67,7 +67,6 @@ object CustomEndpointProviderSpec extends TestSuite:
       assert(provider.name.contains("CustomEndpoint"))
     }
 
-
     test("CustomEndpointProvider - validate models correctly when supportedModels is empty") {
       val provider = new CustomEndpointProvider(
         apiKey = "test-key",
@@ -94,7 +93,6 @@ object CustomEndpointProviderSpec extends TestSuite:
         case _ => assert(false)
       }
     }
-
 
     test("CustomEndpointProvider - allow configuring HTTP version") {
       val http2Provider = CustomEndpointProvider(

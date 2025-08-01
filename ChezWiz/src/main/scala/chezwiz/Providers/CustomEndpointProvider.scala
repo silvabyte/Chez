@@ -13,7 +13,7 @@ import chezwiz.agent.{
 
 /**
  * Provider for custom OpenAI-compatible endpoints.
- * 
+ *
  * @param apiKey API key for authentication
  * @param baseUrl Base URL of the API endpoint
  * @param supportedModels List of supported models (empty = allow any)
@@ -195,7 +195,7 @@ class CustomEndpointProvider(
 object CustomEndpointProvider:
   /**
    * Create a provider for any OpenAI-compatible API endpoint
-   * 
+   *
    * @param baseUrl Base URL of the API endpoint
    * @param apiKey API key for authentication
    * @param supportedModels List of supported models (empty = allow any)
