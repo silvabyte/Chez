@@ -166,6 +166,35 @@ example-lm-studio:
 	@echo ""
 	./mill ChezWiz.runMain chezwiz.agent.examples.LMStudioExample
 
+# Run OpenAI integration example
+.PHONY: example-openai
+example-openai:
+	@echo "🤖 Running OpenAI integration example..."
+	@echo "ℹ️  Set OPENAI_API_KEY environment variable"
+	@echo ""
+	./mill ChezWiz.runMain chezwiz.agent.examples.OpenAIExample
+
+# Run Anthropic (Claude) integration example
+.PHONY: example-anthropic
+example-anthropic:
+	@echo "🤖 Running Anthropic integration example..."
+	@echo "ℹ️  Set ANTHROPIC_API_KEY environment variable"
+	@echo ""
+	./mill ChezWiz.runMain chezwiz.agent.examples.AnthropicExample
+
+# Run all providers comparison example
+.PHONY: example-all-providers
+example-all-providers:
+	@echo "🤖 Running all providers comparison example..."
+	@echo "ℹ️  Set the following environment variables as needed:"
+	@echo "  - OPENAI_API_KEY"
+	@echo "  - ANTHROPIC_API_KEY"
+	@echo "  - LM_STUDIO_URL and LM_STUDIO_MODEL"
+	@echo "  - OLLAMA_URL and OLLAMA_MODEL"
+	@echo "  - AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_KEY"
+	@echo ""
+	./mill ChezWiz.runMain chezwiz.agent.examples.AllProvidersExample
+
 # Run basic usage example showing core functionality
 .PHONY: example-basic
 example-basic:

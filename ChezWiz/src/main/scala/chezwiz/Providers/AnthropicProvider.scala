@@ -8,7 +8,9 @@ import chezwiz.agent.{
   ObjectResponse,
   Role,
   Usage,
-  ChezError
+  ChezError,
+  MessageContent,
+  MessageContentPart
 }
 
 class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
@@ -45,7 +47,35 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
             case Role.Assistant => "assistant"
             case Role.System =>
               throw new IllegalStateException("System messages should be filtered out")),
-          "content" -> msg.content
+          "content" -> (msg.content match {
+            case MessageContent.Text(text) => ujson.Str(text)
+            case MessageContent.ImageUrl(url, detail) => 
+              ujson.Arr(
+                ujson.Obj("type" -> "text", "text" -> ""),
+                ujson.Obj(
+                  "type" -> "image_url",
+                  "image_url" -> ujson.Obj(
+                    "url" -> url,
+                    "detail" -> detail
+                  )
+                )
+              )
+            case MessageContent.MultiModal(parts) =>
+              ujson.Arr(
+                parts.map {
+                  case MessageContentPart.TextPart(_, text) =>
+                    ujson.Obj("type" -> "text", "text" -> text)
+                  case MessageContentPart.ImageUrlPart(_, imageUrl) =>
+                    ujson.Obj(
+                      "type" -> "image_url",
+                      "image_url" -> ujson.Obj(
+                        "url" -> imageUrl.url,
+                        "detail" -> imageUrl.detail
+                      )
+                    )
+                }*
+              )
+          })
         )
       })*
     )
@@ -57,7 +87,10 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     )
 
     // Add system message if present
-    systemChatMessage.headOption.foreach(sys => baseObj("system") = sys.content)
+    systemChatMessage.headOption.foreach(sys => baseObj("system") = (sys.content match {
+      case MessageContent.Text(text) => text
+      case _ => throw new IllegalArgumentException("System messages must be text only")
+    }))
 
     request.temperature.foreach(temp => baseObj("temperature") = temp)
 
@@ -110,7 +143,35 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
             case Role.Assistant => "assistant"
             case Role.System =>
               throw new IllegalStateException("System messages should be filtered out")),
-          "content" -> msg.content
+          "content" -> (msg.content match {
+            case MessageContent.Text(text) => ujson.Str(text)
+            case MessageContent.ImageUrl(url, detail) => 
+              ujson.Arr(
+                ujson.Obj("type" -> "text", "text" -> ""),
+                ujson.Obj(
+                  "type" -> "image_url",
+                  "image_url" -> ujson.Obj(
+                    "url" -> url,
+                    "detail" -> detail
+                  )
+                )
+              )
+            case MessageContent.MultiModal(parts) =>
+              ujson.Arr(
+                parts.map {
+                  case MessageContentPart.TextPart(_, text) =>
+                    ujson.Obj("type" -> "text", "text" -> text)
+                  case MessageContentPart.ImageUrlPart(_, imageUrl) =>
+                    ujson.Obj(
+                      "type" -> "image_url",
+                      "image_url" -> ujson.Obj(
+                        "url" -> imageUrl.url,
+                        "detail" -> imageUrl.detail
+                      )
+                    )
+                }*
+              )
+          })
         )
       })*
     )
@@ -133,7 +194,10 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     )
 
     // Add system message if present
-    systemChatMessage.headOption.foreach(sys => baseObj("system") = sys.content)
+    systemChatMessage.headOption.foreach(sys => baseObj("system") = (sys.content match {
+      case MessageContent.Text(text) => text
+      case _ => throw new IllegalArgumentException("System messages must be text only")
+    }))
 
     request.temperature.foreach(temp => baseObj("temperature") = temp)
 

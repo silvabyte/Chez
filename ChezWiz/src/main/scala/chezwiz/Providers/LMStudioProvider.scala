@@ -8,7 +8,9 @@ import chezwiz.agent.{
   ObjectResponse,
   Role,
   Usage,
-  ChezError
+  ChezError,
+  MessageContent,
+  MessageContentPart
 }
 
 /**
@@ -17,19 +19,20 @@ import chezwiz.agent.{
  *
  * @param baseUrl The base URL of the LM Studio server (e.g., "http://localhost:1234/v1")
  * @param modelId The model ID to use (defaults to "local-model")
+ * @param httpVersionParam The HTTP version to use (defaults to Http2, but Http11 may be more reliable for local servers)
  */
 class LMStudioProvider(
     override protected val baseUrl: String,
-    val modelId: String = "local-model"
+    val modelId: String = "local-model",
+    val httpVersionParam: HttpVersion = HttpVersion.Http2
 ) extends BaseLLMProvider:
+  
+  override val httpVersion: HttpVersion = httpVersionParam
 
   override val name: String = s"LMStudio($baseUrl)"
 
   // LM Studio doesn't require API key
   protected val apiKey: String = ""
-
-  // LM Studio runs locally, so HTTP/1.1 is more reliable
-  override val httpVersion: HttpVersion = HttpVersion.Http11
 
   // Allow any model by default, or restrict to the specified model
   override val supportedModels: List[String] = List(modelId)
@@ -42,12 +45,44 @@ class LMStudioProvider(
   override protected def buildRequestBody(request: ChatRequest): ujson.Value = {
     val messages = ujson.Arr(
       request.messages.map(msg => {
+        val roleStr = msg.role match
+          case Role.System => "system"
+          case Role.User => "user"
+          case Role.Assistant => "assistant"
+
+        val contentValue = msg.content match {
+          case MessageContent.Text(text) => ujson.Str(text)
+          case MessageContent.ImageUrl(url, detail) =>
+            ujson.Arr(
+              ujson.Obj("type" -> "text", "text" -> ""),
+              ujson.Obj(
+                "type" -> "image_url",
+                "image_url" -> ujson.Obj(
+                  "url" -> url,
+                  "detail" -> detail
+                )
+              )
+            )
+          case MessageContent.MultiModal(parts) =>
+            ujson.Arr(
+              parts.map {
+                case MessageContentPart.TextPart(_, text) =>
+                  ujson.Obj("type" -> "text", "text" -> text)
+                case MessageContentPart.ImageUrlPart(_, imageUrl) =>
+                  ujson.Obj(
+                    "type" -> "image_url",
+                    "image_url" -> ujson.Obj(
+                      "url" -> imageUrl.url,
+                      "detail" -> imageUrl.detail
+                    )
+                  )
+              }*
+            )
+        }
+
         ujson.Obj(
-          "role" -> (msg.role match
-            case Role.System => "system"
-            case Role.User => "user"
-            case Role.Assistant => "assistant"),
-          "content" -> msg.content
+          "role" -> roleStr,
+          "content" -> contentValue
         )
       })*
     )
@@ -67,12 +102,44 @@ class LMStudioProvider(
   override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value = {
     val messages = ujson.Arr(
       request.messages.map(msg => {
+        val roleStr = msg.role match
+          case Role.System => "system"
+          case Role.User => "user"
+          case Role.Assistant => "assistant"
+
+        val contentValue = msg.content match {
+          case MessageContent.Text(text) => ujson.Str(text)
+          case MessageContent.ImageUrl(url, detail) =>
+            ujson.Arr(
+              ujson.Obj("type" -> "text", "text" -> ""),
+              ujson.Obj(
+                "type" -> "image_url",
+                "image_url" -> ujson.Obj(
+                  "url" -> url,
+                  "detail" -> detail
+                )
+              )
+            )
+          case MessageContent.MultiModal(parts) =>
+            ujson.Arr(
+              parts.map {
+                case MessageContentPart.TextPart(_, text) =>
+                  ujson.Obj("type" -> "text", "text" -> text)
+                case MessageContentPart.ImageUrlPart(_, imageUrl) =>
+                  ujson.Obj(
+                    "type" -> "image_url",
+                    "image_url" -> ujson.Obj(
+                      "url" -> imageUrl.url,
+                      "detail" -> imageUrl.detail
+                    )
+                  )
+              }*
+            )
+        }
+
         ujson.Obj(
-          "role" -> (msg.role match
-            case Role.System => "system"
-            case Role.User => "user"
-            case Role.Assistant => "assistant"),
-          "content" -> msg.content
+          "role" -> roleStr,
+          "content" -> contentValue
         )
       })*
     )
@@ -179,9 +246,11 @@ object LMStudioProvider:
    *
    * @param baseUrl The base URL of the LM Studio server (e.g., "http://localhost:1234/v1")
    * @param modelId The model ID to use (defaults to "local-model")
+   * @param httpVersion The HTTP version to use (defaults to Http2, but Http11 may be more reliable for local servers)
    */
   def apply(
       baseUrl: String = "http://localhost:1234/v1",
-      modelId: String = "local-model"
+      modelId: String = "local-model",
+      httpVersion: HttpVersion = HttpVersion.Http2
   ): LMStudioProvider =
-    new LMStudioProvider(baseUrl, modelId)
+    new LMStudioProvider(baseUrl, modelId, httpVersionParam = httpVersion)

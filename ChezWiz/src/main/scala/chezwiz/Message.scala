@@ -21,12 +21,58 @@ case class RequestMetadata(
     tenantId: Option[String] = None
 ) derives Schema, ReadWriter
 
+sealed trait MessageContent derives Schema, ReadWriter
+
+object MessageContent:
+  case class Text(text: String) extends MessageContent derives Schema, ReadWriter
+  case class ImageUrl(
+      @Schema.description("The URL of the image")
+      url: String,
+      @Schema.description("The detail level for image processing")
+      detail: String = "auto"
+  ) extends MessageContent derives Schema, ReadWriter
+  case class MultiModal(
+      @Schema.description("Array of content parts")
+      parts: List[MessageContentPart]
+  ) extends MessageContent derives Schema, ReadWriter
+
+sealed trait MessageContentPart derives Schema, ReadWriter
+
+object MessageContentPart:
+  case class TextPart(
+      @Schema.description("The type of content part")
+      `type`: String = "text",
+      @Schema.description("The text content")
+      text: String
+  ) extends MessageContentPart derives Schema, ReadWriter
+  
+  case class ImageUrlPart(
+      @Schema.description("The type of content part")
+      `type`: String = "image_url",
+      @Schema.description("The image URL object")
+      image_url: ImageUrlContent
+  ) extends MessageContentPart derives Schema, ReadWriter
+
+case class ImageUrlContent(
+    @Schema.description("The URL of the image")
+    url: String,
+    @Schema.description("The detail level for image processing")
+    detail: String = "auto"
+) derives Schema, ReadWriter
+
 case class ChatMessage(
     @Schema.description("The role of the message sender")
     role: Role,
     @Schema.description("The content of the message")
-    content: String
+    content: MessageContent
 ) derives Schema, ReadWriter
+
+object ChatMessage:
+  def text(role: Role, text: String): ChatMessage = 
+    ChatMessage(role, MessageContent.Text(text))
+  
+  def multiModal(role: Role, parts: List[MessageContentPart]): ChatMessage =
+    ChatMessage(role, MessageContent.MultiModal(parts))
 
 case class ChatRequest(
     @Schema.description("List of messages in the conversation")

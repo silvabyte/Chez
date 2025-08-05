@@ -8,7 +8,9 @@ import chezwiz.agent.{
   ObjectResponse,
   Role,
   Usage,
-  ChezError
+  ChezError,
+  MessageContent,
+  MessageContentPart
 }
 
 class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
@@ -34,12 +36,44 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
   override protected def buildRequestBody(request: ChatRequest): ujson.Value = {
     val messages = ujson.Arr(
       request.messages.map(msg => {
+        val roleStr = msg.role match
+          case Role.System => "system"
+          case Role.User => "user"
+          case Role.Assistant => "assistant"
+        
+        val contentValue = msg.content match {
+          case MessageContent.Text(text) => ujson.Str(text)
+          case MessageContent.ImageUrl(url, detail) => 
+            ujson.Arr(
+              ujson.Obj("type" -> "text", "text" -> ""),
+              ujson.Obj(
+                "type" -> "image_url",
+                "image_url" -> ujson.Obj(
+                  "url" -> url,
+                  "detail" -> detail
+                )
+              )
+            )
+          case MessageContent.MultiModal(parts) =>
+            ujson.Arr(
+              parts.map {
+                case MessageContentPart.TextPart(_, text) =>
+                  ujson.Obj("type" -> "text", "text" -> text)
+                case MessageContentPart.ImageUrlPart(_, imageUrl) =>
+                  ujson.Obj(
+                    "type" -> "image_url",
+                    "image_url" -> ujson.Obj(
+                      "url" -> imageUrl.url,
+                      "detail" -> imageUrl.detail
+                    )
+                  )
+              }*
+            )
+        }
+        
         ujson.Obj(
-          "role" -> (msg.role match
-            case Role.System => "system"
-            case Role.User => "user"
-            case Role.Assistant => "assistant"),
-          "content" -> msg.content
+          "role" -> roleStr,
+          "content" -> contentValue
         )
       })*
     )
@@ -140,12 +174,44 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
   override protected def buildObjectRequestBody(request: ObjectRequest): ujson.Value = {
     val messages = ujson.Arr(
       request.messages.map(msg => {
+        val roleStr = msg.role match
+          case Role.System => "system"
+          case Role.User => "user"
+          case Role.Assistant => "assistant"
+        
+        val contentValue = msg.content match {
+          case MessageContent.Text(text) => ujson.Str(text)
+          case MessageContent.ImageUrl(url, detail) => 
+            ujson.Arr(
+              ujson.Obj("type" -> "text", "text" -> ""),
+              ujson.Obj(
+                "type" -> "image_url",
+                "image_url" -> ujson.Obj(
+                  "url" -> url,
+                  "detail" -> detail
+                )
+              )
+            )
+          case MessageContent.MultiModal(parts) =>
+            ujson.Arr(
+              parts.map {
+                case MessageContentPart.TextPart(_, text) =>
+                  ujson.Obj("type" -> "text", "text" -> text)
+                case MessageContentPart.ImageUrlPart(_, imageUrl) =>
+                  ujson.Obj(
+                    "type" -> "image_url",
+                    "image_url" -> ujson.Obj(
+                      "url" -> imageUrl.url,
+                      "detail" -> imageUrl.detail
+                    )
+                  )
+              }*
+            )
+        }
+        
         ujson.Obj(
-          "role" -> (msg.role match
-            case Role.System => "system"
-            case Role.User => "user"
-            case Role.Assistant => "assistant"),
-          "content" -> msg.content
+          "role" -> roleStr,
+          "content" -> contentValue
         )
       })*
     )
