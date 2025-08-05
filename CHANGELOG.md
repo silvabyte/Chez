@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.5] - 2025-08-05
+
+* feat: support messages and multimodal (#5)
+* chore: release v0.1.4
+
 ## [0.1.4] - 2025-08-01
 
 * feat: Add LM Studio and Custom Endpoint Provider Support (#4)
