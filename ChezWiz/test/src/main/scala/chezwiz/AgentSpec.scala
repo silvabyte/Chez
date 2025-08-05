@@ -27,7 +27,10 @@ object AgentSpec extends TestSuite:
 
     override def chat(request: ChatRequest): Either[ChezError, ChatResponse] = {
       Right(ChatResponse(
-        content = s"Mock response to: ${request.messages.last.content}",
+        content = s"Mock response to: ${request.messages.last.content match {
+            case MessageContent.Text(text) => text
+            case _ => "non-text content"
+          }}",
         usage = Some(Usage(10, 20, 30)),
         model = request.model,
         finishReason = Some("stop")
@@ -134,7 +137,7 @@ object AgentSpec extends TestSuite:
       // Perform various operations
       agent.generateText("Test message", defaultMetadata)
       agent.clearHistory(defaultMetadata)
-      agent.addChatMessage(ChatMessage(Role.User, "Another message"), defaultMetadata)
+      agent.addChatMessage(ChatMessage.text(Role.User, "Another message"), defaultMetadata)
 
       // ID should remain the same
       assert(agent.id == initialId)
@@ -182,10 +185,10 @@ object AgentSpec extends TestSuite:
       assert(history.size == 5) // system + user1 + assistant1 + user2 + assistant2
       assert(history(0).role == Role.System)
       assert(history(1).role == Role.User)
-      assert(history(1).content == "First message")
+      assert(history(1).content == MessageContent.Text("First message"))
       assert(history(2).role == Role.Assistant)
       assert(history(3).role == Role.User)
-      assert(history(3).content == "Second message")
+      assert(history(3).content == MessageContent.Text("Second message"))
       assert(history(4).role == Role.Assistant)
     }
 
@@ -259,17 +262,17 @@ object AgentSpec extends TestSuite:
     }
 
     test("ChatMessage serialization works correctly") {
-      val message = ChatMessage(Role.User, "Hello world")
+      val message = ChatMessage.text(Role.User, "Hello world")
       val json = upickle.default.write(message)
       val parsed = upickle.default.read[ChatMessage](json)
 
       assert(parsed.role == Role.User)
-      assert(parsed.content == "Hello world")
+      assert(parsed.content == MessageContent.Text("Hello world"))
     }
 
     test("ChatRequest serialization works correctly") {
       val request = ChatRequest(
-        messages = List(ChatMessage(Role.User, "Test")),
+        messages = List(ChatMessage.text(Role.User, "Test")),
         model = "gpt-4o-mini",
         temperature = Some(0.7),
         maxTokens = Some(100)
@@ -320,9 +323,9 @@ object AgentSpec extends TestSuite:
       assert(history2.size == 3) // system + 1 user + 1 assistant
 
       // Verify content isolation
-      assert(history1(1).content == "Hello from user1")
-      assert(history1(3).content == "Another message from user1")
-      assert(history2(1).content == "Hello from user2")
+      assert(history1(1).content == MessageContent.Text("Hello from user1"))
+      assert(history1(3).content == MessageContent.Text("Another message from user1"))
+      assert(history2(1).content == MessageContent.Text("Hello from user2"))
     }
 
     test("Scoped conversation history - partial metadata") {
@@ -368,9 +371,9 @@ object AgentSpec extends TestSuite:
       assert(history3.size == 3) // system + user + assistant
 
       // Verify all three are different scopes
-      assert(history1(1).content == "Message with tenant only")
-      assert(history2(1).content == "Message with user only")
-      assert(history3(1).content == "Message with tenant and user")
+      assert(history1(1).content == MessageContent.Text("Message with tenant only"))
+      assert(history2(1).content == MessageContent.Text("Message with user only"))
+      assert(history3(1).content == MessageContent.Text("Message with tenant and user"))
     }
 
     test("Clear specific scoped history") {
@@ -463,8 +466,8 @@ object AgentSpec extends TestSuite:
       )
 
       // Manually add messages to scoped history
-      agent.addChatMessage(ChatMessage(Role.User, "Manual message 1"), metadata)
-      agent.addChatMessage(ChatMessage(Role.Assistant, "Manual response 1"), metadata)
+      agent.addChatMessage(ChatMessage.text(Role.User, "Manual message 1"), metadata)
+      agent.addChatMessage(ChatMessage.text(Role.Assistant, "Manual response 1"), metadata)
 
       // Also add to different scope
       val differentMetadata = RequestMetadata(
@@ -473,7 +476,7 @@ object AgentSpec extends TestSuite:
         conversationId = Some("different-conv")
       )
       agent.addChatMessage(
-        ChatMessage(Role.User, "Different scope manual message"),
+        ChatMessage.text(Role.User, "Different scope manual message"),
         differentMetadata
       )
 
@@ -481,11 +484,11 @@ object AgentSpec extends TestSuite:
       val differentHistory = agent.getConversationHistory(differentMetadata)
 
       assert(scopedHistory.size == 3) // system + manually added user + assistant
-      assert(scopedHistory(1).content == "Manual message 1")
-      assert(scopedHistory(2).content == "Manual response 1")
+      assert(scopedHistory(1).content == MessageContent.Text("Manual message 1"))
+      assert(scopedHistory(2).content == MessageContent.Text("Manual response 1"))
 
       assert(differentHistory.size == 2) // system + manually added user
-      assert(differentHistory(1).content == "Different scope manual message")
+      assert(differentHistory(1).content == MessageContent.Text("Different scope manual message"))
     }
 
     test("generateTextWithoutHistory respects metadata scoping") {
@@ -556,7 +559,7 @@ object AgentSpec extends TestSuite:
       )
 
       val request = ChatRequest(
-        messages = List(ChatMessage(Role.User, "Test")),
+        messages = List(ChatMessage.text(Role.User, "Test")),
         model = "gpt-4o-mini",
         temperature = Some(0.7),
         maxTokens = Some(100),
@@ -616,8 +619,8 @@ object AgentSpec extends TestSuite:
       assert(history1.size == 3) // system + user + assistant
       assert(history2.size == 3) // system + user + assistant
 
-      assert(history1(1).content == "Generate object 1")
-      assert(history2(1).content == "Generate object 2")
+      assert(history1(1).content == MessageContent.Text("Generate object 1"))
+      assert(history2(1).content == MessageContent.Text("Generate object 2"))
     }
 
     test("generateObjectWithoutHistory with metadata") {
@@ -697,8 +700,8 @@ object AgentSpec extends TestSuite:
       assert(history3.size == 3) // system + 1 user + 1 assistant
 
       // Verify the messages are in the correct history
-      assert(history1(1).content == "Message 1")
-      assert(history1(3).content == "Message 2")
-      assert(history3(1).content == "Different conv")
+      assert(history1(1).content == MessageContent.Text("Message 1"))
+      assert(history1(3).content == MessageContent.Text("Message 2"))
+      assert(history3(1).content == MessageContent.Text("Different conv"))
     }
   }

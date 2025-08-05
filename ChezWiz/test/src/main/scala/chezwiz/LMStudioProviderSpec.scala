@@ -12,7 +12,7 @@ object LMStudioProviderSpec extends TestSuite:
       assert(provider.name.contains("LMStudio"))
       assert(provider.modelId == "local-model")
       assert(provider.supportedModels.contains("local-model"))
-      assert(provider.httpVersion == HttpVersion.Http11)
+      assert(provider.httpVersion == HttpVersion.Http2)
     }
 
     test("LMStudioProvider - create with custom URL and model") {
@@ -37,8 +37,8 @@ object LMStudioProviderSpec extends TestSuite:
       // No need to test internal implementation details
     }
 
-    test("LMStudioProvider - uses HTTP/1.1 for local compatibility") {
-      val provider = LMStudioProvider()
+    test("LMStudioProvider - can use HTTP/1.1 for local compatibility") {
+      val provider = LMStudioProvider(httpVersion = HttpVersion.Http11)
       assert(provider.httpVersion == HttpVersion.Http11)
     }
 
@@ -64,8 +64,8 @@ object LMStudioProviderSpec extends TestSuite:
 
       val request = ChatRequest(
         messages = List(
-          ChatMessage(Role.System, "You are a helpful assistant"),
-          ChatMessage(Role.User, "Hello!")
+          ChatMessage.text(Role.System, "You are a helpful assistant"),
+          ChatMessage.text(Role.User, "Hello!")
         ),
         model = "local-model",
         temperature = Some(0.7),
@@ -80,8 +80,8 @@ object LMStudioProviderSpec extends TestSuite:
       assert(request.stream == false)
       assert(request.messages.length == 2)
       assert(request.messages(0).role == Role.System)
-      assert(request.messages(0).content == "You are a helpful assistant")
+      assert(request.messages(0).content == MessageContent.Text("You are a helpful assistant"))
       assert(request.messages(1).role == Role.User)
-      assert(request.messages(1).content == "Hello!")
+      assert(request.messages(1).content == MessageContent.Text("Hello!"))
     }
   }

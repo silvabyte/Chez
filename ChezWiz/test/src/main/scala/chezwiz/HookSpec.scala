@@ -26,7 +26,10 @@ object HookSpec extends TestSuite:
 
     override def chat(request: ChatRequest): Either[ChezError, ChatResponse] = {
       Right(ChatResponse(
-        content = s"Mock response to: ${request.messages.last.content}",
+        content = s"Mock response to: ${request.messages.last.content match {
+            case MessageContent.Text(text) => text
+            case _ => "non-text content"
+          }}",
         usage = Some(Usage(10, 20, 30)),
         model = request.model,
         finishReason = Some("stop")
@@ -144,7 +147,7 @@ object HookSpec extends TestSuite:
       assert(preContext.agentName == "Test Agent")
       assert(preContext.model == "mock-model-1")
       assert(preContext.metadata == metadata)
-      assert(preContext.request.messages.last.content == "Test message")
+      assert(preContext.request.messages.last.content == MessageContent.Text("Test message"))
 
       val postContext = testHook.postResponseCalls.head
       assert(postContext.agentName == "Test Agent")
@@ -203,11 +206,13 @@ object HookSpec extends TestSuite:
       )
 
       // Test addChatMessage
-      agent.addChatMessage(ChatMessage(Role.User, "Manual message"), defaultMetadata)
+      agent.addChatMessage(ChatMessage.text(Role.User, "Manual message"), defaultMetadata)
       assert(testHook.historyCalls.size == 1)
       assert(testHook.historyCalls.head.operation == HistoryOperation.Add)
       assert(testHook.historyCalls.head.message.isDefined)
-      assert(testHook.historyCalls.head.message.get.content == "Manual message")
+      assert(
+        testHook.historyCalls.head.message.get.content == MessageContent.Text("Manual message")
+      )
 
       // Test clearHistory
       testHook.reset()
@@ -386,7 +391,7 @@ object HookSpec extends TestSuite:
       val preRequestContext = PreRequestContext(
         agentName = "TestAgent",
         model = "test-model",
-        request = ChatRequest(List(ChatMessage(Role.User, "test")), "test-model"),
+        request = ChatRequest(List(ChatMessage.text(Role.User, "test")), "test-model"),
         metadata = defaultMetadata
       )
       registry.executePreRequestHooks(preRequestContext)
@@ -396,7 +401,7 @@ object HookSpec extends TestSuite:
       val postResponseContext = PostResponseContext(
         agentName = "TestAgent",
         model = "test-model",
-        request = ChatRequest(List(ChatMessage(Role.User, "test")), "test-model"),
+        request = ChatRequest(List(ChatMessage.text(Role.User, "test")), "test-model"),
         response = Right(ChatResponse("response", None, "test-model", None)),
         metadata = defaultMetadata,
         requestTimestamp = 1000
@@ -420,8 +425,9 @@ object HookSpec extends TestSuite:
         agentName = "TestAgent",
         metadata = defaultMetadata,
         operation = HistoryOperation.Add,
-        message = Some(ChatMessage(Role.User, "test message")),
-        historySize = 1
+        message = Some(ChatMessage.text(Role.User, "test message")),
+        historySize = 1,
+        timestamp = System.currentTimeMillis()
       )
       registry.executeHistoryHooks(historyContext)
       assert(testHook.historyCalls.size == 1)
@@ -482,7 +488,9 @@ object HookSpec extends TestSuite:
 
       // Verify context
       val preContext = testHook.preRequestCalls.head
-      assert(preContext.request.messages.exists(_.content == "Test without history"))
+      assert(
+        preContext.request.messages.exists(_.content == MessageContent.Text("Test without history"))
+      )
     }
 
     test("Hooks work correctly with generateObjectWithoutHistory") {
