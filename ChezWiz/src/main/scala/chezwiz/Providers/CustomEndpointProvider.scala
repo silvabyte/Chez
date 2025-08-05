@@ -55,10 +55,10 @@ class CustomEndpointProvider(
           case Role.System => "system"
           case Role.User => "user"
           case Role.Assistant => "assistant"
-        
+
         val contentValue = msg.content match {
           case MessageContent.Text(text) => ujson.Str(text)
-          case MessageContent.ImageUrl(url, detail) => 
+          case MessageContent.ImageUrl(url, detail) =>
             ujson.Arr(
               ujson.Obj("type" -> "text", "text" -> ""),
               ujson.Obj(
@@ -85,7 +85,7 @@ class CustomEndpointProvider(
               }*
             )
         }
-        
+
         ujson.Obj(
           "role" -> roleStr,
           "content" -> contentValue
@@ -154,10 +154,10 @@ class CustomEndpointProvider(
           case Role.System => "system"
           case Role.User => "user"
           case Role.Assistant => "assistant"
-        
+
         val contentValue = msg.content match {
           case MessageContent.Text(text) => ujson.Str(text)
-          case MessageContent.ImageUrl(url, detail) => 
+          case MessageContent.ImageUrl(url, detail) =>
             ujson.Arr(
               ujson.Obj("type" -> "text", "text" -> ""),
               ujson.Obj(
@@ -184,7 +184,7 @@ class CustomEndpointProvider(
               }*
             )
         }
-        
+
         ujson.Obj(
           "role" -> roleStr,
           "content" -> contentValue

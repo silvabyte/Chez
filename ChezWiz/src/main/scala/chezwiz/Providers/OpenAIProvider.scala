@@ -40,10 +40,10 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
           case Role.System => "system"
           case Role.User => "user"
           case Role.Assistant => "assistant"
-        
+
         val contentValue = msg.content match {
           case MessageContent.Text(text) => ujson.Str(text)
-          case MessageContent.ImageUrl(url, detail) => 
+          case MessageContent.ImageUrl(url, detail) =>
             ujson.Arr(
               ujson.Obj("type" -> "text", "text" -> ""),
               ujson.Obj(
@@ -70,7 +70,7 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
               }*
             )
         }
-        
+
         ujson.Obj(
           "role" -> roleStr,
           "content" -> contentValue
@@ -178,10 +178,10 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
           case Role.System => "system"
           case Role.User => "user"
           case Role.Assistant => "assistant"
-        
+
         val contentValue = msg.content match {
           case MessageContent.Text(text) => ujson.Str(text)
-          case MessageContent.ImageUrl(url, detail) => 
+          case MessageContent.ImageUrl(url, detail) =>
             ujson.Arr(
               ujson.Obj("type" -> "text", "text" -> ""),
               ujson.Obj(
@@ -208,7 +208,7 @@ class OpenAIProvider(protected val apiKey: String) extends BaseLLMProvider:
               }*
             )
         }
-        
+
         ujson.Obj(
           "role" -> roleStr,
           "content" -> contentValue

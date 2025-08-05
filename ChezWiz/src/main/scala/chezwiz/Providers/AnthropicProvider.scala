@@ -49,7 +49,7 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
               throw new IllegalStateException("System messages should be filtered out")),
           "content" -> (msg.content match {
             case MessageContent.Text(text) => ujson.Str(text)
-            case MessageContent.ImageUrl(url, detail) => 
+            case MessageContent.ImageUrl(url, detail) =>
               ujson.Arr(
                 ujson.Obj("type" -> "text", "text" -> ""),
                 ujson.Obj(
@@ -87,10 +87,12 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     )
 
     // Add system message if present
-    systemChatMessage.headOption.foreach(sys => baseObj("system") = (sys.content match {
-      case MessageContent.Text(text) => text
-      case _ => throw new IllegalArgumentException("System messages must be text only")
-    }))
+    systemChatMessage.headOption.foreach(sys => {
+      baseObj("system") = (sys.content match {
+        case MessageContent.Text(text) => text
+        case _ => throw new IllegalArgumentException("System messages must be text only")
+      })
+    })
 
     request.temperature.foreach(temp => baseObj("temperature") = temp)
 
@@ -145,7 +147,7 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
               throw new IllegalStateException("System messages should be filtered out")),
           "content" -> (msg.content match {
             case MessageContent.Text(text) => ujson.Str(text)
-            case MessageContent.ImageUrl(url, detail) => 
+            case MessageContent.ImageUrl(url, detail) =>
               ujson.Arr(
                 ujson.Obj("type" -> "text", "text" -> ""),
                 ujson.Obj(
@@ -194,10 +196,12 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     )
 
     // Add system message if present
-    systemChatMessage.headOption.foreach(sys => baseObj("system") = (sys.content match {
-      case MessageContent.Text(text) => text
-      case _ => throw new IllegalArgumentException("System messages must be text only")
-    }))
+    systemChatMessage.headOption.foreach(sys => {
+      baseObj("system") = (sys.content match {
+        case MessageContent.Text(text) => text
+        case _ => throw new IllegalArgumentException("System messages must be text only")
+      })
+    })
 
     request.temperature.foreach(temp => baseObj("temperature") = temp)
 

@@ -335,4 +335,3 @@ object AnthropicExample extends App with Logging:
   }
 
   println("\n=== Anthropic Examples Complete ===")
-

@@ -26,7 +26,7 @@ class LMStudioProvider(
     val modelId: String = "local-model",
     val httpVersionParam: HttpVersion = HttpVersion.Http2
 ) extends BaseLLMProvider:
-  
+
   override val httpVersion: HttpVersion = httpVersionParam
 
   override val name: String = s"LMStudio($baseUrl)"

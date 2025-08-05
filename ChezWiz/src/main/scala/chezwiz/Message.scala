@@ -45,7 +45,7 @@ object MessageContentPart:
       @Schema.description("The text content")
       text: String
   ) extends MessageContentPart derives Schema, ReadWriter
-  
+
   case class ImageUrlPart(
       @Schema.description("The type of content part")
       `type`: String = "image_url",
@@ -68,9 +68,9 @@ case class ChatMessage(
 ) derives Schema, ReadWriter
 
 object ChatMessage:
-  def text(role: Role, text: String): ChatMessage = 
+  def text(role: Role, text: String): ChatMessage =
     ChatMessage(role, MessageContent.Text(text))
-  
+
   def multiModal(role: Role, parts: List[MessageContentPart]): ChatMessage =
     ChatMessage(role, MessageContent.MultiModal(parts))
 
