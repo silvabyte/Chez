@@ -12,7 +12,7 @@ object LMStudioProviderSpec extends TestSuite:
       assert(provider.name.contains("LMStudio"))
       assert(provider.modelId == "local-model")
       assert(provider.supportedModels.contains("local-model"))
-      assert(provider.httpVersion == HttpVersion.Http11)
+      assert(provider.httpVersion == HttpVersion.Http2)
     }
 
     test("LMStudioProvider - create with custom URL and model") {
@@ -37,8 +37,8 @@ object LMStudioProviderSpec extends TestSuite:
       // No need to test internal implementation details
     }
 
-    test("LMStudioProvider - uses HTTP/1.1 for local compatibility") {
-      val provider = LMStudioProvider()
+    test("LMStudioProvider - can use HTTP/1.1 for local compatibility") {
+      val provider = LMStudioProvider(httpVersion = HttpVersion.Http11)
       assert(provider.httpVersion == HttpVersion.Http11)
     }
 
