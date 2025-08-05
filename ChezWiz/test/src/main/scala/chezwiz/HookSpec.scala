@@ -27,9 +27,9 @@ object HookSpec extends TestSuite:
     override def chat(request: ChatRequest): Either[ChezError, ChatResponse] = {
       Right(ChatResponse(
         content = s"Mock response to: ${request.messages.last.content match {
-          case MessageContent.Text(text) => text
-          case _ => "non-text content"
-        }}",
+            case MessageContent.Text(text) => text
+            case _ => "non-text content"
+          }}",
         usage = Some(Usage(10, 20, 30)),
         model = request.model,
         finishReason = Some("stop")
@@ -210,7 +210,9 @@ object HookSpec extends TestSuite:
       assert(testHook.historyCalls.size == 1)
       assert(testHook.historyCalls.head.operation == HistoryOperation.Add)
       assert(testHook.historyCalls.head.message.isDefined)
-      assert(testHook.historyCalls.head.message.get.content == MessageContent.Text("Manual message"))
+      assert(
+        testHook.historyCalls.head.message.get.content == MessageContent.Text("Manual message")
+      )
 
       // Test clearHistory
       testHook.reset()
@@ -486,7 +488,9 @@ object HookSpec extends TestSuite:
 
       // Verify context
       val preContext = testHook.preRequestCalls.head
-      assert(preContext.request.messages.exists(_.content == MessageContent.Text("Test without history")))
+      assert(
+        preContext.request.messages.exists(_.content == MessageContent.Text("Test without history"))
+      )
     }
 
     test("Hooks work correctly with generateObjectWithoutHistory") {
