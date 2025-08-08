@@ -217,12 +217,12 @@ class HookRegistry {
     scopeChangeHooks = scopeChangeHooks :+ hook
     this
   }
-  
+
   def addPreEmbeddingHook(hook: PreEmbeddingHook): HookRegistry = {
     preEmbeddingHooks = preEmbeddingHooks :+ hook
     this
   }
-  
+
   def addPostEmbeddingHook(hook: PostEmbeddingHook): HookRegistry = {
     postEmbeddingHooks = postEmbeddingHooks :+ hook
     this
@@ -306,7 +306,7 @@ class HookRegistry {
       }
     }
   }
-  
+
   def executePreEmbeddingHooks(context: PreEmbeddingContext): Unit = {
     preEmbeddingHooks.foreach { hook =>
       try {
@@ -317,7 +317,7 @@ class HookRegistry {
       }
     }
   }
-  
+
   def executePostEmbeddingHooks(context: PostEmbeddingContext): Unit = {
     postEmbeddingHooks.foreach { hook =>
       try {

@@ -541,17 +541,17 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
         s"Provider ${config.provider.name} does not support embeddings"
       ))
     }
-    
+
     val embeddingModel = model.getOrElse(config.model)
-    
+
     logger.info(s"Agent '${config.name}' generating embedding for text with model: $embeddingModel")
-    
+
     val request = EmbeddingRequest(
       input = EmbeddingInput.Single(text),
       model = embeddingModel,
       metadata = Some(metadata)
     )
-    
+
     // Execute pre-embedding hooks
     val requestTimestamp = System.currentTimeMillis()
     config.hooks.executePreEmbeddingHooks(PreEmbeddingContext(
@@ -561,9 +561,9 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       metadata = metadata,
       timestamp = requestTimestamp
     ))
-    
+
     val result = config.provider.embed(request)
-    
+
     // Execute post-embedding hooks
     config.hooks.executePostEmbeddingHooks(PostEmbeddingContext(
       agentName = config.name,
@@ -573,10 +573,12 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       metadata = metadata,
       requestTimestamp = requestTimestamp
     ))
-    
+
     result match {
       case Right(response) =>
-        logger.info(s"Agent '${config.name}' successfully generated embedding (dimensions: ${response.dimensions})")
+        logger.info(
+          s"Agent '${config.name}' successfully generated embedding (dimensions: ${response.dimensions})"
+        )
         Right(response)
       case Left(error) =>
         // Execute error hooks
@@ -592,7 +594,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
         Left(error)
     }
   }
-  
+
   def generateEmbeddings(
       texts: List[String],
       model: Option[String] = None,
@@ -603,17 +605,19 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
         s"Provider ${config.provider.name} does not support embeddings"
       ))
     }
-    
+
     val embeddingModel = model.getOrElse(config.model)
-    
-    logger.info(s"Agent '${config.name}' generating embeddings for ${texts.size} texts with model: $embeddingModel")
-    
+
+    logger.info(
+      s"Agent '${config.name}' generating embeddings for ${texts.size} texts with model: $embeddingModel"
+    )
+
     val request = EmbeddingRequest(
       input = EmbeddingInput.Multiple(texts),
       model = embeddingModel,
       metadata = Some(metadata)
     )
-    
+
     // Execute pre-embedding hooks
     val requestTimestamp = System.currentTimeMillis()
     config.hooks.executePreEmbeddingHooks(PreEmbeddingContext(
@@ -623,9 +627,9 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       metadata = metadata,
       timestamp = requestTimestamp
     ))
-    
+
     val result = config.provider.embed(request)
-    
+
     // Execute post-embedding hooks
     config.hooks.executePostEmbeddingHooks(PostEmbeddingContext(
       agentName = config.name,
@@ -635,10 +639,12 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       metadata = metadata,
       requestTimestamp = requestTimestamp
     ))
-    
+
     result match {
       case Right(response) =>
-        logger.info(s"Agent '${config.name}' successfully generated ${response.embeddings.size} embeddings (dimensions: ${response.dimensions})")
+        logger.info(
+          s"Agent '${config.name}' successfully generated ${response.embeddings.size} embeddings (dimensions: ${response.dimensions})"
+        )
         Right(response)
       case Left(error) =>
         // Execute error hooks
@@ -654,15 +660,15 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
         Left(error)
     }
   }
-  
+
   // Utility method for cosine similarity
   def cosineSimilarity(embedding1: Vector[Float], embedding2: Vector[Float]): Float = {
     require(embedding1.size == embedding2.size, "Embeddings must have the same dimensions")
-    
+
     val dotProduct = embedding1.zip(embedding2).map { case (a, b) => a * b }.sum
     val norm1 = math.sqrt(embedding1.map(x => x * x).sum).toFloat
     val norm2 = math.sqrt(embedding2.map(x => x * x).sum).toFloat
-    
+
     if (norm1 == 0 || norm2 == 0) 0.0f
     else dotProduct / (norm1 * norm2)
   }
