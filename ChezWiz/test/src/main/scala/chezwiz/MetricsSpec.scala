@@ -1,5 +1,5 @@
 import utest.*
-import chezwiz.agent.*
+import chezwiz.agent.{Agent, AgentFactory, AgentMetrics, AgentMetricsSnapshot, ChatMessage, ChatRequest, ChatResponse, ChezError, DefaultAgentMetrics, ErrorContext, ErrorMetrics, HookRegistry, MessageContent, MetricsFactory, MetricsHook, ModelMetrics, ObjectRequest, ObjectResponse, OperationMetrics, PostObjectResponseContext, PostResponseContext, PreObjectRequestContext, PreRequestContext, RequestMetadata, Role, ScopeMetrics, Usage}
 import chezwiz.agent.providers.*
 import chez.derivation.Schema
 import upickle.default.*

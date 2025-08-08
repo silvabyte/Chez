@@ -10,7 +10,11 @@ import chezwiz.agent.{
   Usage,
   ChezError,
   MessageContent,
-  MessageContentPart
+  MessageContentPart,
+  EmbeddingRequest,
+  EmbeddingResponse,
+  Embedding,
+  EmbeddingInput
 }
 
 /**
@@ -238,6 +242,78 @@ class LMStudioProvider(
   override def validateModel(model: String): Either[ChezError.ModelNotSupported, Unit] = {
     // Allow any model for LM Studio since users can load different models
     Right(())
+  }
+
+  // Embedding support
+  override val supportsEmbeddings: Boolean = true
+  override val supportedEmbeddingModels: List[String] = List("*") // Accept any embedding model
+  
+  override def embed(request: EmbeddingRequest): Either[ChezError, EmbeddingResponse] = {
+    val url = s"$baseUrl/embeddings"
+    val body = buildEmbeddingRequestBody(request)
+    
+    for {
+      responseText <- makeRequest(url, buildHeaders(""), body)
+      response <- parseEmbeddingResponse(responseText)
+    } yield response
+  }
+  
+  private def buildEmbeddingRequestBody(request: EmbeddingRequest): ujson.Value = {
+    val baseObj = ujson.Obj(
+      "model" -> request.model,
+      "input" -> (request.input match {
+        case EmbeddingInput.Single(text) => ujson.Str(text)
+        case EmbeddingInput.Multiple(texts) => ujson.Arr(texts.map(ujson.Str(_))*)
+      })
+    )
+    
+    request.dimensions.foreach(d => baseObj("dimensions") = d)
+    if (request.encodingFormat != "float") {
+      baseObj("encoding_format") = request.encodingFormat
+    }
+    
+    baseObj
+  }
+  
+  private def parseEmbeddingResponse(responseBody: String): Either[ChezError, EmbeddingResponse] = {
+    try {
+      val json = ujson.read(responseBody)
+      
+      // Parse the LM Studio embedding response format
+      val data = json("data").arr
+      val embeddings = data.zipWithIndex.map { case (item, idx) =>
+        val embeddingArray = item("embedding").arr.map(_.num.toFloat).toVector
+        Embedding(
+          values = embeddingArray,
+          index = item.obj.get("index").map(_.num.toInt).getOrElse(idx)
+        )
+      }.toList
+      
+      val usage = json.obj.get("usage").map { u =>
+        Usage(
+          promptTokens = u("prompt_tokens").num.toInt,
+          completionTokens = u.obj.get("completion_tokens").map(_.num.toInt).getOrElse(0),
+          totalTokens = u("total_tokens").num.toInt
+        )
+      }
+      
+      val model = json("model").str
+      val dimensions = embeddings.headOption.map(_.values.size).getOrElse(0)
+      
+      Right(EmbeddingResponse(
+        embeddings = embeddings,
+        usage = usage,
+        model = model,
+        dimensions = dimensions
+      ))
+    } catch {
+      case ex: ujson.ParsingFailedException =>
+        Left(ChezError.ParseError(s"Failed to parse LM Studio embedding response: ${ex.getMessage}"))
+      case ex: NoSuchElementException =>
+        Left(ChezError.ParseError(s"Missing required field in LM Studio embedding response: ${ex.getMessage}"))
+      case ex: Exception =>
+        Left(ChezError.ParseError(s"Unexpected error parsing LM Studio embedding response: ${ex.getMessage}"))
+    }
   }
 
 object LMStudioProvider:

@@ -182,6 +182,22 @@ example-anthropic:
 	@echo ""
 	./mill ChezWiz.runMain chezwiz.agent.examples.AnthropicExample
 
+# Run LM Studio embeddings example
+.PHONY: example-embeddings
+example-embeddings:
+	@echo "🧬 Running LM Studio Embeddings example..."
+	@echo "ℹ️  Prerequisites:"
+	@echo "  1. Install LM Studio from https://lmstudio.ai"
+	@echo "  2. Download an embedding model (e.g., text-embedding-qwen3-embedding-8b)"
+	@echo "  3. Start LM Studio server (default: http://localhost:1234)"
+	@echo ""
+	@echo "ℹ️  Configuration (via .env file or environment):"
+	@echo "  - LM_STUDIO_URL: LM Studio server URL (default: http://localhost:1234/v1)"
+	@echo "  - LM_STUDIO_EMBEDDING_MODEL: Embedding model name (default: text-embedding-qwen3-embedding-8b)"
+	@echo "  - ENV_DIR: Directory containing .env file (default: current directory)"
+	@echo ""
+	./mill ChezWiz.runMain chezwiz.agent.examples.LMStudioEmbeddingExample
+
 # Run all providers comparison example
 .PHONY: example-all-providers
 example-all-providers:

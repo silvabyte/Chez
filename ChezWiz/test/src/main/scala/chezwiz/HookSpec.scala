@@ -1,5 +1,5 @@
 import utest.*
-import chezwiz.agent.*
+import chezwiz.agent.{Agent, AgentFactory, ChatMessage, ChatRequest, ChatResponse, ChezError, ErrorContext, ErrorHook, HistoryContext, HistoryHook, HistoryOperation, HookRegistry, MessageContent, ObjectRequest, ObjectResponse, PostObjectResponseContext, PostObjectResponseHook, PostResponseContext, PostResponseHook, PreObjectRequestContext, PreObjectRequestHook, PreRequestContext, PreRequestHook, RequestMetadata, Role, ScopeChangeContext, ScopeChangeHook, Usage}
 import chezwiz.agent.providers.*
 import chez.derivation.Schema
 import upickle.default.*

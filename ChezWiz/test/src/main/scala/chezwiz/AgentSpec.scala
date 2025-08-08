@@ -1,5 +1,5 @@
 import utest.*
-import chezwiz.agent.*
+import chezwiz.agent.{Agent, AgentFactory, ChatMessage, ChatRequest, ChatResponse, ChezError, HistoryOperation, MessageContent, ObjectRequest, ObjectResponse, RequestMetadata, Role, Usage}
 import chezwiz.agent.providers.*
 import chezwiz.agent.providers.{OpenAIResponse, ErrorResponse}
 import chez.derivation.Schema
