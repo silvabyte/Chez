@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.6] - 2025-08-08
+
+* chore: update release order
+* feat: Add Vector Embeddings Support to ChezWiz (#6)
+* chore: release v0.1.5
+
 ## [0.1.5] - 2025-08-05
 
 * feat: support messages and multimodal (#5)
