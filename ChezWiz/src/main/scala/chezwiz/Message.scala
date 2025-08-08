@@ -4,6 +4,7 @@ import upickle.default.*
 import ujson.Value
 import chez.*
 import chez.derivation.Schema
+import chez.derivation.CollectionSchemas.given
 
 sealed trait Role derives Schema, ReadWriter
 
@@ -164,4 +165,43 @@ case class ObjectResponse[T](
     model: String,
     @Schema.description("The reason the generation finished")
     finishReason: Option[String] = None
+) derives Schema, ReadWriter
+
+// Embedding input type - can be single text or multiple texts
+sealed trait EmbeddingInput derives Schema, ReadWriter
+object EmbeddingInput:
+  case class Single(text: String) extends EmbeddingInput derives Schema, ReadWriter
+  case class Multiple(texts: List[String]) extends EmbeddingInput derives Schema, ReadWriter
+
+// Embedding-specific types
+case class EmbeddingRequest(
+    @Schema.description("Text or array of texts to embed")
+    input: EmbeddingInput,
+    @Schema.description("The embedding model to use")
+    model: String,
+    @Schema.description("Optional dimensions parameter (for models that support it)")
+    dimensions: Option[Int] = None,
+    @Schema.description("Encoding format: 'float' or 'base64'")
+    @Schema.default("float")
+    encodingFormat: String = "float",
+    @Schema.description("Optional metadata for request scoping")
+    metadata: Option[RequestMetadata] = None
+) derives Schema, ReadWriter
+
+case class Embedding(
+    @Schema.description("The embedding vector")
+    values: Vector[Float],
+    @Schema.description("Index in the batch")
+    index: Int
+) derives Schema, ReadWriter
+
+case class EmbeddingResponse(
+    @Schema.description("List of embeddings")
+    embeddings: List[Embedding],
+    @Schema.description("Token usage information")
+    usage: Option[Usage] = None,
+    @Schema.description("The model used for generation")
+    model: String,
+    @Schema.description("Dimensions of the embeddings")
+    dimensions: Int
 ) derives Schema, ReadWriter

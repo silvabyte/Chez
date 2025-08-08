@@ -1,5 +1,5 @@
 import utest.*
-import chezwiz.agent.*
+import chezwiz.agent.{ObjectResponse, Usage}
 import ujson.Value
 import upickle.default.*
 

@@ -7,6 +7,7 @@
 ✅ **Multi-provider LLM support** (OpenAI, Anthropic, Custom Endpoints)  
 ✅ **Custom endpoint support** for local LLMs (LM Studio, Ollama) and OpenAI-compatible APIs  
 ✅ **Type-safe structured object generation**  
+✅ **Vector embeddings support** for semantic search and similarity  
 ✅ **Scoped conversation history** (tenant/user/conversation isolation)  
 ✅ **Built-in JSON schema validation** via Chez integration  
 ✅ **Conversation persistence and management**  
@@ -568,6 +569,337 @@ agent.generateText("Hello", metadata) // ✅ Works fine
 ```
 
 For more comprehensive examples, see [ExampleHooks.scala](../ChezWiz/src/main/scala/chezwiz/ExampleHooks.scala).
+
+## Vector Embeddings
+
+ChezWiz provides comprehensive support for vector embeddings, enabling semantic search, similarity analysis, and document clustering capabilities. Embeddings are supported through both local providers (LM Studio) and cloud providers (OpenAI, upcoming).
+
+### Quick Start with Embeddings
+
+```scala
+import chezwiz.agent.*
+
+// Create agent with embedding-capable provider
+val provider = new LMStudioProvider(
+  baseUrl = "http://localhost:1234/v1",
+  modelId = "text-embedding-qwen3-embedding-8b"
+)
+
+val agent = Agent(
+  name = "EmbeddingAgent",
+  instructions = "Generate embeddings for semantic analysis",
+  provider = provider,
+  model = "text-embedding-qwen3-embedding-8b"
+)
+
+// Generate single embedding
+val text = "ChezWiz is a type-safe LLM agent library for Scala 3"
+agent.generateEmbedding(text) match {
+  case Right(response) =>
+    println(s"Generated ${response.dimensions}-dimensional embedding")
+    println(s"Tokens used: ${response.usage.map(_.totalTokens).getOrElse(0)}")
+  case Left(error) =>
+    println(s"Error: $error")
+}
+```
+
+### Batch Embeddings
+
+Process multiple texts efficiently in a single request:
+
+```scala
+val texts = List(
+  "Scala is a functional programming language",
+  "Type safety prevents runtime errors",
+  "LLM agents can generate structured data"
+)
+
+agent.generateEmbeddings(texts) match {
+  case Right(response) =>
+    println(s"Generated ${response.embeddings.size} embeddings")
+    response.embeddings.zip(texts).foreach { case (embedding, text) =>
+      println(s"Text: '${text.take(30)}...' -> ${embedding.values.size} dimensions")
+    }
+  case Left(error) =>
+    println(s"Error: $error")
+}
+```
+
+### Semantic Similarity Search
+
+Find the most similar texts using cosine similarity:
+
+```scala
+// Generate embeddings for documents
+val documents = List(
+  "Machine learning models require training data",
+  "Neural networks learn patterns from examples",
+  "Scala combines object-oriented and functional paradigms",
+  "Type inference reduces boilerplate code"
+)
+
+val queryText = "deep learning algorithms"
+
+// Generate embeddings
+val docsResponse = agent.generateEmbeddings(documents)
+val queryResponse = agent.generateEmbedding(queryText)
+
+(docsResponse, queryResponse) match {
+  case (Right(docs), Right(query)) =>
+    val queryEmbedding = query.embeddings.head.values
+    
+    // Calculate similarities
+    val similarities = docs.embeddings.zip(documents).map { 
+      case (docEmbedding, text) =>
+        val similarity = agent.cosineSimilarity(queryEmbedding, docEmbedding.values)
+        (text, similarity)
+    }
+    
+    // Find most similar
+    val topMatches = similarities.sortBy(-_._2).take(3)
+    println("Top 3 most similar documents:")
+    topMatches.foreach { case (text, score) =>
+      println(f"  Score: $score%.3f - ${text.take(50)}...")
+    }
+    
+  case _ => println("Error generating embeddings")
+}
+```
+
+### Document Clustering
+
+Create similarity matrices for document clustering:
+
+```scala
+val documents = List(
+  "Machine learning requires data",
+  "Neural networks learn patterns",
+  "Scala functional programming",
+  "Type safety in Scala"
+)
+
+agent.generateEmbeddings(documents) match {
+  case Right(response) =>
+    // Build similarity matrix
+    val embeddings = response.embeddings.map(_.values)
+    
+    println("Similarity Matrix:")
+    for (i <- embeddings.indices) {
+      for (j <- embeddings.indices) {
+        val similarity = if (i == j) 1.0 
+          else agent.cosineSimilarity(embeddings(i), embeddings(j))
+        print(f"$similarity%.2f ")
+      }
+      println()
+    }
+    
+    // Find clusters (documents with similarity > threshold)
+    val threshold = 0.7
+    for {
+      i <- documents.indices
+      j <- (i + 1) until documents.size
+      similarity = agent.cosineSimilarity(embeddings(i), embeddings(j))
+      if similarity > threshold
+    } {
+      println(f"Cluster found (similarity: $similarity%.3f):")
+      println(s"  - ${documents(i)}")
+      println(s"  - ${documents(j)}")
+    }
+    
+  case Left(error) => println(s"Error: $error")
+}
+```
+
+### Embedding Message Types
+
+ChezWiz uses type-safe message types for embeddings:
+
+```scala
+import chezwiz.agent.{EmbeddingInput, EmbeddingRequest, EmbeddingResponse}
+
+// Single text input
+val singleInput = EmbeddingInput.Single("Text to embed")
+
+// Multiple texts input
+val multipleInput = EmbeddingInput.Multiple(List("Text 1", "Text 2", "Text 3"))
+
+// Full request with options
+val request = EmbeddingRequest(
+  input = singleInput,
+  model = "text-embedding-qwen3-embedding-8b",
+  dimensions = Some(1024),  // Optional: specify dimensions
+  encodingFormat = "float",  // "float" or "base64"
+  metadata = Some(RequestMetadata(
+    tenantId = Some("my-tenant"),
+    userId = Some("user-123")
+  ))
+)
+```
+
+### Embedding Hooks
+
+Monitor and track embedding operations with hooks:
+
+```scala
+import chezwiz.agent.*
+
+class EmbeddingMonitorHook extends AgentHook 
+  with PreEmbeddingHook 
+  with PostEmbeddingHook {
+  
+  override def onPreEmbedding(context: PreEmbeddingContext): Unit = {
+    println(s"[${context.agentName}] Generating embedding for ${context.inputSize} texts")
+    println(s"  Model: ${context.model}")
+    println(s"  Tenant: ${context.metadata.tenantId.getOrElse("default")}")
+  }
+  
+  override def onPostEmbedding(context: PostEmbeddingContext): Unit = {
+    context.response match {
+      case Right(response) =>
+        println(s"[${context.agentName}] Generated ${response.embeddings.size} embeddings")
+        println(s"  Dimensions: ${response.dimensions}")
+        println(s"  Duration: ${context.duration}ms")
+        response.usage.foreach { usage =>
+          println(s"  Tokens: ${usage.totalTokens}")
+        }
+      case Left(error) =>
+        println(s"[${context.agentName}] Embedding failed: $error")
+    }
+  }
+}
+
+// Register hooks with agent
+val hooks = HookRegistry.empty
+  .addPreEmbeddingHook(new EmbeddingMonitorHook())
+  .addPostEmbeddingHook(new EmbeddingMonitorHook())
+
+val agent = Agent(
+  name = "MonitoredEmbeddingAgent",
+  instructions = "Generate embeddings with monitoring",
+  provider = provider,
+  model = "text-embedding-qwen3-embedding-8b",
+  hooks = hooks
+)
+```
+
+### Supported Embedding Models
+
+#### LM Studio (Local)
+- Any embedding model loaded in LM Studio
+- Recommended: `text-embedding-qwen3-embedding-8b`
+- Other options: `nomic-embed-text`, `bge-large`, `e5-large`
+
+#### OpenAI (Coming Soon)
+- `text-embedding-3-large` (3072 dimensions)
+- `text-embedding-3-small` (1536 dimensions)
+- `text-embedding-ada-002` (1536 dimensions)
+
+### Configuration
+
+Configure embedding providers via environment variables or `.env` file:
+
+```bash
+# LM Studio configuration
+LM_STUDIO_URL=http://localhost:1234/v1
+LM_STUDIO_EMBEDDING_MODEL=text-embedding-qwen3-embedding-8b
+
+# OpenAI configuration (coming soon)
+OPENAI_API_KEY=your-api-key
+OPENAI_EMBEDDING_MODEL=text-embedding-3-large
+```
+
+### Best Practices
+
+1. **Batch Processing**: Use `generateEmbeddings` for multiple texts to reduce API calls
+2. **Caching**: Cache embeddings for frequently accessed texts
+3. **Dimension Selection**: Choose appropriate dimensions based on your use case
+4. **Model Selection**: Use smaller models for speed, larger for accuracy
+5. **Normalization**: Embeddings are pre-normalized for cosine similarity
+6. **Token Limits**: Be aware of model token limits when embedding long texts
+
+### Performance Considerations
+
+```scala
+// Efficient batch processing
+val largeBatch = (1 to 1000).map(i => s"Document $i").toList
+
+// Process in chunks to avoid token limits
+val chunkSize = 100
+val chunks = largeBatch.grouped(chunkSize)
+
+val allEmbeddings = chunks.flatMap { chunk =>
+  agent.generateEmbeddings(chunk) match {
+    case Right(response) => Some(response.embeddings)
+    case Left(error) => 
+      println(s"Error processing chunk: $error")
+      None
+  }
+}.flatten.toList
+
+println(s"Processed ${allEmbeddings.size} embeddings")
+```
+
+### Example: Building a Semantic Search System
+
+```scala
+case class Document(
+  id: String,
+  content: String,
+  embedding: Option[Vector[Float]] = None
+)
+
+class SemanticSearchIndex(agent: Agent) {
+  private var documents = Map[String, Document]()
+  
+  def addDocument(id: String, content: String): Unit = {
+    agent.generateEmbedding(content) match {
+      case Right(response) =>
+        val embedding = response.embeddings.head.values
+        documents = documents + (id -> Document(id, content, Some(embedding)))
+        println(s"Added document $id to index")
+      case Left(error) =>
+        println(s"Failed to index document $id: $error")
+    }
+  }
+  
+  def search(query: String, topK: Int = 5): List[(Document, Float)] = {
+    agent.generateEmbedding(query) match {
+      case Right(response) =>
+        val queryEmbedding = response.embeddings.head.values
+        
+        documents.values.toList
+          .filter(_.embedding.isDefined)
+          .map { doc =>
+            val similarity = agent.cosineSimilarity(
+              queryEmbedding, 
+              doc.embedding.get
+            )
+            (doc, similarity)
+          }
+          .sortBy(-_._2)
+          .take(topK)
+          
+      case Left(error) =>
+        println(s"Search failed: $error")
+        List.empty
+    }
+  }
+}
+
+// Usage
+val searchIndex = new SemanticSearchIndex(agent)
+
+// Add documents
+searchIndex.addDocument("doc1", "Scala is a functional programming language")
+searchIndex.addDocument("doc2", "Machine learning requires large datasets")
+searchIndex.addDocument("doc3", "Type safety helps prevent bugs")
+
+// Search
+val results = searchIndex.search("functional programming", topK = 2)
+results.foreach { case (doc, score) =>
+  println(f"Score: $score%.3f - ${doc.content}")
+}
+```
 
 ## Built-in Metrics System
 

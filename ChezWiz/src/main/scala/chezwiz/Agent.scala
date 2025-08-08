@@ -10,7 +10,10 @@ import chezwiz.agent.{
   ChatMessage,
   Role,
   ChezError,
-  RequestMetadata
+  RequestMetadata,
+  EmbeddingRequest,
+  EmbeddingResponse,
+  EmbeddingInput
 }
 import ujson.Value
 import upickle.default.*
@@ -525,6 +528,149 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
         logger.error(s"Agent '${config.name}' failed to generate with custom messages: $error")
         Left(error)
     }
+  }
+
+  // Embedding methods
+  def generateEmbedding(
+      text: String,
+      model: Option[String] = None,
+      metadata: RequestMetadata = RequestMetadata()
+  ): Either[ChezError, EmbeddingResponse] = {
+    if (!config.provider.supportsEmbeddings) {
+      return Left(ChezError.ConfigurationError(
+        s"Provider ${config.provider.name} does not support embeddings"
+      ))
+    }
+
+    val embeddingModel = model.getOrElse(config.model)
+
+    logger.info(s"Agent '${config.name}' generating embedding for text with model: $embeddingModel")
+
+    val request = EmbeddingRequest(
+      input = EmbeddingInput.Single(text),
+      model = embeddingModel,
+      metadata = Some(metadata)
+    )
+
+    // Execute pre-embedding hooks
+    val requestTimestamp = System.currentTimeMillis()
+    config.hooks.executePreEmbeddingHooks(PreEmbeddingContext(
+      agentName = config.name,
+      model = embeddingModel,
+      request = request,
+      metadata = metadata,
+      timestamp = requestTimestamp
+    ))
+
+    val result = config.provider.embed(request)
+
+    // Execute post-embedding hooks
+    config.hooks.executePostEmbeddingHooks(PostEmbeddingContext(
+      agentName = config.name,
+      model = embeddingModel,
+      request = request,
+      response = result,
+      metadata = metadata,
+      requestTimestamp = requestTimestamp
+    ))
+
+    result match {
+      case Right(response) =>
+        logger.info(
+          s"Agent '${config.name}' successfully generated embedding (dimensions: ${response.dimensions})"
+        )
+        Right(response)
+      case Left(error) =>
+        // Execute error hooks
+        config.hooks.executeErrorHooks(ErrorContext(
+          agentName = config.name,
+          model = embeddingModel,
+          error = error,
+          metadata = metadata,
+          operation = "generateEmbedding",
+          request = None
+        ))
+        logger.error(s"Agent '${config.name}' failed to generate embedding: $error")
+        Left(error)
+    }
+  }
+
+  def generateEmbeddings(
+      texts: List[String],
+      model: Option[String] = None,
+      metadata: RequestMetadata = RequestMetadata()
+  ): Either[ChezError, EmbeddingResponse] = {
+    if (!config.provider.supportsEmbeddings) {
+      return Left(ChezError.ConfigurationError(
+        s"Provider ${config.provider.name} does not support embeddings"
+      ))
+    }
+
+    val embeddingModel = model.getOrElse(config.model)
+
+    logger.info(
+      s"Agent '${config.name}' generating embeddings for ${texts.size} texts with model: $embeddingModel"
+    )
+
+    val request = EmbeddingRequest(
+      input = EmbeddingInput.Multiple(texts),
+      model = embeddingModel,
+      metadata = Some(metadata)
+    )
+
+    // Execute pre-embedding hooks
+    val requestTimestamp = System.currentTimeMillis()
+    config.hooks.executePreEmbeddingHooks(PreEmbeddingContext(
+      agentName = config.name,
+      model = embeddingModel,
+      request = request,
+      metadata = metadata,
+      timestamp = requestTimestamp
+    ))
+
+    val result = config.provider.embed(request)
+
+    // Execute post-embedding hooks
+    config.hooks.executePostEmbeddingHooks(PostEmbeddingContext(
+      agentName = config.name,
+      model = embeddingModel,
+      request = request,
+      response = result,
+      metadata = metadata,
+      requestTimestamp = requestTimestamp
+    ))
+
+    result match {
+      case Right(response) =>
+        logger.info(
+          s"Agent '${config.name}' successfully generated ${response.embeddings.size} embeddings (dimensions: ${response.dimensions})"
+        )
+        Right(response)
+      case Left(error) =>
+        // Execute error hooks
+        config.hooks.executeErrorHooks(ErrorContext(
+          agentName = config.name,
+          model = embeddingModel,
+          error = error,
+          metadata = metadata,
+          operation = "generateEmbeddings",
+          request = None
+        ))
+        logger.error(s"Agent '${config.name}' failed to generate embeddings: $error")
+        Left(error)
+    }
+  }
+
+  // Utility method for cosine similarity
+  def cosineSimilarity(embedding1: Vector[Float], embedding2: Vector[Float]): Float = {
+    require(embedding1.size == embedding2.size, "Embeddings must have the same dimensions")
+
+    val dotProduct = embedding1.zip(embedding2).map { case (a, b) => a * b }.sum
+    val norm1 = math.sqrt(embedding1.map(x => x * x).sum).toFloat
+    val norm2 = math.sqrt(embedding2.map(x => x * x).sum).toFloat
+
+    if (norm1 == 0 || norm2 == 0) 0.0f
+    else dotProduct / (norm1 * norm2)
   }
 
 object Agent:

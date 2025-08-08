@@ -1,6 +1,15 @@
 package chezwiz.agent.providers
 
-import chezwiz.agent.{ChatRequest, ChatResponse, ObjectRequest, ObjectResponse, ChezError}
+import chezwiz.agent.{
+  ChatRequest,
+  ChatResponse,
+  ObjectRequest,
+  ObjectResponse,
+  ChezError,
+  EmbeddingRequest,
+  EmbeddingResponse,
+  EmbeddingInput
+}
 import scala.util.{Try, Success, Failure}
 
 enum HttpVersion:
@@ -18,6 +27,15 @@ trait LLMProvider:
     if supportedModels.contains(model) then Right(())
     else Left(ChezError.ModelNotSupported(model, name, supportedModels))
   }
+
+  // Embedding support
+  def supportsEmbeddings: Boolean = false
+  def supportedEmbeddingModels: List[String] = List.empty
+  def embed(request: EmbeddingRequest): Either[ChezError, EmbeddingResponse] =
+    Left(ChezError.ConfigurationError(s"Provider $name does not support embeddings"))
+
+  def embedBatch(texts: List[String], model: String): Either[ChezError, EmbeddingResponse] =
+    embed(EmbeddingRequest(EmbeddingInput.Multiple(texts), model))
 
   protected def buildHeaders(apiKey: String): Map[String, String]
   protected def buildRequestBody(request: ChatRequest): ujson.Value

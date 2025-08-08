@@ -92,6 +92,28 @@ case class ScopeChangeContext(
     timestamp: Long = System.currentTimeMillis()
 )
 
+/** Context passed to PreEmbeddingHook */
+case class PreEmbeddingContext(
+    agentName: String,
+    model: String,
+    request: EmbeddingRequest,
+    metadata: RequestMetadata,
+    timestamp: Long = System.currentTimeMillis()
+)
+
+/** Context passed to PostEmbeddingHook */
+case class PostEmbeddingContext(
+    agentName: String,
+    model: String,
+    request: EmbeddingRequest,
+    response: Either[ChezError, EmbeddingResponse],
+    metadata: RequestMetadata,
+    requestTimestamp: Long,
+    responseTimestamp: Long = System.currentTimeMillis()
+) {
+  def duration: Long = responseTimestamp - requestTimestamp
+}
+
 // ============================================================================
 // Hook Trait Interfaces
 // ============================================================================
@@ -134,6 +156,16 @@ trait ScopeChangeHook extends AgentHook {
   def onScopeChange(context: ScopeChangeContext): Unit
 }
 
+/** Hook executed before sending embedding requests to LLM providers */
+trait PreEmbeddingHook extends AgentHook {
+  def onPreEmbedding(context: PreEmbeddingContext): Unit
+}
+
+/** Hook executed after receiving embedding responses from LLM providers */
+trait PostEmbeddingHook extends AgentHook {
+  def onPostEmbedding(context: PostEmbeddingContext): Unit
+}
+
 // ============================================================================
 // Hook Registry
 // ============================================================================
@@ -147,6 +179,8 @@ class HookRegistry {
   private var errorHooks: List[ErrorHook] = List.empty
   private var historyHooks: List[HistoryHook] = List.empty
   private var scopeChangeHooks: List[ScopeChangeHook] = List.empty
+  private var preEmbeddingHooks: List[PreEmbeddingHook] = List.empty
+  private var postEmbeddingHooks: List[PostEmbeddingHook] = List.empty
 
   // Registration methods
   def addPreRequestHook(hook: PreRequestHook): HookRegistry = {
@@ -181,6 +215,16 @@ class HookRegistry {
 
   def addScopeChangeHook(hook: ScopeChangeHook): HookRegistry = {
     scopeChangeHooks = scopeChangeHooks :+ hook
+    this
+  }
+
+  def addPreEmbeddingHook(hook: PreEmbeddingHook): HookRegistry = {
+    preEmbeddingHooks = preEmbeddingHooks :+ hook
+    this
+  }
+
+  def addPostEmbeddingHook(hook: PostEmbeddingHook): HookRegistry = {
+    postEmbeddingHooks = postEmbeddingHooks :+ hook
     this
   }
 
@@ -263,6 +307,28 @@ class HookRegistry {
     }
   }
 
+  def executePreEmbeddingHooks(context: PreEmbeddingContext): Unit = {
+    preEmbeddingHooks.foreach { hook =>
+      try {
+        hook.onPreEmbedding(context)
+      } catch {
+        case ex: Exception =>
+          System.err.println(s"PreEmbeddingHook failed: ${ex.getMessage}")
+      }
+    }
+  }
+
+  def executePostEmbeddingHooks(context: PostEmbeddingContext): Unit = {
+    postEmbeddingHooks.foreach { hook =>
+      try {
+        hook.onPostEmbedding(context)
+      } catch {
+        case ex: Exception =>
+          System.err.println(s"PostEmbeddingHook failed: ${ex.getMessage}")
+      }
+    }
+  }
+
   // Utility methods
   def hasAnyHooks: Boolean = {
     preRequestHooks.nonEmpty ||
@@ -271,7 +337,9 @@ class HookRegistry {
     postObjectResponseHooks.nonEmpty ||
     errorHooks.nonEmpty ||
     historyHooks.nonEmpty ||
-    scopeChangeHooks.nonEmpty
+    scopeChangeHooks.nonEmpty ||
+    preEmbeddingHooks.nonEmpty ||
+    postEmbeddingHooks.nonEmpty
   }
 
   def clear(): Unit = {
@@ -282,6 +350,8 @@ class HookRegistry {
     errorHooks = List.empty
     historyHooks = List.empty
     scopeChangeHooks = List.empty
+    preEmbeddingHooks = List.empty
+    postEmbeddingHooks = List.empty
   }
 }
 
