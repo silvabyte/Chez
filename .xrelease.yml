@@ -21,8 +21,8 @@ release:
     - type: custom
       name: "assembly"
       command: "make assembly"
-    - type: git-tag
     - type: commit-push
+    - type: git-tag
     - type: github-release
       assets:
         - "out/Chez/assembly.dest/out.jar"
