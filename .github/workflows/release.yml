@@ -32,6 +32,10 @@ jobs:
           java-version: "23"
           distribution: "temurin"
 
+      # Install Mill build tool
+      - name: Make Assembly
+        run: make assembly
+
       # Configure Git user - if you want to use a different user, or leave as is to use the default git bot user
       - name: Configure Git
         run: |

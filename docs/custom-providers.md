@@ -1,251 +1,226 @@
-# Custom Providers in ChezWiz
+# OpenAI-Compatible Providers in ChezWiz
 
-**ChezWiz** provides dedicated support for LM Studio (local LLM server) and custom OpenAI-compatible endpoints through specialized providers.
+ChezWiz provides a unified `OpenAICompatibleProvider` for connecting to any OpenAI-compatible API, including local model servers like LM Studio, LLamaCPP, Ollama, and cloud services.
 
-## LM Studio Provider
-
-LM Studio is a desktop application for running LLMs locally. ChezWiz includes a dedicated `LMStudioProvider` optimized for local model serving.
-
-### Features
-
-✅ **No authentication required** - Runs locally without API keys  
-✅ **HTTP/1.1 by default** - Optimized for local network compatibility  
-✅ **Structured output support** - Uses OpenAI's `json_schema` format  
-✅ **Automatic model validation** - Accepts any model loaded in LM Studio  
-✅ **Simple configuration** - Minimal setup required
-
-### Quick Start
+## Quick Start
 
 ```scala
 import chezwiz.agent.{Agent, RequestMetadata}
-import chezwiz.agent.providers.LMStudioProvider
+import chezwiz.agent.providers.OpenAICompatibleProvider
 
-// Create LM Studio provider with default settings
-val provider = LMStudioProvider()  // Defaults to http://localhost:1234/v1
-
-// Or specify custom URL and model
-val customProvider = LMStudioProvider(
-  baseUrl = "http://localhost:8080/v1",
-  modelId = "qwen2.5-coder-7b-instruct"
+// LM Studio (local, no auth)
+val lmStudioProvider = OpenAICompatibleProvider(
+  baseUrl = "http://localhost:1234/v1",
+  modelId = "local-model",
+  strictModelValidation = false
 )
 
-// Create an agent
+// Custom cloud endpoint (with auth)
+val cloudProvider = OpenAICompatibleProvider(
+  baseUrl = "https://api.example.com/v1",
+  apiKey = "your-api-key",
+  modelId = "gpt-3.5-turbo"
+)
+
+// Create agent
 val agent = Agent(
-  name = "LocalAssistant",
-  instructions = "You are a helpful AI assistant running locally.",
-  provider = provider,
+  name = "Assistant",
+  instructions = "You are a helpful AI assistant.",
+  provider = lmStudioProvider,
   model = "local-model"
 )
 
-// Use the agent
-val metadata = RequestMetadata(userId = Some("user123"))
-
-agent.generateText("Hello! Tell me about yourself.", metadata) match {
+// Use it
+agent.generateText("Hello!", RequestMetadata()) match {
   case Right(response) => println(response.content)
   case Left(error) => println(s"Error: $error")
 }
 ```
 
-### Configuration
+## Configuration Parameters
 
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `baseUrl` | `String` | LM Studio server URL | `"http://localhost:1234/v1"` |
-| `modelId` | `String` | Default model ID | `"local-model"` |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `baseUrl` | `String` | Required | API endpoint URL |
+| `apiKey` | `String` | `""` | API key (empty for no auth) |
+| `modelId` | `String` | `"local-model"` | Default model to use |
+| `supportedModels` | `List[String]` | `List.empty` | Allowed models (empty = any) |
+| `customHeaders` | `Map[String, String]` | `Map.empty` | Additional headers |
+| `enableEmbeddings` | `Boolean` | `false` | Enable embedding support |
+| `strictModelValidation` | `Boolean` | `true` | Enforce model validation |
+| `httpVersion` | `HttpVersion` | `Http2` | HTTP protocol version |
+| `timeouts` | `ProviderTimeouts` | Default | Connection/request timeouts |
 
-### Structured Output
+## Common Use Cases
 
-LM Studio supports OpenAI's `json_schema` format for structured output:
+### Local Model Servers
+
+```scala
+// LM Studio
+val lmStudio = OpenAICompatibleProvider(
+  baseUrl = "http://localhost:1234/v1",
+  modelId = "qwen2.5-coder-7b",
+  strictModelValidation = false  // Local models may have custom names
+)
+
+// LLamaCPP
+val llamaCpp = OpenAICompatibleProvider(
+  baseUrl = "http://localhost:8080/v1",
+  modelId = "llama-3.2-3b",
+  strictModelValidation = false,
+  httpVersion = HttpVersion.Http11  // Some local servers prefer HTTP/1.1
+)
+
+// Ollama (with OpenAI compatibility)
+val ollama = OpenAICompatibleProvider(
+  baseUrl = "http://localhost:11434/v1",
+  modelId = "llama3.2",
+  strictModelValidation = false
+)
+```
+
+### Cloud Endpoints
+
+```scala
+// Custom endpoint with authentication
+val customCloud = OpenAICompatibleProvider(
+  baseUrl = "https://api.company.com/v1",
+  apiKey = sys.env("API_KEY"),
+  modelId = "company-model-v2",
+  customHeaders = Map(
+    "X-Organization" -> "my-org",
+    "X-Project" -> "my-project"
+  )
+)
+
+// With model validation
+val restrictedEndpoint = OpenAICompatibleProvider(
+  baseUrl = "https://api.example.com/v1",
+  apiKey = "key",
+  supportedModels = List("model-a", "model-b"),
+  strictModelValidation = true  // Only allow listed models
+)
+```
+
+## Structured Output
+
+Generate typed responses using Chez schemas:
 
 ```scala
 import upickle.default.*
 import chez.derivation.*
 
 case class Analysis(
-  @Schema.description("Summary of the text")
+  @Schema.description("Brief summary")
   summary: String,
   
   @Schema.description("Sentiment: positive, negative, or neutral")
   sentiment: String,
   
-  @Schema.description("Key topics identified")
-  topics: List[String],
-  
-  @Schema.description("Confidence score from 0.0 to 1.0")
+  @Schema.description("Confidence from 0.0 to 1.0")
   @Schema.minimum(0.0)
   @Schema.maximum(1.0)
   confidence: Double
 ) derives Schema, ReadWriter
 
-val provider = LMStudioProvider()
 val agent = Agent(
   name = "Analyzer",
-  instructions = "You analyze text and provide structured insights.",
-  provider = provider,
+  instructions = "Analyze text and provide structured insights.",
+  provider = OpenAICompatibleProvider("http://localhost:1234/v1"),
   model = "local-model"
 )
 
 agent.generateObject[Analysis](
-  "Analyze this: The new product launch was incredibly successful!",
+  "The product launch exceeded all expectations!",
   RequestMetadata()
 ) match {
   case Right(response) =>
-    val analysis = response.data
-    println(s"Sentiment: ${analysis.sentiment}")
-    println(s"Confidence: ${analysis.confidence}")
-    println(s"Topics: ${analysis.topics.mkString(", ")}")
+    println(s"Sentiment: ${response.data.sentiment}")
+    println(s"Confidence: ${response.data.confidence}")
   case Left(error) =>
     println(s"Error: $error")
 }
 ```
 
-## Custom Endpoint Provider
+## Embeddings
 
-For other OpenAI-compatible APIs, use the `CustomEndpointProvider`:
-
-### Features
-
-✅ **OpenAI-compatible API support**  
-✅ **Configurable authentication**  
-✅ **Custom headers support**  
-✅ **HTTP/2 by default** with HTTP/1.1 option  
-✅ **Model whitelisting**
-
-### Examples
-
-#### Basic Usage
+For providers that support embeddings:
 
 ```scala
-import chezwiz.agent.providers.CustomEndpointProvider
-
-// Create provider for OpenAI-compatible API
-val provider = CustomEndpointProvider(
-  baseUrl = "https://api.example.com/v1",
-  apiKey = "your-api-key"
+val embeddingProvider = OpenAICompatibleProvider(
+  baseUrl = "http://localhost:1234/v1",
+  modelId = "text-embedding-model",
+  enableEmbeddings = true
 )
 
-val agent = Agent(
-  name = "Assistant",
-  instructions = "You are a helpful assistant.",
-  provider = provider,
-  model = "gpt-3.5-turbo"
-)
-```
-
-#### With Custom Headers
-
-```scala
-val provider = CustomEndpointProvider(
-  baseUrl = "https://api.company.com/v1",
-  apiKey = sys.env("API_KEY"),
-  customHeaders = Map(
-    "X-Organization" -> "my-org",
-    "X-Project" -> "my-project"
+embeddingProvider.generateEmbedding(
+  EmbeddingRequest(
+    input = EmbeddingInput.Text("Vector databases are useful"),
+    model = "text-embedding-model"
   )
-)
+) match {
+  case Right(response) =>
+    println(s"Embedding dimension: ${response.data.head.embedding.length}")
+  case Left(error) =>
+    println(s"Error: $error")
+}
 ```
 
-#### Model Whitelisting
+## Error Handling
 
 ```scala
-val provider = CustomEndpointProvider(
-  baseUrl = "https://api.example.com/v1",
-  apiKey = "key",
-  supportedModels = List("model-a", "model-b", "model-c")
-)
-
-// This will succeed
-agent.generateText("Hello", RequestMetadata(), model = "model-a")
-
-// This will fail with ModelNotSupported error
-agent.generateText("Hello", RequestMetadata(), model = "model-x")
+agent.generateText("Hello", metadata) match {
+  case Right(response) => 
+    println(response.content)
+    
+  case Left(error) => error match {
+    case ChezError.NetworkError(msg, statusCode) =>
+      println(s"Network error: $msg (status: ${statusCode.getOrElse("unknown")})")
+      
+    case ChezError.ParseError(msg) =>
+      println(s"Failed to parse response: $msg")
+      
+    case ChezError.ApiError(msg, code, _) =>
+      println(s"API error: $msg (code: ${code.getOrElse("unknown")})")
+      
+    case ChezError.ModelNotSupported(model, provider, supported) =>
+      println(s"Model '$model' not supported. Available: ${supported.mkString(", ")}")
+      
+    case _ => println(s"Unexpected error: $error")
+  }
+}
 ```
 
-#### Local Network with HTTP/1.1
+## Advanced Examples
+
+### Conversation with History
 
 ```scala
-val provider = CustomEndpointProvider(
-  baseUrl = "http://192.168.1.100:8080/v1",
-  apiKey = "", // No auth for local endpoint
-  httpVersion = HttpVersion.Http11
-)
-```
-
-### Configuration
-
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `baseUrl` | `String` | API endpoint base URL (required) | - |
-| `apiKey` | `String` | API key for authentication (required) | - |
-| `supportedModels` | `List[String]` | Allowed models (empty = any) | `List.empty` |
-| `customHeaders` | `Map[String, String]` | Additional request headers | `Map.empty` |
-| `httpVersion` | `HttpVersion` | HTTP protocol version | `Http2` |
-
-## Complete Examples
-
-### Example 1: Chat with Conversation History
-
-```scala
-val provider = LMStudioProvider()
 val agent = Agent(
   name = "ChatBot",
   instructions = "You are a friendly conversational assistant.",
-  provider = provider,
+  provider = OpenAICompatibleProvider("http://localhost:1234/v1"),
   model = "local-model"
 )
 
 val metadata = RequestMetadata(
   userId = Some("user123"),
-  conversationId = Some("chat-001")
+  conversationId = Some("chat-001")  // Enables conversation history
 )
 
-// First message
+// Messages automatically maintain context
 agent.generateText("My name is Alice", metadata)
-
-// Follow-up uses conversation history
 agent.generateText("What's my name?", metadata) match {
-  case Right(response) => 
-    println(response.content) // Should remember "Alice"
-  case Left(error) => 
-    println(s"Error: $error")
+  case Right(response) => println(response.content)  // Should remember "Alice"
+  case Left(error) => println(s"Error: $error")
 }
 ```
 
-### Example 2: Code Generation with Custom Endpoint
-
-```scala
-val provider = CustomEndpointProvider(
-  baseUrl = "https://api.codegen.com/v1",
-  apiKey = sys.env("CODEGEN_API_KEY"),
-  supportedModels = List("codegen-16b", "codegen-6b")
-)
-
-val agent = Agent(
-  name = "CodeGenerator",
-  instructions = "You are an expert programmer.",
-  provider = provider,
-  model = "codegen-16b",
-  temperature = Some(0.2),
-  maxTokens = Some(2000)
-)
-
-agent.generateText(
-  "Write a Scala function to merge two sorted lists",
-  RequestMetadata()
-) match {
-  case Right(response) => 
-    println(s"Generated code:\n${response.content}")
-  case Left(error) => 
-    println(s"Error: $error")
-}
-```
-
-### Example 3: Monitoring with Hooks
+### With Monitoring Hooks
 
 ```scala
 import chezwiz.agent.*
 
-// Create monitoring hooks
 val requestLogger = new PreRequestHook {
   def execute(context: PreRequestContext): Unit = {
     println(s"[${context.timestamp}] Request to ${context.provider}")
@@ -254,86 +229,27 @@ val requestLogger = new PreRequestHook {
 
 val responseLogger = new PostResponseHook {
   def execute(context: PostResponseContext): Unit = {
+    val duration = context.durationMs
     context.response match {
-      case Right(_) => 
-        println(s"[${context.timestamp}] Success in ${context.durationMs}ms")
-      case Left(error) => 
-        println(s"[${context.timestamp}] Failed: $error")
+      case Right(_) => println(s"Success in ${duration}ms")
+      case Left(error) => println(s"Failed after ${duration}ms: $error")
     }
   }
 }
 
-val hooks = HookRegistry.empty
-  .withPreRequestHook(requestLogger)
-  .withPostResponseHook(responseLogger)
-
-// Create agent with hooks
-val provider = LMStudioProvider()
 val agent = Agent(
   name = "MonitoredAgent",
   instructions = "You are a helpful assistant.",
-  provider = provider,
+  provider = OpenAICompatibleProvider("http://localhost:1234/v1"),
   model = "local-model",
-  hooks = hooks
-)
-
-// Requests will be logged automatically
-agent.generateText("Hello", RequestMetadata())
-```
-
-## Error Handling
-
-Both providers return detailed error information:
-
-```scala
-agent.generateText("Hello", metadata) match {
-  case Right(response) => 
-    println(s"Success: ${response.content}")
-    
-  case Left(error) => error match {
-    case ChezError.NetworkError(msg, statusCode) =>
-      println(s"Network error: $msg")
-      statusCode.foreach(code => println(s"HTTP Status: $code"))
-      
-    case ChezError.ParseError(msg) =>
-      println(s"Failed to parse response: $msg")
-      
-    case ChezError.ApiError(msg, code, statusCode) =>
-      println(s"API error: $msg")
-      code.foreach(c => println(s"Error code: $c"))
-      
-    case ChezError.ModelNotSupported(model, provider, supported) =>
-      println(s"Model '$model' not supported by $provider")
-      println(s"Supported models: ${supported.mkString(", ")}")
-      
-    case _ =>
-      println(s"Unexpected error: $error")
-  }
-}
-```
-
-## Best Practices
-
-### 1. Environment Variables
-```scala
-val provider = LMStudioProvider(
-  baseUrl = sys.env.getOrElse("LM_STUDIO_URL", "http://localhost:1234/v1"),
-  modelId = sys.env.getOrElse("LM_STUDIO_MODEL", "local-model")
+  hooks = HookRegistry.empty
+    .withPreRequestHook(requestLogger)
+    .withPostResponseHook(responseLogger)
 )
 ```
 
-### 2. Resource Management
-```scala
-// Use the same agent instance for multiple requests
-val agent = Agent(name = "Assistant", provider = provider, model = "model")
+### Retry with Backoff
 
-// Reuse for efficiency
-(1 to 10).foreach { i =>
-  agent.generateText(s"Question $i", metadata)
-}
-```
-
-### 3. Error Recovery
 ```scala
 def retryWithBackoff[T](
   fn: => Either[ChezError, T], 
@@ -342,7 +258,7 @@ def retryWithBackoff[T](
   def attempt(retriesLeft: Int, delay: Long): Either[ChezError, T] = {
     fn match {
       case Right(result) => Right(result)
-      case Left(error: ChezError.NetworkError) if retriesLeft > 0 =>
+      case Left(_: ChezError.NetworkError) if retriesLeft > 0 =>
         Thread.sleep(delay)
         attempt(retriesLeft - 1, delay * 2)
       case Left(error) => Left(error)
@@ -357,109 +273,83 @@ retryWithBackoff {
 }
 ```
 
+## Supported Servers
+
+The `OpenAICompatibleProvider` works with:
+
+- **LM Studio** - Local model server
+- **LLamaCPP** - High-performance local inference
+- **Ollama** - Local model management
+- **LocalAI** - OpenAI-compatible local API
+- **vLLM** - High-throughput serving
+- **Text Generation WebUI** - With API enabled
+- **FastChat** - Multi-model serving
+- Any OpenAI-compatible API endpoint
+
+## Migration Guide
+
+If upgrading from older versions:
+
+```scala
+// Old approach (deprecated)
+import chezwiz.agent.providers.{LMStudioProvider, CustomEndpointProvider}
+
+val lmStudio = LMStudioProvider(baseUrl, modelId)
+val custom = CustomEndpointProvider(baseUrl, apiKey)
+
+// New unified approach
+import chezwiz.agent.providers.OpenAICompatibleProvider
+
+val provider = OpenAICompatibleProvider(
+  baseUrl = baseUrl,
+  apiKey = apiKey,  // Optional, defaults to ""
+  modelId = modelId,
+  strictModelValidation = false  // For local models
+)
+```
+
 ## Troubleshooting
 
-### LM Studio Connection Issues
+### Connection Issues
+- Verify server is running: `curl http://localhost:1234/v1/models`
+- Check firewall settings
+- For local servers, use `httpVersion = HttpVersion.Http11` if needed
 
-**Problem**: `NetworkError("Failed to connect to localhost:1234")`
-
-**Solutions**:
-- Verify LM Studio is running and server is started
-- Check the correct port in LM Studio settings
-- Ensure no firewall is blocking the connection
-- Try `curl http://localhost:1234/v1/models` to test
-
-**Problem**: `ParseError("Failed to parse LM Studio response")`
-
-**Solutions**:
-- Update LM Studio to the latest version
-- Check if the model is fully loaded
-- Verify the response format in LM Studio logs
-
-### Custom Endpoint Issues
-
-**Problem**: `ModelNotSupported("gpt-4", "CustomEndpoint", ["gpt-3.5"])`
-
-**Solutions**:
-- Check supported models with provider configuration
+### Model Errors
+- Set `strictModelValidation = false` for local models with custom names
 - Leave `supportedModels` empty to allow any model
-- Verify model availability at the endpoint
+- Check available models at `/v1/models` endpoint
 
-**Problem**: `ApiError("Invalid API key", code = "invalid_api_key")`
+### Authentication
+- Local servers typically don't need `apiKey` (leave as `""`)
+- Cloud endpoints may require Bearer token format
+- Use `customHeaders` for non-standard auth schemes
 
-**Solutions**:
-- Verify API key is correct
-- Check if API key needs specific format (Bearer token, etc.)
-- Ensure API key has required permissions
+## Best Practices
 
-## Migration from CustomEndpointProvider.forLMStudio
+1. **Environment Configuration**
+   ```scala
+   val provider = OpenAICompatibleProvider(
+     baseUrl = sys.env.getOrElse("LLM_URL", "http://localhost:1234/v1"),
+     apiKey = sys.env.getOrElse("LLM_API_KEY", ""),
+     modelId = sys.env.getOrElse("LLM_MODEL", "local-model")
+   )
+   ```
 
-If you were using the old API:
+2. **Reuse Agents**
+   ```scala
+   // Create once, use many times
+   val agent = Agent(name = "Assistant", provider = provider, model = "model")
+   
+   // Efficient for multiple requests
+   val responses = requests.map(req => agent.generateText(req, metadata))
+   ```
 
-```scala
-// Old way
-val provider = CustomEndpointProvider.forLMStudio(
-  baseUrl = "http://localhost:1234/v1",
-  modelId = "local-model"
-)
-
-// New way
-val provider = LMStudioProvider(
-  baseUrl = "http://localhost:1234/v1",
-  modelId = "local-model"
-)
-```
-
-The new `LMStudioProvider` is simpler and optimized specifically for LM Studio.
-
-## Supported LLM Servers
-
-### Works with LMStudioProvider
-- **LM Studio** - Primary target, fully supported
-
-### Works with CustomEndpointProvider
-- **Ollama** (with OpenAI compatibility layer)
-- **LocalAI**
-- **Text Generation WebUI** (with API)
-- **vLLM**
-- **FastChat**
-- **Any OpenAI-compatible API**
-
-## Advanced Topics
-
-### Custom Response Parsing
-
-If you need to handle non-standard responses, you can extend the providers:
-
-```scala
-class MyCustomProvider(baseUrl: String, apiKey: String) 
-    extends CustomEndpointProvider(baseUrl, apiKey) {
-  
-  override protected def parseResponse(responseBody: String): Either[ChezError, ChatResponse] = {
-    // Custom parsing logic
-    super.parseResponse(responseBody)
-  }
-}
-```
-
-### Performance Optimization
-
-For high-throughput scenarios:
-
-```scala
-// Use connection pooling with custom endpoint
-val provider = CustomEndpointProvider(
-  baseUrl = "https://api.example.com/v1",
-  apiKey = "key",
-  httpVersion = HttpVersion.Http2 // Better for concurrent requests
-)
-
-// Process requests in parallel
-val requests = (1 to 100).map { i =>
-  Future {
-    agent.generateText(s"Request $i", RequestMetadata())
-  }
-}
-
-val results = Await.result(Future.sequence(requests), 5.minutes)
-```
+3. **Handle Errors Gracefully**
+   ```scala
+   agent.generateText(prompt, metadata) match {
+     case Right(response) => processResponse(response)
+     case Left(ChezError.NetworkError(_, _)) => fallbackToCache()
+     case Left(error) => logError(error)
+   }
+   ```

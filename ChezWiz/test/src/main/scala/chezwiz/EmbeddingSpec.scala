@@ -17,7 +17,7 @@ import chezwiz.agent.{
   RequestMetadata,
   Usage
 }
-import chezwiz.agent.providers.{LMStudioProvider, HttpVersion}
+import chezwiz.agent.providers.{OpenAICompatibleProvider, HttpVersion}
 import upickle.default.*
 
 object EmbeddingSpec extends TestSuite:
@@ -78,10 +78,12 @@ object EmbeddingSpec extends TestSuite:
     }
 
     test("Cosine similarity calculation") {
-      val provider = new LMStudioProvider(
+      val provider = OpenAICompatibleProvider(
         baseUrl = "http://localhost:1234/v1",
         modelId = "test-model",
-        httpVersionParam = HttpVersion.Http11
+        httpVersion = HttpVersion.Http11,
+        enableEmbeddings = true,
+        strictModelValidation = false
       )
 
       val agent = Agent(
@@ -110,10 +112,11 @@ object EmbeddingSpec extends TestSuite:
       assert(math.abs(similarity3 + 1.0f) < 0.001) // Should be ~-1
     }
 
-    test("LMStudio provider supports embeddings") {
-      val provider = new LMStudioProvider(
+    test("Provider with embeddings enabled") {
+      val provider = OpenAICompatibleProvider(
         baseUrl = "http://localhost:1234/v1",
-        modelId = "text-embedding-qwen3-embedding-8b"
+        modelId = "text-embedding-qwen3-embedding-8b",
+        enableEmbeddings = true
       )
 
       assert(provider.supportsEmbeddings == true)
@@ -121,7 +124,7 @@ object EmbeddingSpec extends TestSuite:
     }
 
     test("Embedding request body building") {
-      val provider = new LMStudioProvider(
+      val provider = OpenAICompatibleProvider(
         baseUrl = "http://localhost:1234/v1",
         modelId = "text-embedding-qwen3-embedding-8b"
       )

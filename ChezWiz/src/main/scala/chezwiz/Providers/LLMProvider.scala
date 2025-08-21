@@ -16,10 +16,13 @@ enum HttpVersion:
   case Http11
   case Http2
 
+case class ProviderTimeouts(requestTimeout: Int = 60_000, connectTimeout: Int = 30_000)
+
 trait LLMProvider:
   def name: String
   def supportedModels: List[String]
   def httpVersion: HttpVersion = HttpVersion.Http2
+  def timeouts: ProviderTimeouts = ProviderTimeouts()
 
   def chat(request: ChatRequest): Either[ChezError, ChatResponse]
   def generateObject(request: ObjectRequest): Either[ChezError, ObjectResponse[ujson.Value]]
@@ -56,7 +59,7 @@ abstract class BaseLLMProvider extends LLMProvider:
   ): Either[ChezError, String] = {
     httpVersion match {
       case HttpVersion.Http11 =>
-        Http11Client.post(url, headers, body.toString(), readTimeout = 60000)
+        Http11Client.post(url, headers, body.toString(), readTimeout = timeouts.requestTimeout)
 
       case HttpVersion.Http2 =>
         Try {
@@ -65,8 +68,8 @@ abstract class BaseLLMProvider extends LLMProvider:
             url = url,
             headers = headers,
             data = body.toString(),
-            readTimeout = 60000,
-            connectTimeout = 15000
+            readTimeout = timeouts.requestTimeout,
+            connectTimeout = timeouts.connectTimeout
           )
 
           if response.statusCode >= 400 then
