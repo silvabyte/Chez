@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.7] - 2025-08-21
+
+* Consolidate OpenAI-compatible providers into unified architecture (#7)
+
 ## [0.1.6] - 2025-08-08
 
 * chore: update release order
