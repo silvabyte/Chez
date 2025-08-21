@@ -18,32 +18,43 @@ import chezwiz.agent.{
 }
 
 /**
- * Provider for LM Studio local LLM server.
- * LM Studio runs OpenAI-compatible API locally without authentication.
+ * Unified provider for OpenAI-compatible endpoints.
+ * Consolidates the functionality of LMStudioProvider and CustomEndpointProvider.
  *
- * @param baseUrl The base URL of the LM Studio server (e.g., "http://localhost:1234/v1")
- * @param modelId The model ID to use (defaults to "local-model")
- * @param httpVersionParam The HTTP version to use (defaults to Http2, but Http11 may be more reliable for local servers)
+ * @param baseUrl The base URL of the API endpoint
+ * @param apiKey API key for authentication (empty string for no auth)
+ * @param modelId The default model ID to use
+ * @param supportedModels List of supported models (empty = allow any)
+ * @param customHeaders Additional headers to include in requests
+ * @param enableEmbeddings Whether this endpoint supports embeddings
+ * @param strictModelValidation Whether to enforce supported model validation
+ * @param httpVersion HTTP protocol version to use
+ * @param timeouts Connection and request timeout settings
  */
-class LMStudioProvider(
+class OpenAICompatibleProvider(
     override protected val baseUrl: String,
+    protected val apiKey: String = "",
     val modelId: String = "local-model",
-    val httpVersionParam: HttpVersion = HttpVersion.Http2
+    override val supportedModels: List[String] = List.empty,
+    val customHeaders: Map[String, String] = Map.empty,
+    val enableEmbeddings: Boolean = false,
+    val strictModelValidation: Boolean = true,
+    override val httpVersion: HttpVersion = HttpVersion.Http2,
+    override val timeouts: ProviderTimeouts = ProviderTimeouts()
 ) extends BaseLLMProvider:
 
-  override val httpVersion: HttpVersion = httpVersionParam
-
-  override val name: String = s"LMStudio($baseUrl)"
-
-  // LM Studio doesn't require API key
-  protected val apiKey: String = ""
-
-  // Allow any model by default, or restrict to the specified model
-  override val supportedModels: List[String] = List(modelId)
+  override val name: String = s"OpenAICompatible($baseUrl)"
 
   override protected def buildHeaders(apiKey: String): Map[String, String] = {
-    // LM Studio only needs Content-Type header
-    Map("Content-Type" -> "application/json")
+    val baseHeaders = Map("Content-Type" -> "application/json")
+
+    val authHeaders = if (apiKey.nonEmpty) {
+      Map("Authorization" -> s"Bearer $apiKey")
+    } else {
+      Map.empty
+    }
+
+    baseHeaders ++ authHeaders ++ customHeaders
   }
 
   override protected def buildRequestBody(request: ChatRequest): ujson.Value = {
@@ -91,8 +102,10 @@ class LMStudioProvider(
       })*
     )
 
+    val model = if request.model.isEmpty then modelId else request.model
+
     val baseObj = ujson.Obj(
-      "model" -> request.model,
+      "model" -> model,
       "messages" -> messages,
       "stream" -> request.stream
     )
@@ -154,7 +167,7 @@ class LMStudioProvider(
       "stream" -> request.stream
     )
 
-    // LM Studio uses json_schema format for structured output
+    // Standard json_schema format for structured output
     baseObj("response_format") = ujson.Obj(
       "type" -> "json_schema",
       "json_schema" -> ujson.Obj(
@@ -186,19 +199,21 @@ class LMStudioProvider(
             ))
           } catch {
             case _: Exception =>
-              Left(ChezError.ParseError(s"Failed to parse LM Studio response: $responseBody"))
+              Left(
+                ChezError.ParseError(s"Failed to parse OpenAI-compatible response: $responseBody")
+              )
           }
       }
     } catch {
       case ex: ujson.ParsingFailedException =>
-        Left(ChezError.ParseError(s"Failed to parse LM Studio response: ${ex.getMessage}"))
+        Left(ChezError.ParseError(s"Failed to parse response: ${ex.getMessage}"))
       case ex: NoSuchElementException =>
         Left(ChezError.ParseError(
-          s"Missing required field in LM Studio response: ${ex.getMessage}"
+          s"Missing required field in response: ${ex.getMessage}"
         ))
       case ex: Exception =>
         Left(ChezError.ParseError(
-          s"Unexpected error parsing LM Studio response: ${ex.getMessage}"
+          s"Unexpected error parsing response: ${ex.getMessage}"
         ))
     }
   }
@@ -221,18 +236,18 @@ class LMStudioProvider(
           } catch {
             case _: Exception =>
               Left(ChezError.ParseError(
-                s"Failed to parse LM Studio object response: $responseBody"
+                s"Failed to parse OpenAI-compatible object response: $responseBody"
               ))
           }
       }
     } catch {
       case ex: ujson.ParsingFailedException =>
         Left(
-          ChezError.ParseError(s"Failed to parse LM Studio response body: ${ex.getMessage}")
+          ChezError.ParseError(s"Failed to parse response body: ${ex.getMessage}")
         )
       case ex: NoSuchElementException =>
         Left(ChezError.ParseError(
-          s"Missing required field in LM Studio response: ${ex.getMessage}"
+          s"Missing required field in response: ${ex.getMessage}"
         ))
       case ex: Exception =>
         Left(ChezError.ParseError(s"Unexpected error in parseObjectResponse: ${ex.getMessage}"))
@@ -240,20 +255,32 @@ class LMStudioProvider(
   }
 
   override def validateModel(model: String): Either[ChezError.ModelNotSupported, Unit] = {
-    // Allow any model for LM Studio since users can load different models
-    Right(())
+    if (!strictModelValidation) {
+      Right(())
+    } else if (supportedModels.isEmpty || supportedModels.contains(model)) {
+      Right(())
+    } else {
+      Left(ChezError.ModelNotSupported(model, name, supportedModels))
+    }
   }
 
-  // Embedding support
-  override val supportsEmbeddings: Boolean = true
-  override val supportedEmbeddingModels: List[String] = List("*") // Accept any embedding model
+  // Conditional embedding support
+  override val supportsEmbeddings: Boolean = enableEmbeddings
+  override val supportedEmbeddingModels: List[String] =
+    if (enableEmbeddings) List("*") else List.empty
 
   override def embed(request: EmbeddingRequest): Either[ChezError, EmbeddingResponse] = {
+    if (!enableEmbeddings) {
+      return Left(ChezError.ConfigurationError(
+        s"Provider $name does not support embeddings"
+      ))
+    }
+
     val url = s"$baseUrl/embeddings"
     val body = buildEmbeddingRequestBody(request)
 
     for {
-      responseText <- makeRequest(url, buildHeaders(""), body)
+      responseText <- makeRequest(url, buildHeaders(apiKey), body)
       response <- parseEmbeddingResponse(responseText)
     } yield response
   }
@@ -279,7 +306,7 @@ class LMStudioProvider(
     try {
       val json = ujson.read(responseBody)
 
-      // Parse the LM Studio embedding response format
+      // Parse the OpenAI-compatible embedding response format
       val data = json("data").arr
       val embeddings = data.zipWithIndex.map { case (item, idx) =>
         val embeddingArray = item("embedding").arr.map(_.num.toFloat).toVector
@@ -309,30 +336,43 @@ class LMStudioProvider(
     } catch {
       case ex: ujson.ParsingFailedException =>
         Left(
-          ChezError.ParseError(s"Failed to parse LM Studio embedding response: ${ex.getMessage}")
+          ChezError.ParseError(s"Failed to parse embedding response: ${ex.getMessage}")
         )
       case ex: NoSuchElementException =>
         Left(ChezError.ParseError(
-          s"Missing required field in LM Studio embedding response: ${ex.getMessage}"
+          s"Missing required field in embedding response: ${ex.getMessage}"
         ))
       case ex: Exception =>
         Left(ChezError.ParseError(
-          s"Unexpected error parsing LM Studio embedding response: ${ex.getMessage}"
+          s"Unexpected error parsing embedding response: ${ex.getMessage}"
         ))
     }
   }
 
-object LMStudioProvider:
+object OpenAICompatibleProvider:
   /**
-   * Create a new LM Studio provider
-   *
-   * @param baseUrl The base URL of the LM Studio server (e.g., "http://localhost:1234/v1")
-   * @param modelId The model ID to use (defaults to "local-model")
-   * @param httpVersion The HTTP version to use (defaults to Http2, but Http11 may be more reliable for local servers)
+   * Create a provider for any OpenAI-compatible endpoint
    */
   def apply(
-      baseUrl: String = "http://localhost:1234/v1",
+      baseUrl: String,
+      apiKey: String = "",
       modelId: String = "local-model",
-      httpVersion: HttpVersion = HttpVersion.Http2
-  ): LMStudioProvider =
-    new LMStudioProvider(baseUrl, modelId, httpVersionParam = httpVersion)
+      supportedModels: List[String] = List.empty,
+      customHeaders: Map[String, String] = Map.empty,
+      enableEmbeddings: Boolean = false,
+      strictModelValidation: Boolean = true,
+      httpVersion: HttpVersion = HttpVersion.Http2,
+      timeouts: ProviderTimeouts = ProviderTimeouts()
+  ): OpenAICompatibleProvider = {
+    new OpenAICompatibleProvider(
+      baseUrl = baseUrl,
+      apiKey = apiKey,
+      modelId = modelId,
+      supportedModels = supportedModels,
+      customHeaders = customHeaders,
+      enableEmbeddings = enableEmbeddings,
+      strictModelValidation = strictModelValidation,
+      httpVersion = httpVersion,
+      timeouts = timeouts
+    )
+  }

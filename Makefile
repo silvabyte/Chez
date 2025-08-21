@@ -156,15 +156,15 @@ example-wiz:
 	@echo "🚀 Running All ChezWiz examples..."
 	./mill ChezWiz.runMain chezwiz.agent.examples.Examples
 
-# Run LM Studio integration example
-.PHONY: example-lm-studio
-example-lm-studio:
-	@echo "🤖 Running LM Studio integration example..."
-	@echo "ℹ️  Set LM_STUDIO_URL and LM_STUDIO_MODEL environment variables to configure"
-	@echo "ℹ️  Default: LM_STUDIO_URL=http://localhost:1234/v1"
-	@echo "ℹ️  Default: LM_STUDIO_MODEL=local-model"
-	@echo ""
-	./mill ChezWiz.runMain chezwiz.agent.examples.LMStudioExample
+# Run OpenAI Compatible Provider example
+.PHONY: example-unified
+example-unified:
+	@echo "🔗 Running OpenAI Compatible Provider example..."
+	@echo "ℹ️  This works with any OpenAI-compatible endpoint (LLamaCPP, LM Studio, etc.)"
+	@echo "ℹ️  Set LLAMA_CPP_URL and LLAMA_CPP_MODEL environment variables to configure"
+	@echo "ℹ️  Default: LLAMA_CPP_URL=http://localhost:39080/v1"
+	@echo "ℹ️  Default: LLAMA_CPP_MODEL=qwen3-coder-30b-q5"
+	./mill ChezWiz.runMain chezwiz.agent.examples.OpenAICompatibleExample
 
 # Run OpenAI integration example
 .PHONY: example-openai
