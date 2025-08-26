@@ -269,6 +269,7 @@ object UserCrudAPI extends cask.MainRoutes {
     )
   )
   def getUser(id: String, validatedRequest: ValidatedRequest): String = {
+    val _ = validatedRequest // Suppress unused warning
     val userOpt: Option[User] = Option(users.get(id))
     userOpt match {
       case Some(user) =>
@@ -356,6 +357,7 @@ object UserCrudAPI extends cask.MainRoutes {
     )
   )
   def deleteUser(id: String, validatedRequest: ValidatedRequest): String = {
+    val _ = validatedRequest // Suppress unused warning
     val userOpt: Option[User] = Option(users.get(id))
     userOpt match {
       case Some(_) =>

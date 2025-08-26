@@ -3,8 +3,6 @@ package caskchez.openapi.generators
 import caskchez.*
 import caskchez.openapi.models.*
 import caskchez.openapi.config.*
-import _root_.chez.Chez
-import upickle.default.*
 
 /**
  * Main OpenAPI 3.1.1 document generator

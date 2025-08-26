@@ -1,10 +1,8 @@
 package caskchez
 
-import _root_.chez.*
 import cask.{Request, Response}
 import cask.router.Result
 import upickle.default.*
-import scala.reflect.ClassTag
 import caskchez.openapi.config.OpenAPIConfig
 import caskchez.openapi.generators.OpenAPIGenerator
 

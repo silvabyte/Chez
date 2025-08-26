@@ -4,7 +4,6 @@ import caskchez.*
 import caskchez.openapi.models.*
 import caskchez.openapi.config.*
 import _root_.chez.Chez
-import upickle.default.*
 
 /**
  * Generates OpenAPI Paths Object from registered routes

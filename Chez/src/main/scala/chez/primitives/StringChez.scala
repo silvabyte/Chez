@@ -2,8 +2,7 @@ package chez.primitives
 
 import chez.Chez
 import chez.validation.{ValidationResult, ValidationContext}
-import upickle.default.*
-import scala.util.{Try, Success, Failure}
+import scala.util.Try
 
 /**
  * String schema type with JSON Schema 2020-12 validation keywords

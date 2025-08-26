@@ -2,7 +2,6 @@ package chez.examples
 
 import chez.*
 import chez.derivation.*
-import upickle.default.*
 import scala.util.{Try, Success, Failure}
 
 /**

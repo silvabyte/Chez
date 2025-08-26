@@ -5,8 +5,6 @@ import chez.primitives.*
 import chez.complex.*
 import chez.composition.*
 import chez.validation.*
-import upickle.default.*
-import scala.util.{Try, Success, Failure}
 
 /**
  * Schema validation examples demonstrating the validation capabilities of Chez
@@ -440,16 +438,6 @@ object Validation {
       condition = Chez.Object("role" -> Chez.String(const = Some("admin"))),
       thenSchema = Chez.Object("adminLevel" -> Chez.String()), // replaced array with simple string
       elseSchema = Chez.Object("department" -> Chez.String())
-    )
-
-    val adminUser = ujson.Obj(
-      "role" -> ujson.Str("admin"),
-      "adminLevel" -> ujson.Str("full") // replaced array with simple string
-    )
-
-    val regularUser = ujson.Obj(
-      "role" -> ujson.Str("user"),
-      "department" -> ujson.Str("Engineering")
     )
 
     println("Conditional validation:")

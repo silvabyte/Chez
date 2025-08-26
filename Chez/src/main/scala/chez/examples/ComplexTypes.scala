@@ -1,8 +1,6 @@
 package chez.examples
 
 import chez.*
-import upickle.default.*
-import scala.util.{Try, Success, Failure}
 
 /**
  * Advanced schema composition examples demonstrating complex JSON Schema 2020-12 features
