@@ -2,7 +2,6 @@ package caskchez.openapi.generators
 
 import caskchez.*
 import caskchez.openapi.models.*
-import upickle.default.*
 
 /**
  * Generates OpenAPI Tag objects from route schemas

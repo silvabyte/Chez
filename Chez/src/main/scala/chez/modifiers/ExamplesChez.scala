@@ -57,5 +57,5 @@ case class ExamplesChez[T <: Chez](
   override def withDescription(desc: String): Chez = DescriptionChez(this, desc)
   override def withSchema(schema: String): Chez = SchemaChez(this, schema)
   override def withId(id: String): Chez = IdChez(this, id)
-  override def withDefs(defs: (String, Chez)*): Chez = chez.modifiers.DefsChez(this, defs.toMap)
+  override def withDefs(defs: (String, Chez)*): Chez = chez.modifiers.DefsChez(Some(this), defs.toMap)
 }

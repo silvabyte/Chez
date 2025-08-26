@@ -3,15 +3,17 @@ package caskchez.openapi.generators
 import caskchez.*
 import caskchez.openapi.models.*
 import caskchez.openapi.config.*
-import _root_.chez.Chez
-import upickle.default.*
 
 /**
  * Main OpenAPI 3.1.1 document generator
  */
 object OpenAPIGenerator {
 
-  private var documentCache: Option[(OpenAPIDocument, Int)] = None
+  // scalafix:off DisableSyntax.var
+  // Disabling because mutable cache is needed for performance optimization - avoids regenerating
+  // the OpenAPI document on every request when the registry hasn't changed
+  @volatile private var _documentCache: Option[(OpenAPIDocument, Int)] = None
+  // scalafix:on DisableSyntax.var
 
   /**
    * Generate complete OpenAPI 3.1.1 document from registered routes
@@ -20,11 +22,11 @@ object OpenAPIGenerator {
     val registryHash = RouteSchemaRegistry.getAll.hashCode()
 
     // Use cache if registry hasn't changed
-    documentCache match {
+    _documentCache match {
       case Some((doc, hash)) if hash == registryHash => doc
       case _ =>
         val newDoc = generateFreshDocument(config)
-        documentCache = Some((newDoc, registryHash))
+        _documentCache = Some((newDoc, registryHash))
         newDoc
     }
   }
@@ -63,6 +65,6 @@ object OpenAPIGenerator {
    * Clear the document cache (useful for testing or manual refresh)
    */
   def clearCache(): Unit = {
-    documentCache = None
+    _documentCache = None
   }
 }

@@ -172,59 +172,74 @@ trait PostEmbeddingHook extends AgentHook {
 
 /** Registry for managing and executing hooks */
 class HookRegistry {
-  private var preRequestHooks: List[PreRequestHook] = List.empty
-  private var postResponseHooks: List[PostResponseHook] = List.empty
-  private var preObjectRequestHooks: List[PreObjectRequestHook] = List.empty
-  private var postObjectResponseHooks: List[PostObjectResponseHook] = List.empty
-  private var errorHooks: List[ErrorHook] = List.empty
-  private var historyHooks: List[HistoryHook] = List.empty
-  private var scopeChangeHooks: List[ScopeChangeHook] = List.empty
-  private var preEmbeddingHooks: List[PreEmbeddingHook] = List.empty
-  private var postEmbeddingHooks: List[PostEmbeddingHook] = List.empty
+  // scalafix:off DisableSyntax.var
+  // Disabling because the hook registry needs mutable state to dynamically add and remove hooks
+  // at runtime - hooks can be registered/unregistered during the agent's lifecycle for monitoring and debugging
+  @volatile private var _preRequestHooks: List[PreRequestHook] = List.empty
+  @volatile private var _postResponseHooks: List[PostResponseHook] = List.empty
+  @volatile private var _preObjectRequestHooks: List[PreObjectRequestHook] = List.empty
+  @volatile private var _postObjectResponseHooks: List[PostObjectResponseHook] = List.empty
+  @volatile private var _errorHooks: List[ErrorHook] = List.empty
+  @volatile private var _historyHooks: List[HistoryHook] = List.empty
+  @volatile private var _scopeChangeHooks: List[ScopeChangeHook] = List.empty
+  @volatile private var _preEmbeddingHooks: List[PreEmbeddingHook] = List.empty
+  @volatile private var _postEmbeddingHooks: List[PostEmbeddingHook] = List.empty
+  // scalafix:on DisableSyntax.var
+
+  // Accessors
+  private def preRequestHooks = _preRequestHooks
+  private def postResponseHooks = _postResponseHooks
+  private def preObjectRequestHooks = _preObjectRequestHooks
+  private def postObjectResponseHooks = _postObjectResponseHooks
+  private def errorHooks = _errorHooks
+  private def historyHooks = _historyHooks
+  private def scopeChangeHooks = _scopeChangeHooks
+  private def preEmbeddingHooks = _preEmbeddingHooks
+  private def postEmbeddingHooks = _postEmbeddingHooks
 
   // Registration methods
   def addPreRequestHook(hook: PreRequestHook): HookRegistry = {
-    preRequestHooks = preRequestHooks :+ hook
+    _preRequestHooks = _preRequestHooks :+ hook
     this
   }
 
   def addPostResponseHook(hook: PostResponseHook): HookRegistry = {
-    postResponseHooks = postResponseHooks :+ hook
+    _postResponseHooks = _postResponseHooks :+ hook
     this
   }
 
   def addPreObjectRequestHook(hook: PreObjectRequestHook): HookRegistry = {
-    preObjectRequestHooks = preObjectRequestHooks :+ hook
+    _preObjectRequestHooks = _preObjectRequestHooks :+ hook
     this
   }
 
   def addPostObjectResponseHook(hook: PostObjectResponseHook): HookRegistry = {
-    postObjectResponseHooks = postObjectResponseHooks :+ hook
+    _postObjectResponseHooks = _postObjectResponseHooks :+ hook
     this
   }
 
   def addErrorHook(hook: ErrorHook): HookRegistry = {
-    errorHooks = errorHooks :+ hook
+    _errorHooks = _errorHooks :+ hook
     this
   }
 
   def addHistoryHook(hook: HistoryHook): HookRegistry = {
-    historyHooks = historyHooks :+ hook
+    _historyHooks = _historyHooks :+ hook
     this
   }
 
   def addScopeChangeHook(hook: ScopeChangeHook): HookRegistry = {
-    scopeChangeHooks = scopeChangeHooks :+ hook
+    _scopeChangeHooks = _scopeChangeHooks :+ hook
     this
   }
 
   def addPreEmbeddingHook(hook: PreEmbeddingHook): HookRegistry = {
-    preEmbeddingHooks = preEmbeddingHooks :+ hook
+    _preEmbeddingHooks = _preEmbeddingHooks :+ hook
     this
   }
 
   def addPostEmbeddingHook(hook: PostEmbeddingHook): HookRegistry = {
-    postEmbeddingHooks = postEmbeddingHooks :+ hook
+    _postEmbeddingHooks = _postEmbeddingHooks :+ hook
     this
   }
 
@@ -343,15 +358,15 @@ class HookRegistry {
   }
 
   def clear(): Unit = {
-    preRequestHooks = List.empty
-    postResponseHooks = List.empty
-    preObjectRequestHooks = List.empty
-    postObjectResponseHooks = List.empty
-    errorHooks = List.empty
-    historyHooks = List.empty
-    scopeChangeHooks = List.empty
-    preEmbeddingHooks = List.empty
-    postEmbeddingHooks = List.empty
+    _preRequestHooks = List.empty
+    _postResponseHooks = List.empty
+    _preObjectRequestHooks = List.empty
+    _postObjectResponseHooks = List.empty
+    _errorHooks = List.empty
+    _historyHooks = List.empty
+    _scopeChangeHooks = List.empty
+    _preEmbeddingHooks = List.empty
+    _postEmbeddingHooks = List.empty
   }
 }
 

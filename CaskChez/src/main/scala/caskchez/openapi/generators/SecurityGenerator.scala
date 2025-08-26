@@ -2,7 +2,6 @@ package caskchez.openapi.generators
 
 import caskchez.*
 import caskchez.openapi.models.*
-import upickle.default.*
 
 /**
  * Generates OpenAPI security schemes and requirements from CaskChez SecurityRequirement

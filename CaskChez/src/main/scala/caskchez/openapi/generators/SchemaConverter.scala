@@ -1,7 +1,6 @@
 package caskchez.openapi.generators
 
 import _root_.chez.Chez
-import upickle.default.*
 
 /**
  * Schema utilities for OpenAPI 3.1.1 generation

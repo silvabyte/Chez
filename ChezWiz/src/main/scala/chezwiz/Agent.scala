@@ -37,7 +37,11 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     extends Logging:
 
   // Scoped history storage: Map[ScopeKey, Vector[ChatMessage]]
-  private var scopedHistories: Map[String, Vector[ChatMessage]] = Map.empty
+  // scalafix:off DisableSyntax.var
+  // Disabling because mutable state is required to maintain conversation history across
+  // multiple chat interactions - each scope needs its own conversation history that evolves over time
+  @volatile private var _scopedHistories: Map[String, Vector[ChatMessage]] = Map.empty
+  // scalafix:on DisableSyntax.var
 
   private def createScopeKey(metadata: RequestMetadata): String = {
     val parts = List(
@@ -50,7 +54,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
 
   private def getHistory(metadata: RequestMetadata): Vector[ChatMessage] = {
     val scopeKey = createScopeKey(metadata)
-    scopedHistories.getOrElse(scopeKey, Vector(ChatMessage.text(Role.System, config.instructions)))
+    _scopedHistories.getOrElse(scopeKey, Vector(ChatMessage.text(Role.System, config.instructions)))
   }
 
   private def updateHistory(
@@ -58,7 +62,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       newHistory: Vector[ChatMessage]
   ): Unit = {
     val scopeKey = createScopeKey(metadata)
-    scopedHistories = scopedHistories.updated(scopeKey, newHistory)
+    _scopedHistories = _scopedHistories.updated(scopeKey, newHistory)
   }
 
   def id: String = config.id
@@ -73,9 +77,9 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     logger.info(s"Agent '${config.name}' generating text for: $userChatMessage")
 
     // Get scoped history and add user message
-    var currentHistory = getHistory(metadata)
+    val initialHistory = getHistory(metadata)
     val userMsg = ChatMessage.text(Role.User, userChatMessage)
-    currentHistory = currentHistory :+ userMsg
+    val currentHistory = initialHistory :+ userMsg
 
     val request = ChatRequest(
       messages = currentHistory.toList,
@@ -112,8 +116,8 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
       case Right(response) =>
         // Add assistant response to scoped conversation history
         val assistantMsg = ChatMessage.text(Role.Assistant, response.content)
-        currentHistory = currentHistory :+ assistantMsg
-        updateHistory(metadata, currentHistory)
+        val updatedHistory = currentHistory :+ assistantMsg
+        updateHistory(metadata, updatedHistory)
         logger.info(s"Agent '${config.name}' generated response: ${response.content.take(100)}...")
         Right(response)
       case Left(error) =>
@@ -200,9 +204,9 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
     logger.info(s"Agent '${config.name}' generating structured object for: $userChatMessage")
 
     // Get scoped history and add user message
-    var currentHistory = getHistory(metadata)
+    val initialHistory = getHistory(metadata)
     val userMsg = ChatMessage.text(Role.User, userChatMessage)
-    currentHistory = currentHistory :+ userMsg
+    val currentHistory = initialHistory :+ userMsg
 
     // Get the schema directly from the type parameter
     val schema = summon[Schema[T]].schema
@@ -254,8 +258,8 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
 
           // Add assistant response to scoped conversation history (convert object to string representation)
           val assistantMsg = ChatMessage.text(Role.Assistant, jsonResponse.data.toString())
-          currentHistory = currentHistory :+ assistantMsg
-          updateHistory(metadata, currentHistory)
+          val updatedHistory = currentHistory :+ assistantMsg
+          updateHistory(metadata, updatedHistory)
 
           logger.info(s"Agent '${config.name}' generated structured object")
           Right(typedResponse)
@@ -427,8 +431,8 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
   def clearHistory(metadata: RequestMetadata): Unit = {
     logger.info(s"Agent '${config.name}' clearing conversation history")
     val scopeKey = createScopeKey(metadata)
-    scopedHistories =
-      scopedHistories.updated(scopeKey, Vector(ChatMessage.text(Role.System, config.instructions)))
+    _scopedHistories =
+      _scopedHistories.updated(scopeKey, Vector(ChatMessage.text(Role.System, config.instructions)))
 
     // Execute history hooks
     config.hooks.executeHistoryHooks(HistoryContext(
@@ -442,7 +446,7 @@ class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.em
 
   def clearAllHistories(): Unit = {
     logger.info(s"Agent '${config.name}' clearing all conversation histories")
-    scopedHistories = Map.empty
+    _scopedHistories = Map.empty
 
     // Execute history hooks (use empty metadata for clearAll operation)
     config.hooks.executeHistoryHooks(HistoryContext(

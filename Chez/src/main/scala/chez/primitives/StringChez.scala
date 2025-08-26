@@ -2,8 +2,7 @@ package chez.primitives
 
 import chez.Chez
 import chez.validation.{ValidationResult, ValidationContext}
-import upickle.default.*
-import scala.util.{Try, Success, Failure}
+import scala.util.Try
 
 /**
  * String schema type with JSON Schema 2020-12 validation keywords
@@ -48,45 +47,32 @@ case class StringChez(
     value match {
       case ujson.Str(stringValue) =>
         // Inline validation logic
-        var errors = List.empty[chez.ValidationError]
-
-        // Length validation
-        minLength.foreach { min =>
-          if (stringValue.length < min) {
-            errors = chez.ValidationError.MinLengthViolation(
-              min,
-              stringValue.length,
-              context.path
-            ) :: errors
-          }
+        val minLengthErrors = minLength.fold(List.empty[chez.ValidationError]) { min =>
+          if (stringValue.length < min)
+            List(chez.ValidationError.MinLengthViolation(min, stringValue.length, context.path))
+          else Nil
         }
 
-        maxLength.foreach { max =>
-          if (stringValue.length > max) {
-            errors = chez.ValidationError.MaxLengthViolation(
-              max,
-              stringValue.length,
-              context.path
-            ) :: errors
-          }
+        val maxLengthErrors = maxLength.fold(List.empty[chez.ValidationError]) { max =>
+          if (stringValue.length > max)
+            List(chez.ValidationError.MaxLengthViolation(max, stringValue.length, context.path))
+          else Nil
         }
 
-        // Pattern validation
-        pattern.foreach { p =>
-          if (!stringValue.matches(p)) {
-            errors = chez.ValidationError.PatternMismatch(p, stringValue, context.path) :: errors
-          }
+        val patternErrors = pattern.fold(List.empty[chez.ValidationError]) { p =>
+          if (!stringValue.matches(p))
+            List(chez.ValidationError.PatternMismatch(p, stringValue, context.path))
+          else Nil
         }
 
-        // Const validation
-        const.foreach { c =>
-          if (stringValue != c) {
-            errors = chez.ValidationError.TypeMismatch(c, stringValue, context.path) :: errors
-          }
+        val constErrors = const.fold(List.empty[chez.ValidationError]) { c =>
+          if (stringValue != c)
+            List(chez.ValidationError.TypeMismatch(c, stringValue, context.path))
+          else Nil
         }
 
         // Format validation - this is a basic implementation...
-        format.foreach { f =>
+        val formatErrors = format.fold(List.empty[chez.ValidationError]) { f =>
           val isValid = f match {
             case "email" =>
               stringValue.matches("""^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$""")
@@ -96,22 +82,24 @@ case class StringChez(
                 """^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"""
               )
             case "date" => stringValue.matches("""^\d{4}-\d{2}-\d{2}$""")
-            case "time" => stringValue.matches("""^\d{2}:\d{2}:\d{2}$""")
+            case "time" => stringValue.matches("""^\d{2}:\d{2}:\d{2}""")
             case "date-time" => stringValue.matches("""^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}""")
             // TODO: add support for more formats, enable custom format registration as well
             // TODO: maybe change format to enum to provide type safety and expected behavior
             case _ => true // Unknown formats are not validated
           }
 
-          if (!isValid) {
-            errors = chez.ValidationError.InvalidFormat(f, stringValue, context.path) :: errors
-          }
+          if (!isValid)
+            List(chez.ValidationError.InvalidFormat(f, stringValue, context.path))
+          else Nil
         }
 
-        if (errors.isEmpty) {
+        val allErrors = minLengthErrors ++ maxLengthErrors ++ patternErrors ++ constErrors ++ formatErrors
+
+        if (allErrors.isEmpty) {
           ValidationResult.valid()
         } else {
-          ValidationResult.invalid(errors.reverse)
+          ValidationResult.invalid(allErrors)
         }
       case _ =>
         // Non-string ujson.Value type - return TypeMismatch error

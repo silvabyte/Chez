@@ -29,21 +29,13 @@ case class OneOfChez(
    */
   override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
     // For oneOf, exactly one schema must validate successfully
-    var successCount = 0
-    var allErrors = List.empty[chez.ValidationError]
-
-    schemas.foreach { schema =>
-      val result = schema.validate(value, context)
-      if (result.isValid) {
-        successCount += 1
-      } else {
-        allErrors = result.errors ++ allErrors
-      }
-    }
+    val results = schemas.map(_.validate(value, context))
+    val successCount = results.count(_.isValid)
 
     if (successCount == 1) {
       ValidationResult.valid()
     } else if (successCount == 0) {
+      val allErrors = results.flatMap(_.errors)
       val error = chez.ValidationError.CompositionError(
         "Value does not match any of the schemas in oneOf",
         context.path

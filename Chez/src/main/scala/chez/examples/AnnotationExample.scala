@@ -2,7 +2,7 @@ package chez.examples
 
 import upickle.default.*
 import chez.*
-import chez.derivation.{Schema, ValidatedReadWriter, AnnotationProcessor}
+import chez.derivation.{Schema, AnnotationProcessor}
 
 /**
  * Comprehensive Annotation-Based Schema Metadata Example

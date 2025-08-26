@@ -49,7 +49,19 @@ object Http11Client {
       case Failure(ex: java.net.ConnectException) =>
         Left(ChezError.NetworkError(s"Failed to connect to $url: ${ex.getMessage}"))
       case Failure(ex) =>
-        Left(ChezError.NetworkError(s"Network request failed: ${ex.getMessage}"))
+        // Enhanced error logging for debugging
+        ex.printStackTrace()
+        val errorMsg = ex match {
+          case e: java.net.UnknownHostException =>
+            s"Unknown host: ${e.getMessage} in url $url"
+          case e: java.net.ConnectException =>
+            s"Connection failed: ${e.getMessage} to $url"
+          case e: java.net.http.HttpTimeoutException =>
+            s"Request timeout: ${e.getMessage} for $url"
+          case e =>
+            s"Network request failed: ${e.getClass.getSimpleName}: ${e.getMessage}"
+        }
+        Left(ChezError.NetworkError(errorMsg))
     }
   }
 }

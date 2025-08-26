@@ -1,3 +1,6 @@
+// scalafix:off DisableSyntax.null
+// Disabling for entire file because EnumChez needs to support null as a valid enum value
+// according to JSON Schema specification - enums can contain null as one of the allowed values
 package chez.primitives
 
 import chez.Chez

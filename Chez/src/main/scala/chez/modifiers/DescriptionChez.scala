@@ -54,5 +54,5 @@ case class DescriptionChez[T <: Chez](
   override def withTitle(title: String): Chez = TitleChez(this, title)
   override def withSchema(schema: String): Chez = SchemaChez(this, schema)
   override def withId(id: String): Chez = IdChez(this, id)
-  override def withDefs(defs: (String, Chez)*): Chez = chez.modifiers.DefsChez(this, defs.toMap)
+  override def withDefs(defs: (String, Chez)*): Chez = chez.modifiers.DefsChez(Some(this), defs.toMap)
 }

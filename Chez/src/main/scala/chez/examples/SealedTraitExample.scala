@@ -1,7 +1,7 @@
 package chez.examples
 
 import chez.*
-import chez.derivation.{Schema, CollectionSchemas}
+import chez.derivation.Schema
 import chez.derivation.CollectionSchemas.given
 import scala.util.{Try, Success, Failure}
 
@@ -305,15 +305,15 @@ object SealedTraitExample {
 
     // Demonstrate schemas can be summoned for instances
     Try {
-      val circleSchema = summon[Schema[Circle]]
-      val rectangleSchema = summon[Schema[Rectangle]]
-      val carSchema = summon[Schema[Car]]
+      summon[Schema[Circle]]
+      summon[Schema[Rectangle]]
+      summon[Schema[Car]]
 
       println("✅ SUCCESS: All case class schemas derived successfully")
 
       // Verify sealed trait schemas
-      val shapeSchema = summon[Schema[Shape]]
-      val vehicleSchema = summon[Schema[Vehicle]]
+      summon[Schema[Shape]]
+      summon[Schema[Vehicle]]
 
       println("✅ SUCCESS: All sealed trait schemas derived successfully")
 

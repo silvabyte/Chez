@@ -99,7 +99,21 @@ trait GitHubDepsModule extends ScalaModule {
 }
 
 trait Shared extends GitHubDepsModule {
-  def scalaVersion = "3.6.2"
+  def scalaVersion = "3.7.2"
+
+  // Suppress the "caps" warning which is a known Scala 3 issue
+  // This warning occurs because Scala 3 depends on Scala 2.13 stdlib for compatibility
+  def scalacOptions = Seq(
+    "-deprecation",
+    "-feature",
+    "-Wunused:all",
+    "-Wconf:msg=package scala contains object and package with same name.*:s" // Suppress caps warning
+  )
+
+  // Add JVM options to suppress native access warnings
+  def forkArgs = Seq(
+    "--enable-native-access=ALL-UNNAMED" // Allow native access for file-tree-views library
+  )
 
   def mvnDeps = Task {
     Seq(
@@ -122,6 +136,53 @@ trait Shared extends GitHubDepsModule {
       )
     }
     def testFramework = "utest.runner.Framework"
+
+    // Inherit fork arguments for tests as well
+    override def forkArgs = super.forkArgs
+  }
+
+// Scalafix tasks
+  def fix() = Task.Command {
+    val sources = allSources().map(_.path)
+    val sourceFiles = sources.flatMap(os.walk(_).filter(_.ext == "scala"))
+    val configPath = (os.pwd / os.up / os.up / os.up / ".scalafix.conf").toString
+
+    if (sourceFiles.nonEmpty) {
+      os.proc(
+        "cs",
+        "launch",
+        "scalafix",
+        "--",
+        "--config",
+        configPath,
+        "--scala-version",
+        "3.7.2",
+        "--syntactic",
+        sourceFiles.map(_.toString)
+      ).call()
+    }
+  }
+
+  def fixCheck() = Task.Command {
+    val sources = allSources().map(_.path)
+    val sourceFiles = sources.flatMap(os.walk(_).filter(_.ext == "scala"))
+    val configPath = (os.pwd / os.up / os.up / os.up / ".scalafix.conf").toString
+
+    if (sourceFiles.nonEmpty) {
+      os.proc(
+        "cs",
+        "launch",
+        "scalafix",
+        "--",
+        "--config",
+        configPath,
+        "--scala-version",
+        "3.7.2",
+        "--syntactic",
+        "--check",
+        sourceFiles.map(_.toString)
+      ).call()
+    }
   }
 }
 

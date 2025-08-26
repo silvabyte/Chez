@@ -49,63 +49,49 @@ case class NumberChez(
     value match {
       case ujson.Num(numberValue) =>
         // Inline validation logic
-        var errors = List.empty[chez.ValidationError]
-
-        // Minimum validation
-        minimum.foreach { min =>
-          if (numberValue < min) {
-            errors =
-              chez.ValidationError.OutOfRange(Some(min), None, numberValue, context.path) :: errors
-          }
+        val minErrors = minimum.fold(List.empty[chez.ValidationError]) { min =>
+          if (numberValue < min)
+            List(chez.ValidationError.OutOfRange(Some(min), None, numberValue, context.path))
+          else Nil
         }
 
-        // Maximum validation
-        maximum.foreach { max =>
-          if (numberValue > max) {
-            errors =
-              chez.ValidationError.OutOfRange(None, Some(max), numberValue, context.path) :: errors
-          }
+        val maxErrors = maximum.fold(List.empty[chez.ValidationError]) { max =>
+          if (numberValue > max)
+            List(chez.ValidationError.OutOfRange(None, Some(max), numberValue, context.path))
+          else Nil
         }
 
-        // Exclusive minimum validation
-        exclusiveMinimum.foreach { min =>
-          if (numberValue <= min) {
-            errors =
-              chez.ValidationError.OutOfRange(Some(min), None, numberValue, context.path) :: errors
-          }
+        val exclusiveMinErrors = exclusiveMinimum.fold(List.empty[chez.ValidationError]) { min =>
+          if (numberValue <= min)
+            List(chez.ValidationError.OutOfRange(Some(min), None, numberValue, context.path))
+          else Nil
         }
 
-        // Exclusive maximum validation
-        exclusiveMaximum.foreach { max =>
-          if (numberValue >= max) {
-            errors =
-              chez.ValidationError.OutOfRange(None, Some(max), numberValue, context.path) :: errors
-          }
+        val exclusiveMaxErrors = exclusiveMaximum.fold(List.empty[chez.ValidationError]) { max =>
+          if (numberValue >= max)
+            List(chez.ValidationError.OutOfRange(None, Some(max), numberValue, context.path))
+          else Nil
         }
 
-        // Multiple of validation
-        multipleOf.foreach { mul =>
-          if (numberValue % mul != 0) {
-            errors =
-              chez.ValidationError.MultipleOfViolation(mul, numberValue, context.path) :: errors
-          }
+        val multipleErrors = multipleOf.fold(List.empty[chez.ValidationError]) { mul =>
+          if (numberValue % mul != 0)
+            List(chez.ValidationError.MultipleOfViolation(mul, numberValue, context.path))
+          else Nil
         }
 
-        // Const validation
-        const.foreach { c =>
-          if (numberValue != c) {
-            errors = chez.ValidationError.TypeMismatch(
-              c.toString,
-              numberValue.toString,
-              context.path
-            ) :: errors
-          }
+        val constErrors = const.fold(List.empty[chez.ValidationError]) { c =>
+          if (numberValue != c)
+            List(chez.ValidationError.TypeMismatch(c.toString, numberValue.toString, context.path))
+          else Nil
         }
 
-        if (errors.isEmpty) {
+        val allErrors =
+          minErrors ++ maxErrors ++ exclusiveMinErrors ++ exclusiveMaxErrors ++ multipleErrors ++ constErrors
+
+        if (allErrors.isEmpty) {
           ValidationResult.valid()
         } else {
-          ValidationResult.invalid(errors.reverse)
+          ValidationResult.invalid(allErrors)
         }
       case _ =>
         // Non-number ujson.Value type - return TypeMismatch error

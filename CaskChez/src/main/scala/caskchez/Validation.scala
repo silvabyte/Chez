@@ -150,12 +150,15 @@ case class ValidatedRequest(
   /**
    * Get validated body as a specific type, throwing an exception if parsing fails This is useful for endpoints where validation
    * has already passed
+   * @deprecated Use getBody[T] which returns Either instead of throwing
    */
+  @deprecated("Use getBody[T] which returns Either", "1.0.0")
   def getBodyUnsafe[T: ReadWriter]: T = {
     getBody[T] match {
       case Right(value) => value
       case Left(error) =>
-        throw new RuntimeException(s"Failed to parse validated body: ${error.message}")
+        // This method is intentionally unsafe for backward compatibility
+        sys.error(s"Failed to parse validated body: ${error.message}")
     }
   }
 
@@ -352,60 +355,53 @@ object SchemaValidator {
       routeSchema: RouteSchema,
       pathParams: Map[String, String] = Map.empty
   ): Either[List[ValidationError], ValidatedRequest] = {
-    var allErrors = List.empty[ValidationError]
-    var validatedBody: Option[ujson.Value] = None
-    var validatedQueryParams: Option[Map[String, ujson.Value]] = None
-    var validatedPathParams: Option[Map[String, ujson.Value]] = None
-    var validatedHeaders: Option[Map[String, ujson.Value]] = None
+    // Collect all validation results
+    val bodyValidation = routeSchema.body.fold[Either[List[ValidationError], Option[ujson.Value]]](Right(None)) {
+      schema =>
+        ValidationHelpers.validateRequestBody(request, schema).map(Some(_))
+    }
 
-    // Validate request body if schema is provided
-    routeSchema.body.foreach { bodySchema =>
-      ValidationHelpers.validateRequestBody(request, bodySchema) match {
-        case Right(body) => validatedBody = Some(body)
-        case Left(errors) => allErrors ++= errors
+    val queryValidation = {
+      routeSchema.query.fold[Either[List[ValidationError], Option[Map[String, ujson.Value]]]](Right(None)) { schema =>
+        ValidationHelpers.validateQueryParams(request, schema).map(Some(_))
       }
     }
 
-    // Validate query parameters if schema is provided
-    routeSchema.query.foreach { querySchema =>
-      ValidationHelpers.validateQueryParams(request, querySchema) match {
-        case Right(queryParams) => validatedQueryParams = Some(queryParams)
-        case Left(errors) => allErrors ++= errors
-      }
-    }
-
-    // Validate path parameters if schema is provided and params exist
-    routeSchema.params.foreach { paramsSchema =>
-      if (pathParams.nonEmpty) {
-        ValidationHelpers.validatePathParams(pathParams, paramsSchema) match {
-          case Right(params) => validatedPathParams = Some(params)
-          case Left(errors) => allErrors ++= errors
+    val paramsValidation = {
+      routeSchema.params.fold[Either[List[ValidationError], Option[Map[String, ujson.Value]]]](Right(None)) { schema =>
+        if (pathParams.nonEmpty) {
+          ValidationHelpers.validatePathParams(pathParams, schema).map(Some(_))
+        } else {
+          Right(None)
         }
       }
     }
 
-    // Validate headers if schema is provided
-    routeSchema.headers.foreach { headersSchema =>
-      ValidationHelpers.validateHeaders(request, headersSchema) match {
-        case Right(headers) => validatedHeaders = Some(headers)
-        case Left(errors) => allErrors ++= errors
+    val headersValidation = {
+      routeSchema.headers.fold[Either[List[ValidationError], Option[Map[String, ujson.Value]]]](Right(None)) { schema =>
+        ValidationHelpers.validateHeaders(request, schema).map(Some(_))
       }
     }
 
-    // If there are validation errors, return them
-    if (allErrors.nonEmpty) {
-      Left(allErrors)
-    } else {
-      // Create validated request with all validated data
-      val validatedRequest = ValidatedRequest(
-        original = request,
-        validatedBody = validatedBody,
-        validatedParams = validatedPathParams.map(_.map { case (k, v) => k -> v.toString }),
-        validatedQuery = validatedQueryParams.map(_.map { case (k, v) => k -> v.toString }),
-        validatedHeaders = validatedHeaders.map(_.map { case (k, v) => k -> v.toString })
-      )
-
-      Right(validatedRequest)
+    // Combine results
+    (bodyValidation, queryValidation, paramsValidation, headersValidation) match {
+      case (Right(body), Right(query), Right(params), Right(headers)) =>
+        // Convert back to proper types for ValidatedRequest
+        val queryMap = query.map(_.map { case (k, v) => k -> v.toString })
+        val paramsMap = params.map(_.map { case (k, v) => k -> v.toString })
+        val headersMap = headers.map(_.map { case (k, v) => k -> v.toString })
+        Right(ValidatedRequest(
+          original = request,
+          validatedBody = body,
+          validatedQuery = queryMap,
+          validatedParams = paramsMap,
+          validatedHeaders = headersMap
+        ))
+      case _ =>
+        val errors = List(bodyValidation, queryValidation, paramsValidation, headersValidation)
+          .collect { case Left(errs) => errs }
+          .flatten
+        Left(errors)
     }
   }
 

@@ -409,7 +409,11 @@ object ValidatedReadWriter {
         } else {
           // Validation failed, create a meaningful error message
           val errorMessages = validationResult.errors.map(_.toString).mkString(", ")
+          // scalafix:off DisableSyntax.throw
+          // Disabling because throwing an exception is the appropriate way to handle schema validation
+          // failures in the default validator implementation - users can override with custom validators
           throw new IllegalArgumentException(s"Schema validation failed: $errorMessages")
+          // scalafix:on DisableSyntax.throw
         }
       }
     )

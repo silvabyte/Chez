@@ -5,8 +5,6 @@ import chez.primitives.*
 import chez.complex.*
 import chez.composition.*
 import chez.validation.*
-import upickle.default.*
-import scala.util.{Try, Success, Failure}
 
 /**
  * Schema validation examples demonstrating the validation capabilities of Chez
@@ -442,16 +440,6 @@ object Validation {
       elseSchema = Chez.Object("department" -> Chez.String())
     )
 
-    val adminUser = ujson.Obj(
-      "role" -> ujson.Str("admin"),
-      "adminLevel" -> ujson.Str("full") // replaced array with simple string
-    )
-
-    val regularUser = ujson.Obj(
-      "role" -> ujson.Str("user"),
-      "department" -> ujson.Str("Engineering")
-    )
-
     println("Conditional validation:")
     println(s"- Schema: ${conditionalUserSchema.toJsonSchema}")
     println("- Admin user validation would check for adminLevel")
@@ -781,13 +769,13 @@ object Validation {
   }
 
   private def testEnumValidation(schema: EnumChez, value: Any, description: String): Unit = {
-    val ujsonValue = value match {
-      case s: String => ujson.Str(s)
-      case i: Int => ujson.Num(i)
-      case d: Double => ujson.Num(d)
-      case b: Boolean => if (b) ujson.True else ujson.False
-      case null => ujson.Null
-      case _ => ujson.Str(value.toString)
+    val ujsonValue = Option(value) match {
+      case None => ujson.Null
+      case Some(s: String) => ujson.Str(s)
+      case Some(i: Int) => ujson.Num(i)
+      case Some(d: Double) => ujson.Num(d)
+      case Some(b: Boolean) => if (b) ujson.True else ujson.False
+      case Some(other) => ujson.Str(other.toString)
     }
 
     val result = schema.validate(ujsonValue, ValidationContext())

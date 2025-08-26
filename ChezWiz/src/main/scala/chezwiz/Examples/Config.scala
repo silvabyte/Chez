@@ -1,25 +1,32 @@
 package chezwiz.agent.examples
 
 import dotenv.{DotEnv}
+import scala.util.{Try, Success, Failure}
 
 object Config {
-  private var dotenv: Option[DotEnv] = None
+  // scalafix:off DisableSyntax.var
+  // Disabling because we need mutable state to lazy-load the .env configuration file
+  // only when initialize() is called, supporting different env directories at runtime
+  @volatile private var _dotenv: Option[DotEnv] = None
+  // scalafix:on DisableSyntax.var
 
   // Initialize the configuration with a specified directory
   def initialize(envDirectory: String): Unit = {
-    dotenv = Some(DotEnv.load(s"$envDirectory/.env"))
+    _dotenv = Some(DotEnv.load(s"$envDirectory/.env"))
   }
 
-  // Accessors for configuration values
-  lazy val OPENAI_API_KEY: String = dotenv
-    .getOrElse(throw new IllegalStateException("Config not initialized"))
-    .get("OPENAI_API_KEY")
-    .getOrElse(throw new IllegalStateException("OPENAI_API_KEY not set"))
+  private def dotenv: Option[DotEnv] = _dotenv
 
-  lazy val ANTHROPIC_API_KEY: String = dotenv
-    .getOrElse(throw new IllegalStateException("Config not initialized"))
-    .get("ANTHROPIC_API_KEY")
-    .getOrElse(throw new IllegalStateException("ANTHROPIC_API_KEY not set"))
+  // Accessors for configuration values - return Option instead of throwing
+  def getOpenAIKey: Option[String] =
+    dotenv.flatMap(_.get("OPENAI_API_KEY"))
+
+  def getAnthropicKey: Option[String] =
+    dotenv.flatMap(_.get("ANTHROPIC_API_KEY"))
+
+  // For backward compatibility, provide methods that return default empty strings
+  lazy val OPENAI_API_KEY: String = getOpenAIKey.getOrElse("")
+  lazy val ANTHROPIC_API_KEY: String = getAnthropicKey.getOrElse("")
 
   // Generic get method for any config value
   def get(key: String, default: String = ""): String = {

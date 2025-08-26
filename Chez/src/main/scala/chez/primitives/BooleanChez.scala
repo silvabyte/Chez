@@ -39,23 +39,16 @@ case class BooleanChez(
     value match {
       case ujson.Bool(booleanValue) =>
         // Inline validation logic
-        var errors = List.empty[chez.ValidationError]
-
-        // Const validation
-        const.foreach { c =>
-          if (booleanValue != c) {
-            errors = chez.ValidationError.TypeMismatch(
-              c.toString,
-              booleanValue.toString,
-              context.path
-            ) :: errors
-          }
+        val constErrors = const.fold(List.empty[chez.ValidationError]) { c =>
+          if (booleanValue != c)
+            List(chez.ValidationError.TypeMismatch(c.toString, booleanValue.toString, context.path))
+          else Nil
         }
 
-        if (errors.isEmpty) {
+        if (constErrors.isEmpty) {
           ValidationResult.valid()
         } else {
-          ValidationResult.invalid(errors.reverse)
+          ValidationResult.invalid(constErrors)
         }
       case _ =>
         // Non-boolean ujson.Value type - return TypeMismatch error

@@ -10,6 +10,9 @@ object OpenAICompatibleExample extends App with Logging {
 
   Config.initialize(sys.env.getOrElse("ENV_DIR", os.pwd.toString))
 
+  // Force HTTP/1.1 for Java 24 compatibility
+  val useHttp11 = HttpVersion.Http11
+
   val llamaCppUrl = Config.get("LLAMA_CPP_URL", "http://localhost:39080/v1")
   val llamaCppModel = Config.get("LLAMA_CPP_MODEL", "qwen3-coder-30b-q5")
 
@@ -32,7 +35,8 @@ object OpenAICompatibleExample extends App with Logging {
     val provider = OpenAICompatibleProvider(
       baseUrl = llamaCppUrl,
       modelId = llamaCppModel,
-      strictModelValidation = false
+      strictModelValidation = false,
+      httpVersion = HttpVersion.Http11
     )
 
     val agent = Agent(
@@ -105,7 +109,7 @@ object OpenAICompatibleExample extends App with Logging {
       customHeaders = Map("X-Custom-Header" -> "test-value"),
       enableEmbeddings = false,
       strictModelValidation = true,
-      httpVersion = HttpVersion.Http2
+      httpVersion = HttpVersion.Http11
     )
 
     val agent = Agent(
@@ -145,7 +149,8 @@ object OpenAICompatibleExample extends App with Logging {
     val provider = OpenAICompatibleProvider(
       baseUrl = llamaCppUrl,
       modelId = llamaCppModel,
-      strictModelValidation = false
+      strictModelValidation = false,
+      httpVersion = HttpVersion.Http11
     )
 
     val agent = Agent(
@@ -189,7 +194,8 @@ def fibonacci(n):
       baseUrl = lmStudioUrl,
       modelId = "text-embedding-model", // Assuming an embedding model
       enableEmbeddings = true,
-      strictModelValidation = false
+      strictModelValidation = false,
+      httpVersion = HttpVersion.Http11
     )
 
     val agent = Agent(

@@ -60,68 +60,59 @@ case class ArrayChez[T <: Chez](
     value match {
       case arr: ujson.Arr =>
         val arrayValue = arr.arr.toList
-        var errors = List.empty[chez.ValidationError]
-
-        // Min items validation
-        minItems.foreach { min =>
-          if (arrayValue.length < min) {
-            errors =
-              chez.ValidationError.MinItemsViolation(min, arrayValue.length, context.path) :: errors
-          }
+        val minItemsErrors = minItems.fold(List.empty[chez.ValidationError]) { min =>
+          if (arrayValue.length < min)
+            List(chez.ValidationError.MinItemsViolation(min, arrayValue.length, context.path))
+          else List.empty
         }
 
-        // Max items validation
-        maxItems.foreach { max =>
-          if (arrayValue.length > max) {
-            errors =
-              chez.ValidationError.MaxItemsViolation(max, arrayValue.length, context.path) :: errors
-          }
+        val maxItemsErrors = maxItems.fold(List.empty[chez.ValidationError]) { max =>
+          if (arrayValue.length > max)
+            List(chez.ValidationError.MaxItemsViolation(max, arrayValue.length, context.path))
+          else List.empty
         }
 
-        // Unique items validation
-        uniqueItems.foreach { unique =>
-          if (unique && arrayValue.distinct.length != arrayValue.length) {
-            errors = chez.ValidationError.UniqueViolation(context.path) :: errors
-          }
+        val uniqueItemsErrors = uniqueItems.fold(List.empty[chez.ValidationError]) { unique =>
+          if (unique && arrayValue.distinct.length != arrayValue.length)
+            List(chez.ValidationError.UniqueViolation(context.path))
+          else List.empty
         }
+
+        val structuralErrors = minItemsErrors ++ maxItemsErrors ++ uniqueItemsErrors
 
         // Handle prefixItems (tuple validation) if specified
-        prefixItems match {
+        val itemErrors = prefixItems match {
           case Some(prefixes) =>
             // Validate prefix items with their specific schemas
-            prefixes.zipWithIndex.foreach { case (prefixSchema, index) =>
+            val prefixErrors = prefixes.zipWithIndex.flatMap { case (prefixSchema, index) =>
               if (index < arrayValue.length) {
                 val item = arrayValue(index)
                 val itemContext = context.withIndex(index)
                 val itemResult = prefixSchema.validate(item, itemContext)
-                if (!itemResult.isValid) {
-                  errors = itemResult.errors ++ errors
-                }
-              }
+                if (!itemResult.isValid) itemResult.errors else Nil
+              } else Nil
             }
 
             // Validate remaining items (beyond prefixItems) against the items schema
-            arrayValue.zipWithIndex.drop(prefixes.length).foreach { case (item, index) =>
+            val remainingErrors = arrayValue.zipWithIndex.drop(prefixes.length).flatMap { case (item, index) =>
               val itemContext = context.withIndex(index)
               val itemResult = items.validate(item, itemContext)
-              if (!itemResult.isValid) {
-                errors = itemResult.errors ++ errors
-              }
+              if (!itemResult.isValid) itemResult.errors else Nil
             }
+
+            prefixErrors ++ remainingErrors
 
           case None =>
             // Standard validation: validate each item against the items schema
-            arrayValue.zipWithIndex.foreach { case (item, index) =>
+            arrayValue.zipWithIndex.flatMap { case (item, index) =>
               val itemContext = context.withIndex(index)
               val itemResult = items.validate(item, itemContext)
-              if (!itemResult.isValid) {
-                errors = itemResult.errors ++ errors
-              }
+              if (!itemResult.isValid) itemResult.errors else Nil
             }
         }
 
         // Contains validation - check that items matching the contains schema are within bounds
-        contains.foreach { containsSchema =>
+        val containsErrors = contains.fold(List.empty[chez.ValidationError]) { containsSchema =>
           val containsCount = arrayValue.count { item =>
             val itemResult = containsSchema.validate(item, context)
             itemResult.isValid
@@ -131,19 +122,21 @@ case class ArrayChez[T <: Chez](
           val maxContainsCheck = maxContains.forall(max => containsCount <= max)
 
           if (!minContainsCheck || !maxContainsCheck) {
-            errors = chez.ValidationError.ContainsViolation(
+            List(chez.ValidationError.ContainsViolation(
               minContains,
               maxContains,
               containsCount,
               context.path
-            ) :: errors
-          }
+            ))
+          } else Nil
         }
 
-        if (errors.isEmpty) {
+        val allErrors = structuralErrors ++ itemErrors ++ containsErrors
+
+        if (allErrors.isEmpty) {
           ValidationResult.valid()
         } else {
-          ValidationResult.invalid(errors.reverse)
+          ValidationResult.invalid(allErrors)
         }
       case _ =>
         val error = chez.ValidationError.TypeMismatch("array", getValueType(value), context.path)

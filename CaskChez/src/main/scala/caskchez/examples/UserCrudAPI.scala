@@ -8,6 +8,7 @@ import caskchez.CaskChez.ValidatedRequestReader
 import caskchez.openapi.config.OpenAPIConfig
 import upickle.default._
 import chez.derivation.Schema
+import scala.jdk.CollectionConverters._
 
 /**
  * User CRUD API - Complete example showcasing CaskChez best practices
@@ -27,11 +28,15 @@ object UserCrudAPI extends cask.MainRoutes {
   override def host = "0.0.0.0"
 
   // In-memory storage (use real database in production)
-  var users = scala.collection.mutable.Map[String, User](
-    "1" -> User("1", "Alice Smith", "alice@example.com", 25, isActive = true),
-    "2" -> User("2", "Bob Johnson", "bob@example.com", 32, isActive = true),
-    "3" -> User("3", "Carol Davis", "carol@example.com", 28, isActive = false)
-  )
+  // Using a thread-safe mutable map for the example
+  private val users = new java.util.concurrent.ConcurrentHashMap[String, User]()
+
+  // Initialize with sample data
+  {
+    users.put("1", User("1", "Alice Smith", "alice@example.com", 25, isActive = true))
+    users.put("2", User("2", "Bob Johnson", "bob@example.com", 32, isActive = true))
+    users.put("3", User("3", "Carol Davis", "carol@example.com", 28, isActive = false))
+  }
 
   // === DATA MODELS ===
 
@@ -167,7 +172,8 @@ object UserCrudAPI extends cask.MainRoutes {
     validatedRequest.getBody[CreateUserRequest] match {
       case Right(request) =>
         // Check if email already exists
-        if (users.values.exists(_.email == request.email)) {
+        import scala.jdk.CollectionConverters._
+        if (users.values.asScala.exists(_.email == request.email)) {
           val error = ErrorResponse(
             error = "email_exists",
             message = s"Email ${request.email} is already registered",
@@ -175,7 +181,7 @@ object UserCrudAPI extends cask.MainRoutes {
           )
           write(error)
         } else {
-          val newId = (users.keys.map(_.toInt).maxOption.getOrElse(0) + 1).toString
+          val newId = (users.keySet.asScala.map(_.toInt).maxOption.getOrElse(0) + 1).toString
           val user = User(
             id = newId,
             name = request.name,
@@ -183,7 +189,7 @@ object UserCrudAPI extends cask.MainRoutes {
             age = request.age,
             isActive = request.isActive
           )
-          users(newId) = user
+          users.put(newId, user)
           write(user)
         }
 
@@ -218,7 +224,7 @@ object UserCrudAPI extends cask.MainRoutes {
         val activeFilter = query.active
 
         // Apply filters
-        val filteredUsers = users.values.filter { user =>
+        val filteredUsers = users.values.asScala.filter { user =>
           val matchesSearch = search.isEmpty || user.name.toLowerCase.contains(search.toLowerCase)
           val matchesActive = activeFilter.isEmpty || user.isActive == activeFilter.get
           matchesSearch && matchesActive
@@ -263,7 +269,9 @@ object UserCrudAPI extends cask.MainRoutes {
     )
   )
   def getUser(id: String, validatedRequest: ValidatedRequest): String = {
-    users.get(id) match {
+    val _ = validatedRequest // Suppress unused warning
+    val userOpt: Option[User] = Option(users.get(id))
+    userOpt match {
       case Some(user) =>
         write(user)
       case None =>
@@ -291,7 +299,8 @@ object UserCrudAPI extends cask.MainRoutes {
     )
   )
   def updateUser(id: String, validatedRequest: ValidatedRequest): String = {
-    users.get(id) match {
+    val userOpt: Option[User] = Option(users.get(id))
+    userOpt match {
       case None =>
         val error = ErrorResponse(
           error = "user_not_found",
@@ -304,7 +313,7 @@ object UserCrudAPI extends cask.MainRoutes {
           case Right(updates) =>
             // Check email conflict if email is being updated
             val emailConflict = updates.email.exists { newEmail =>
-              newEmail != existingUser.email && users.values.exists(_.email == newEmail)
+              newEmail != existingUser.email && users.values.asScala.exists(_.email == newEmail)
             }
 
             if (emailConflict) {
@@ -321,7 +330,7 @@ object UserCrudAPI extends cask.MainRoutes {
                 age = updates.age.getOrElse(existingUser.age),
                 isActive = updates.isActive.getOrElse(existingUser.isActive)
               )
-              users(id) = updatedUser
+              users.put(id, updatedUser)
               write(updatedUser)
             }
 
@@ -348,7 +357,9 @@ object UserCrudAPI extends cask.MainRoutes {
     )
   )
   def deleteUser(id: String, validatedRequest: ValidatedRequest): String = {
-    users.get(id) match {
+    val _ = validatedRequest // Suppress unused warning
+    val userOpt: Option[User] = Option(users.get(id))
+    userOpt match {
       case Some(_) =>
         users.remove(id)
         val response = SuccessResponse(s"User with ID '$id' has been deleted")

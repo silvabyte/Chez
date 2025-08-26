@@ -112,53 +112,46 @@ case class ObjectChez(
       value: ujson.Obj,
       context: ValidationContext
   ): List[chez.ValidationError] = {
-    var errors = List.empty[chez.ValidationError]
 
     // Min properties validation
-    minProperties.foreach { min =>
-      if (value.value.size < min) {
-        errors =
-          chez.ValidationError.MinPropertiesViolation(min, value.value.size, context.path) :: errors
-      }
+    val minPropErrors = minProperties.fold(List.empty[chez.ValidationError]) { min =>
+      if (value.value.size < min)
+        List(chez.ValidationError.MinPropertiesViolation(min, value.value.size, context.path))
+      else Nil
     }
 
     // Max properties validation
-    maxProperties.foreach { max =>
-      if (value.value.size > max) {
-        errors =
-          chez.ValidationError.MaxPropertiesViolation(max, value.value.size, context.path) :: errors
-      }
+    val maxPropErrors = maxProperties.fold(List.empty[chez.ValidationError]) { max =>
+      if (value.value.size > max)
+        List(chez.ValidationError.MaxPropertiesViolation(max, value.value.size, context.path))
+      else Nil
     }
 
     // Required properties validation
-    required.foreach { prop =>
-      if (!value.value.contains(prop)) {
-        errors = chez.ValidationError.MissingField(prop, context.path) :: errors
-      }
+    val requiredErrors = required.flatMap { prop =>
+      if (!value.value.contains(prop))
+        List(chez.ValidationError.MissingField(prop, context.path))
+      else Nil
     }
 
     // Property validation - validate each property against its schema
-    properties.foreach { case (propName, propSchema) =>
-      value.value.get(propName).foreach { propValue =>
+    val propertyErrors = properties.flatMap { case (propName, propSchema) =>
+      value.value.get(propName).fold(List.empty[chez.ValidationError]) { propValue =>
         val propContext = context.withProperty(propName)
         val validationResult = propSchema.validate(propValue, propContext)
-        if (!validationResult.isValid) {
-          errors = validationResult.errors ++ errors
-        }
+        if (!validationResult.isValid) validationResult.errors else Nil
       }
     }
 
     // Pattern properties validation
-    patternProperties.foreach { case (pattern, patternSchema) =>
+    val patternErrors = patternProperties.flatMap { case (pattern, patternSchema) =>
       val regex = new Regex(pattern)
-      value.value.foreach { case (propName, propValue) =>
+      value.value.flatMap { case (propName, propValue) =>
         if (regex.findFirstIn(propName).isDefined && !properties.contains(propName)) {
           val propContext = context.withProperty(propName)
           val validationResult = patternSchema.validate(propValue, propContext)
-          if (!validationResult.isValid) {
-            errors = validationResult.errors ++ errors
-          }
-        }
+          if (!validationResult.isValid) validationResult.errors else Nil
+        } else Nil
       }
     }
 
@@ -171,32 +164,31 @@ case class ObjectChez(
 
     val additionalProps = value.value.keySet -- definedProperties -- patternMatchedProperties
 
-    additionalProperties match {
+    val additionalPropErrors = additionalProperties match {
       case Some(false) =>
         // Additional properties not allowed
-        additionalProps.foreach { prop =>
-          errors = chez.ValidationError.AdditionalProperty(prop, context.path) :: errors
-        }
+        additionalProps.map { prop =>
+          chez.ValidationError.AdditionalProperty(prop, context.path)
+        }.toList
       case _ =>
         // Additional properties allowed or unspecified
         additionalPropertiesSchema match {
           case Some(additionalSchema) =>
             // Validate additional properties against the additional properties schema
-            additionalProps.foreach { propName =>
-              value.value.get(propName).foreach { propValue =>
+            additionalProps.flatMap { propName =>
+              value.value.get(propName).fold(List.empty[chez.ValidationError]) { propValue =>
                 val propContext = context.withProperty(propName)
                 val validationResult = additionalSchema.validate(propValue, propContext)
-                if (!validationResult.isValid) {
-                  errors = validationResult.errors ++ errors
-                }
+                if (!validationResult.isValid) validationResult.errors else Nil
               }
-            }
+            }.toList
           case None =>
-          // No additional properties schema - allow any additional properties
+            // No additional properties schema - allow any additional properties
+            Nil
         }
     }
 
-    errors.reverse
+    (minPropErrors ++ maxPropErrors ++ requiredErrors ++ propertyErrors ++ patternErrors ++ additionalPropErrors).reverse
   }
 
   /**
