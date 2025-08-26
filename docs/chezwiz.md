@@ -15,31 +15,44 @@
 ✅ **Configurable temperature and token limits**  
 ✅ **Hooks and metrics** for request/response monitoring
 
+## Migration Note
+
+**Important:** As of version 0.2.0, `AgentFactory` has been removed in favor of direct agent instantiation. Simply create provider instances and pass them to the `Agent` companion object. This provides the same functionality with a cleaner API.
+
+```scala
+// Old way (deprecated)
+// val agent = AgentFactory.createOpenAIAgent(...)
+
+// New way
+val provider = new OpenAIProvider("api-key")
+val agent = Agent(name = "Assistant", instructions = "...", provider = provider, model = "gpt-4o")
+```
+
 ## Quick Start
 
 ### Basic Agent Creation
 
 ```scala
 import chezwiz.agent.*
+import chezwiz.agent.providers.{OpenAIProvider, AnthropicProvider}
 
 // Create an OpenAI agent
-val openAIAgent = AgentFactory.createOpenAIAgent(
+val openAIProvider = new OpenAIProvider("your-openai-api-key")
+val openAIAgent = Agent(
   name = "MyAssistant",
   instructions = "You are a helpful assistant that provides concise answers.",
-  apiKey = "your-openai-api-key",
+  provider = openAIProvider,
   model = "gpt-4o",
   temperature = Some(0.7),
   maxTokens = Some(1000)
-) match {
-  case Right(agent) => agent
-  case Left(error) => throw new RuntimeException(s"Failed to create agent: $error")
-}
+)
 
 // Create an Anthropic agent
-val anthropicAgent = AgentFactory.createAnthropicAgent(
+val anthropicProvider = new AnthropicProvider("your-anthropic-api-key")
+val anthropicAgent = Agent(
   name = "ClaudeAssistant",
   instructions = "You are Claude, an AI assistant.",
-  apiKey = "your-anthropic-api-key",
+  provider = anthropicProvider,
   model = "claude-3-5-sonnet-20241022",
   temperature = Some(0.5)
 )
@@ -366,13 +379,14 @@ val hooks = HookRegistry.empty
   .addPostResponseHook(new LoggingHook())
   .addErrorHook(new LoggingHook())
 
-val agent = AgentFactory.createOpenAIAgent(
+val provider = new OpenAIProvider("your-api-key")
+val agent = Agent(
   name = "Monitored Agent",
   instructions = "You are a helpful assistant.",
-  apiKey = "your-api-key",
+  provider = provider,
   model = "gpt-4o-mini",
   hooks = hooks
-).toOption.get
+)
 ```
 
 ### Metrics Collection Hook
@@ -918,7 +932,10 @@ val (agent, metrics) = MetricsFactory.createOpenAIAgentWithMetrics(
   instructions = "You are a helpful assistant.",
   apiKey = "your-api-key",
   model = "gpt-4o"
-).toOption.get
+) match {
+  case Right((a, m)) => (a, m)
+  case Left(error) => throw new RuntimeException(s"Failed to create agent: $error")
+}
 
 val metadata = RequestMetadata(
   tenantId = Some("my-company"),
@@ -957,11 +974,17 @@ The metrics system tracks:
 // All agents created with MetricsFactory share a global metrics instance
 val (agent1, _) = MetricsFactory.createOpenAIAgentWithMetrics(
   name = "Agent1", instructions = "First agent", apiKey = "key", model = "gpt-4o"
-).toOption.get
+) match {
+  case Right(result) => result
+  case Left(error) => throw new RuntimeException(s"Failed to create agent: $error")
+}
 
 val (agent2, _) = MetricsFactory.createAnthropicAgentWithMetrics(
   name = "Agent2", instructions = "Second agent", apiKey = "key", model = "claude-3-5-sonnet-20241022"
-).toOption.get
+) match {
+  case Right(result) => result
+  case Left(error) => throw new RuntimeException(s"Failed to create agent: $error")
+}
 
 // Get metrics for all agents
 val allMetrics = MetricsFactory.getAllMetrics
@@ -986,7 +1009,10 @@ val (agent, _) = MetricsFactory.createOpenAIAgentWithMetrics(
   apiKey = "your-api-key",
   model = "gpt-4o",
   customMetrics = Some(customMetrics)
-).toOption.get
+) match {
+  case Right(result) => result
+  case Left(error) => throw new RuntimeException(s"Failed to create agent: $error")
+}
 
 // This metrics instance is separate from the global one
 val snapshot = customMetrics.getSnapshot("IsolatedAgent")
@@ -1099,7 +1125,10 @@ val (agent, metrics) = MetricsFactory.createOpenAIAgentWithMetrics(
   apiKey = "your-api-key",
   model = "gpt-4o",
   additionalHooks = customHooks // Your custom hooks + automatic metrics
-).toOption.get
+) match {
+  case Right(result) => result
+  case Left(error) => throw new RuntimeException(s"Failed to create agent: $error")
+}
 ```
 
 ### Thread Safety and Performance
