@@ -13,22 +13,22 @@ case class User(
   @Schema.description("User ID")
   @Schema.pattern("^[a-zA-Z0-9]+$")
   id: String,
-  
+
   @Schema.description("User's full name")
   @Schema.minLength(1)
   @Schema.maxLength(100)
   name: String,
-  
+
   @Schema.description("Email address")
   @Schema.format("email")
   email: String,
-  
+
   @Schema.description("User's age")
   @Schema.minimum(0)
   @Schema.maximum(120)
   @Schema.default(18)
   age: Int,
-  
+
   @Schema.description("Whether the user is active")
   @Schema.default(true)
   isActive: Boolean

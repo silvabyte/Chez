@@ -65,6 +65,14 @@ productSchema.validate(validProduct) match {
   case Right(()) => println("✅ Valid product!")
   case Left(errors) => println(s"❌ Validation failed: $errors")
 }
+
+// Invalid example - validation catches all issues:
+// { "id": "WRONG", "name": "", "price": -10 }
+// Returns: Left(List(
+//   "id: does not match pattern ^[A-Z]{3}-[0-9]{4}$",
+//   "name: length 0 is less than minimum 1",
+//   "price: -10 is less than minimum 0.01"
+// ))
 ```
 
 ### 2️⃣ Add CaskChez - Create a Validated REST API
@@ -85,14 +93,23 @@ object ProductAPI extends Main {
     )
   ))
   def createProduct(validatedRequest: ValidatedRequest) = {
+    // User sends: POST /products
+    // { "id": "LAP-4521", "name": "UltraBook Pro", "price": 1299.99, 
+    //   "stock": 10, "tags": ["laptop"] }
+    
     validatedRequest.getBody[Product] match {
       case Right(product) =>
         // Product is guaranteed to be valid here!
         val saved = saveToDatabase(product)
         cask.Response(upickle.default.write(saved), 200)
+        // Returns: 200 OK with saved product
 
       case Left(errors) =>
         cask.Response(s"""{"errors": ${errors.toJson}}""", 400)
+        // Invalid request example:
+        // { "id": "123", "name": "", "price": 1000 }
+        // Returns: 400 Bad Request
+        // {"errors": ["id: does not match pattern", "name: too short", "tags: required"]}
     }
   }
 
@@ -131,43 +148,43 @@ import chezwiz.agent.providers.OpenAIProvider
 case class ProductMetadata(
   @Schema.description("Primary category")
   category: String,
-  
+
   @Schema.description("Sub-category for detailed classification")
   subCategory: String,
-  
+
   @Schema.description("Relevant tags for search and filtering")
   @Schema.minItems(3)
   @Schema.maxItems(10)
   tags: List[String],
-  
+
   @Schema.description("SEO-optimized description")
   @Schema.minLength(50)
   @Schema.maxLength(500)
   seoDescription: String,
-  
+
   @Schema.description("Key features and benefits")
   @Schema.minItems(3)
   @Schema.maxItems(6)
   features: List[String],
-  
+
   @Schema.description("Target audience")
   targetAudience: String,
-  
+
   @Schema.description("Search keywords")
   searchKeywords: List[String]
 ) derives Schema
 
 // AI enrichment service
 object ProductEnricher {
-  
+
   val provider = new OpenAIProvider(sys.env("OPENAI_API_KEY"))
-  
+
   // ✨ Create specialized agent for product enrichment
   val agent = Agent(
     name = "ProductEnricher",
-    instructions = """You are a product categorization and SEO expert. 
-                     Analyze products and generate rich metadata to improve 
-                     searchability and user experience. Focus on accuracy 
+    instructions = """You are a product categorization and SEO expert.
+                     Analyze products and generate rich metadata to improve
+                     searchability and user experience. Focus on accuracy
                      and relevant categorization.""",
     provider = provider,
     model = "gpt-4o",
@@ -181,6 +198,10 @@ object ProductEnricher {
       userId = Some("system")
     )
     
+    // Input: Basic product from user
+    // Product(id="LAP-4521", name="UltraBook Pro 15", price=1299.99, 
+    //         stock=10, tags=List("laptop"))
+
     // AI analyzes the product and generates structured metadata
     agent.generateObject[ProductMetadata](
       s"""Analyze this product and generate comprehensive metadata:
@@ -198,6 +219,17 @@ object ProductEnricher {
          """.stripMargin,
       metadata
     ).map(_.data)
+    
+    // Output: AI-generated metadata (schema-validated!)
+    // ProductMetadata(
+    //   category = "Electronics",
+    //   subCategory = "Computers & Laptops",
+    //   tags = List("laptop", "ultrabook", "portable", "professional"),
+    //   seoDescription = "The UltraBook Pro 15 delivers exceptional performance...",
+    //   features = List("Ultra-slim design", "All-day battery", "4K display"),
+    //   targetAudience = "Business professionals and content creators",
+    //   searchKeywords = List("ultrabook", "15 inch laptop", "professional laptop")
+    // )
   }
 
   // ✨ Batch enrichment with context awareness
@@ -206,17 +238,17 @@ object ProductEnricher {
       tenantId = Some("store-1"),
       conversationId = Some("batch-enrichment")  // Maintains context across products
     )
-    
+
     // Set context for consistent categorization
     agent.generateText(
       "You'll be enriching multiple related products. Ensure consistent categorization.",
       metadata
     )
-    
+
     products.flatMap { product =>
       enrichProduct(product) match {
         case Right(enriched) => Some((product, enriched))
-        case Left(error) => 
+        case Left(error) =>
           println(s"Failed to enrich ${product.name}: $error")
           None
       }
@@ -246,35 +278,53 @@ object ProductSystem extends Main {
     )
   ))
   def createProduct(validatedRequest: ValidatedRequest) = {
+    // User submits minimal product:
+    // POST /products
+    // { "id": "LAP-4521", "name": "UltraBook Pro 15", 
+    //   "price": 1299.99, "stock": 10, "tags": ["laptop"] }
+    
     validatedRequest.getBody[Product] match {
       case Right(product) =>
-        // Step 1: User's product is already validated by CaskChez
+        // Step 1: CaskChez validated the product ✅
         println(s"✅ Received valid product: ${product.name}")
-        
-        // Step 2: Use AI to enrich with metadata
+
+        // Step 2: AI enriches with metadata
         ProductEnricher.enrichProduct(product) match {
           case Right(metadata) =>
-            // Step 3: Combine and save enriched product
+            // Step 3: Combine original + AI-generated data
             val enriched = EnrichedProduct(product, metadata)
             saveToDatabase(enriched)
-            
-            // Return enriched product to user
+
+            // Return enriched product to user:
+            // {
+            //   "product": { "id": "LAP-4521", "name": "UltraBook Pro 15", ... },
+            //   "metadata": {
+            //     "category": "Electronics",
+            //     "subCategory": "Computers & Laptops", 
+            //     "tags": ["laptop", "ultrabook", "portable", "professional"],
+            //     "seoDescription": "The UltraBook Pro 15 delivers exceptional...",
+            //     "features": ["Ultra-slim design", "All-day battery", ...],
+            //     "targetAudience": "Business professionals...",
+            //     "searchKeywords": ["ultrabook", "15 inch laptop", ...]
+            //   }
+            // }
             cask.Response(
               upickle.default.write(enriched),
               200,
               headers = Seq("Content-Type" -> "application/json")
             )
-            
+
           case Left(error) =>
-            // AI enrichment failed, but we can still save the basic product
+            // AI failed, but still save basic product
             saveToDatabase(product)
             cask.Response(
               s"""{"warning": "Product saved without enrichment: $error"}""",
               200
             )
         }
-        
+
       case Left(errors) =>
+        // Schema validation failed
         cask.Response(s"""{"errors": ${errors.toJson}}""", 400)
     }
   }
@@ -295,44 +345,6 @@ object ProductSystem extends Main {
 
   initialize()
 }
-
-// Example usage showing the complete flow:
-/*
-POST /products
-{
-  "id": "LAP-4521",
-  "name": "UltraBook Pro 15",
-  "price": 1299.99,
-  "stock": 10,
-  "tags": ["laptop"]  // User provides minimal tags
-}
-
-Response:
-{
-  "product": {
-    "id": "LAP-4521",
-    "name": "UltraBook Pro 15",
-    "price": 1299.99,
-    "stock": 10,
-    "tags": ["laptop"]
-  },
-  "metadata": {
-    "category": "Electronics",
-    "subCategory": "Computers & Laptops",
-    "tags": ["laptop", "ultrabook", "portable", "professional", "high-performance"],
-    "seoDescription": "The UltraBook Pro 15 delivers exceptional performance in an ultra-slim design. Perfect for professionals and power users who need reliable computing on the go. Features cutting-edge processors and all-day battery life.",
-    "features": [
-      "Ultra-slim lightweight design",
-      "High-performance processor",
-      "All-day battery life",
-      "Premium build quality",
-      "Professional-grade display"
-    ],
-    "targetAudience": "Business professionals, content creators, and power users",
-    "searchKeywords": ["ultrabook", "laptop 15 inch", "professional laptop", "thin laptop", "portable computer"]
-  }
-}
-*/
 ```
 
 ## Installation
