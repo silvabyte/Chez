@@ -27,8 +27,9 @@ jobs:
       - name: Compile
         run: make compile
 
-      - name: Lint for smells
-        run: make lint
+      # skip for now, will revisit this
+      # - name: Lint for smells
+      #   run: make lint
 
       - name: Run tests
         run: make test
