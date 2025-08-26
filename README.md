@@ -8,10 +8,10 @@ A powerful ecosystem of libraries for JSON Schema generation, HTTP validation, a
 ## The Ecosystem
 
 - **[Chez](./docs/chez.md)**: Core JSON Schema library with TypeBox-like ergonomics
-- **[CaskChez](./docs/caskchez.md)**: Automatic HTTP validation for Cask web framework  
+- **[CaskChez](./docs/caskchez.md)**: Automatic HTTP validation for Cask web framework
 - **[ChezWiz](./docs/chezwiz.md)**: Type-safe LLM agents with structured generation
 
-## Progressive Example: From Schema to Production
+## Example Time -> From Schema to Production
 
 ### 1️⃣ Start with Chez - Define Your Data Model
 
@@ -75,7 +75,7 @@ import cask.main.Main
 
 // Build a REST API with automatic validation
 object ProductAPI extends Main {
-  
+
   // ✨ Automatic request validation using the Product schema
   @CaskChez.post("/products", RouteSchema(
     body = Some(Schema[Product]),
@@ -90,7 +90,7 @@ object ProductAPI extends Main {
         // Product is guaranteed to be valid here!
         val saved = saveToDatabase(product)
         cask.Response(upickle.default.write(saved), 200)
-      
+
       case Left(errors) =>
         cask.Response(s"""{"errors": ${errors.toJson}}""", 400)
     }
@@ -106,7 +106,7 @@ object ProductAPI extends Main {
   def listProducts(validatedRequest: ValidatedRequest) = {
     val minPrice = validatedRequest.getQueryParam[Double]("minPrice").toOption
     val tags = validatedRequest.getQueryParam[List[String]]("tags").toOption
-    
+
     val products = findProducts(minPrice, tags)
     upickle.default.write(products)
   }
@@ -121,74 +121,105 @@ object ProductAPI extends Main {
 }
 ```
 
-### 3️⃣ Add ChezWiz - Intelligent Product Generation with LLMs
+### 3️⃣ Add ChezWiz - AI-Powered Product Enrichment
 
 ```scala
 import chezwiz.agent._
 import chezwiz.agent.providers.OpenAIProvider
 
-// Create an AI agent that understands your Product schema
-object ProductAI {
+// Define enriched metadata that AI will generate
+case class ProductMetadata(
+  @Schema.description("Primary category")
+  category: String,
   
-  // ✨ Create agent with built-in metrics
-  val (agent, metrics) = MetricsFactory.createOpenAIAgentWithMetrics(
-    name = "ProductGenerator",
-    instructions = """You are a product catalog expert. Generate realistic 
-                     product data following all validation rules.""",
-    apiKey = sys.env("OPENAI_API_KEY"),
-    model = "gpt-4o"
-  ) match {
-    case Right(result) => result
-    case Left(error) => throw new RuntimeException(s"Failed: $error")
-  }
+  @Schema.description("Sub-category for detailed classification")
+  subCategory: String,
+  
+  @Schema.description("Relevant tags for search and filtering")
+  @Schema.minItems(3)
+  @Schema.maxItems(10)
+  tags: List[String],
+  
+  @Schema.description("SEO-optimized description")
+  @Schema.minLength(50)
+  @Schema.maxLength(500)
+  seoDescription: String,
+  
+  @Schema.description("Key features and benefits")
+  @Schema.minItems(3)
+  @Schema.maxItems(6)
+  features: List[String],
+  
+  @Schema.description("Target audience")
+  targetAudience: String,
+  
+  @Schema.description("Search keywords")
+  searchKeywords: List[String]
+) derives Schema
 
-  // ✨ Generate valid products using AI
-  def generateProduct(description: String): Either[ChezError, Product] = {
+// AI enrichment service
+object ProductEnricher {
+  
+  val provider = new OpenAIProvider(sys.env("OPENAI_API_KEY"))
+  
+  // ✨ Create specialized agent for product enrichment
+  val agent = Agent(
+    name = "ProductEnricher",
+    instructions = """You are a product categorization and SEO expert. 
+                     Analyze products and generate rich metadata to improve 
+                     searchability and user experience. Focus on accuracy 
+                     and relevant categorization.""",
+    provider = provider,
+    model = "gpt-4o",
+    temperature = Some(0.3)  // Lower temperature for consistency
+  )
+
+  // ✨ Enrich a basic product with AI-generated metadata
+  def enrichProduct(basicProduct: Product): Either[ChezError, ProductMetadata] = {
     val metadata = RequestMetadata(
       tenantId = Some("store-1"),
-      userId = Some("admin"),
-      conversationId = Some("product-gen-session")
+      userId = Some("system")
     )
     
-    // The agent automatically ensures the output matches the Product schema!
-    agent.generateObject[Product](
-      s"""Create a product based on this description: $description
-          Ensure the ID follows the pattern XXX-9999 format.
-          Choose appropriate tags from: electronics, clothing, books, home, sports.""",
+    // AI analyzes the product and generates structured metadata
+    agent.generateObject[ProductMetadata](
+      s"""Analyze this product and generate comprehensive metadata:
+         |Name: ${basicProduct.name}
+         |Price: $$${basicProduct.price}
+         |Current tags: ${basicProduct.tags.mkString(", ")}
+         |
+         |Generate:
+         |- Accurate category and subcategory
+         |- SEO-optimized description that highlights key benefits
+         |- Relevant tags for discovery (include original tags if appropriate)
+         |- Key features that customers care about
+         |- Target audience identification
+         |- Search keywords customers might use
+         """.stripMargin,
       metadata
     ).map(_.data)
   }
 
-  // ✨ Bulk generation with conversation context
-  def generateCatalog(category: String, count: Int): List[Product] = {
+  // ✨ Batch enrichment with context awareness
+  def enrichSimilarProducts(products: List[Product]): List[(Product, ProductMetadata)] = {
     val metadata = RequestMetadata(
       tenantId = Some("store-1"),
-      conversationId = Some(s"catalog-$category")
+      conversationId = Some("batch-enrichment")  // Maintains context across products
     )
     
-    // First message sets context
+    // Set context for consistent categorization
     agent.generateText(
-      s"We're building a $category catalog. Generate diverse, realistic products.",
+      "You'll be enriching multiple related products. Ensure consistent categorization.",
       metadata
     )
     
-    // Generate products with maintained context
-    (1 to count).flatMap { i =>
-      generateProduct(s"Product $i for $category category").toOption
-    }.toList
-  }
-
-  // ✨ Monitor AI performance
-  def printMetrics(): Unit = {
-    metrics.getSnapshot("ProductGenerator").foreach { snapshot =>
-      println(s"""
-        |📊 AI Product Generator Metrics:
-        |  Total requests: ${snapshot.totalRequests}
-        |  Success rate: ${(snapshot.successRate * 100).round}%
-        |  Avg response time: ${snapshot.averageDuration}ms
-        |  Products generated: ${snapshot.objectGenerations.count}
-        |  Tokens used: ${snapshot.totalTokens}
-      """.stripMargin)
+    products.flatMap { product =>
+      enrichProduct(product) match {
+        case Right(enriched) => Some((product, enriched))
+        case Left(error) => 
+          println(s"Failed to enrich ${product.name}: $error")
+          None
+      }
     }
   }
 }
@@ -197,46 +228,111 @@ object ProductAI {
 ### 🎯 Putting It All Together
 
 ```scala
-// Complete system: Schema validation + REST API + AI generation
+// Complete system: User creates product → AI enriches it → Save enhanced product
 object ProductSystem extends Main {
-  
-  // Reuse the same Product schema everywhere
-  val productSchema = Schema[Product]
-  
-  // API endpoint that uses AI to generate products
-  @CaskChez.post("/products/generate", RouteSchema(
-    body = Some(Schema[ProductRequest]),
-    responses = Map(200 -> ResponseDef("Generated product", Some(productSchema)))
+
+  case class EnrichedProduct(
+    product: Product,
+    metadata: ProductMetadata
+  ) derives Schema
+
+  // API endpoint that creates AND enriches products with AI
+  @CaskChez.post("/products", RouteSchema(
+    body = Some(Schema[Product]),
+    responses = Map(
+      200 -> ResponseDef("Enriched product", Some(Schema[EnrichedProduct])),
+      400 -> ResponseDef("Invalid product"),
+      500 -> ResponseDef("Enrichment failed")
+    )
   ))
-  def generateProduct(validatedRequest: ValidatedRequest) = {
-    validatedRequest.getBody[ProductRequest] match {
-      case Right(request) =>
-        // AI generates a product that's guaranteed to be schema-valid
-        ProductAI.generateProduct(request.description) match {
-          case Right(product) =>
-            // Save to database and return
-            val saved = saveToDatabase(product)
-            cask.Response(upickle.default.write(saved), 200)
-          
+  def createProduct(validatedRequest: ValidatedRequest) = {
+    validatedRequest.getBody[Product] match {
+      case Right(product) =>
+        // Step 1: User's product is already validated by CaskChez
+        println(s"✅ Received valid product: ${product.name}")
+        
+        // Step 2: Use AI to enrich with metadata
+        ProductEnricher.enrichProduct(product) match {
+          case Right(metadata) =>
+            // Step 3: Combine and save enriched product
+            val enriched = EnrichedProduct(product, metadata)
+            saveToDatabase(enriched)
+            
+            // Return enriched product to user
+            cask.Response(
+              upickle.default.write(enriched),
+              200,
+              headers = Seq("Content-Type" -> "application/json")
+            )
+            
           case Left(error) =>
-            cask.Response(s"""{"error": "$error"}""", 500)
+            // AI enrichment failed, but we can still save the basic product
+            saveToDatabase(product)
+            cask.Response(
+              s"""{"warning": "Product saved without enrichment: $error"}""",
+              200
+            )
         }
-      
+        
       case Left(errors) =>
         cask.Response(s"""{"errors": ${errors.toJson}}""", 400)
     }
   }
 
-  // Metrics endpoint for monitoring
-  @cask.get("/metrics")
-  def metrics() = {
-    ProductAI.metrics.exportPrometheus  // Prometheus-ready metrics
+  // Batch enrichment endpoint
+  @CaskChez.post("/products/enrich-batch", RouteSchema(
+    body = Some(Schema[List[Product]])
+  ))
+  def enrichBatch(validatedRequest: ValidatedRequest) = {
+    validatedRequest.getBody[List[Product]] match {
+      case Right(products) =>
+        val enriched = ProductEnricher.enrichSimilarProducts(products)
+        cask.Response(upickle.default.write(enriched), 200)
+      case Left(errors) =>
+        cask.Response(s"""{"errors": ${errors.toJson}}""", 400)
+    }
   }
-  
+
   initialize()
 }
 
-case class ProductRequest(description: String) derives Schema
+// Example usage showing the complete flow:
+/*
+POST /products
+{
+  "id": "LAP-4521",
+  "name": "UltraBook Pro 15",
+  "price": 1299.99,
+  "stock": 10,
+  "tags": ["laptop"]  // User provides minimal tags
+}
+
+Response:
+{
+  "product": {
+    "id": "LAP-4521",
+    "name": "UltraBook Pro 15",
+    "price": 1299.99,
+    "stock": 10,
+    "tags": ["laptop"]
+  },
+  "metadata": {
+    "category": "Electronics",
+    "subCategory": "Computers & Laptops",
+    "tags": ["laptop", "ultrabook", "portable", "professional", "high-performance"],
+    "seoDescription": "The UltraBook Pro 15 delivers exceptional performance in an ultra-slim design. Perfect for professionals and power users who need reliable computing on the go. Features cutting-edge processors and all-day battery life.",
+    "features": [
+      "Ultra-slim lightweight design",
+      "High-performance processor",
+      "All-day battery life",
+      "Premium build quality",
+      "Professional-grade display"
+    ],
+    "targetAudience": "Business professionals, content creators, and power users",
+    "searchKeywords": ["ultrabook", "laptop 15 inch", "professional laptop", "thin laptop", "portable computer"]
+  }
+}
+*/
 ```
 
 ## Installation
@@ -262,13 +358,15 @@ ivy"com.silvabyte::chezwiz:0.2.0"
 ## Key Features by Module
 
 ### 🎯 Chez Core
+
 - ✅ Full JSON Schema 2020-12 compliance
-- ✅ Annotation-based schema derivation  
+- ✅ Annotation-based schema derivation
 - ✅ TypeBox-like ergonomics with type safety
 - ✅ Compile-time and runtime validation
 - ✅ Scala 3 union types and match types
 
-### 🌐 CaskChez  
+### 🌐 CaskChez
+
 - ✅ Zero-boilerplate HTTP validation
 - ✅ Automatic OpenAPI generation
 - ✅ Request/response schema enforcement
@@ -276,9 +374,10 @@ ivy"com.silvabyte::chezwiz:0.2.0"
 - ✅ Content negotiation
 
 ### 🤖 ChezWiz
+
 - ✅ Multi-provider LLM support (OpenAI, Anthropic, local)
 - ✅ Structured generation with schema validation
-- ✅ Scoped conversation management 
+- ✅ Scoped conversation management
 - ✅ Built-in metrics and monitoring
 - ✅ Comprehensive hook system
 - ✅ Vector embeddings support
@@ -286,7 +385,7 @@ ivy"com.silvabyte::chezwiz:0.2.0"
 ## Documentation
 
 - **[Chez Reference](./docs/chez.md)** - Complete schema API
-- **[CaskChez Guide](./docs/caskchez.md)** - HTTP validation patterns  
+- **[CaskChez Guide](./docs/caskchez.md)** - HTTP validation patterns
 - **[ChezWiz Manual](./docs/chezwiz.md)** - LLM agent development
 - **[Custom Providers](./docs/custom-providers.md)** - Local LLM integration
 
@@ -302,7 +401,7 @@ cd Chez
 
 # Run specific module tests
 ./mill Chez.test
-./mill CaskChez.test  
+./mill CaskChez.test
 ./mill ChezWiz.test
 
 # Run examples
