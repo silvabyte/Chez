@@ -173,32 +173,29 @@ object Examples extends App {
       .addPreRequestHook(logging)
       .addPostResponseHook(logging)
 
-    AgentFactory.createOpenAIAgent(
+    val provider = new OpenAIProvider(Config.OPENAI_API_KEY)
+    val agent = Agent(
       "Monitored",
       "You are monitored",
-      Config.OPENAI_API_KEY,
+      provider,
       "gpt-4o-mini",
       hooks = hooks
-    ) match {
-      case Right(agent) =>
-        println("✅ Agent with monitoring created")
+    )
+    println("✅ Agent with monitoring created")
 
-        // Run a few operations to generate metrics
-        List(
-          "Hello, how are you?",
-          "What's the weather like?",
-          "Tell me a joke"
-        ).foreach { msg =>
-          agent.generateText(msg, metadata) match {
-            case Right(response) => println(s"Response: ${response.content.take(50)}...")
-            case Left(error) => println(s"Error: $error")
-          }
-        }
-
-        println(s"\n📊 Final Metrics: ${metrics.stats}")
-
-      case Left(error) => println(s"Failed to create monitored agent: $error")
+    // Run a few operations to generate metrics
+    List(
+      "Hello, how are you?",
+      "What's the weather like?",
+      "Tell me a joke"
+    ).foreach { msg =>
+      agent.generateText(msg, metadata) match {
+        case Right(response) => println(s"Response: ${response.content.take(50)}...")
+        case Left(error) => println(s"Error: $error")
+      }
     }
+
+    println(s"\n📊 Final Metrics: ${metrics.stats}")
   }
 
 // Example 6: Built-in metrics system (most advanced)

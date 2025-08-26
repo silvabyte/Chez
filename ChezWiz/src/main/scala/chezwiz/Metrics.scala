@@ -1,5 +1,6 @@
 package chezwiz.agent
 
+import chezwiz.agent.providers.{OpenAIProvider, AnthropicProvider}
 import java.time.Instant
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import scala.collection.concurrent.TrieMap
@@ -633,8 +634,9 @@ object MetricsFactory {
       .addErrorHook(metricsHook)
       .addHistoryHook(metricsHook)
 
-    AgentFactory.createOpenAIAgent(name, instructions, apiKey, model, temperature, maxTokens, hooks)
-      .map(_ -> metricsInstance)
+    val provider = new OpenAIProvider(apiKey)
+    val agent = Agent(name, instructions, provider, model, temperature, maxTokens, hooks)
+    Right(agent -> metricsInstance)
   }
 
   /** Create an Anthropic agent with metrics enabled */
@@ -659,16 +661,9 @@ object MetricsFactory {
       .addErrorHook(metricsHook)
       .addHistoryHook(metricsHook)
 
-    AgentFactory.createAnthropicAgent(
-      name,
-      instructions,
-      apiKey,
-      model,
-      temperature,
-      maxTokens,
-      hooks
-    )
-      .map(_ -> metricsInstance)
+    val provider = new AnthropicProvider(apiKey)
+    val agent = Agent(name, instructions, provider, model, temperature, maxTokens, hooks)
+    Right(agent -> metricsInstance)
   }
 
   /** Get current metrics for an agent */
