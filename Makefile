@@ -295,7 +295,7 @@ format:
 # Run linting (compile warnings)
 .PHONY: lint
 lint: compile
-	@echo "🔍 Linting code..."
+	./mill __.fix
 
 
 # ============================================================================

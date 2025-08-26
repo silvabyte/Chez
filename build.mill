@@ -99,7 +99,7 @@ trait GitHubDepsModule extends ScalaModule {
 }
 
 trait Shared extends GitHubDepsModule {
-  def scalaVersion = "3.6.2"
+  def scalaVersion = "3.7.2"
 
   def mvnDeps = Task {
     Seq(
@@ -122,6 +122,50 @@ trait Shared extends GitHubDepsModule {
       )
     }
     def testFramework = "utest.runner.Framework"
+  }
+
+// Scalafix tasks
+  def fix() = Task.Command {
+    val sources = allSources().map(_.path)
+    val sourceFiles = sources.flatMap(os.walk(_).filter(_.ext == "scala"))
+    val configPath = "/home/matsilva/code/silvabyte/AudeticScala/.scalafix.conf"
+
+    if (sourceFiles.nonEmpty) {
+      os.proc(
+        "cs",
+        "launch",
+        "scalafix",
+        "--",
+        "--config",
+        configPath,
+        "--scala-version",
+        "3.7.2",
+        "--syntactic",
+        sourceFiles.map(_.toString)
+      ).call()
+    }
+  }
+
+  def fixCheck() = Task.Command {
+    val sources = allSources().map(_.path)
+    val sourceFiles = sources.flatMap(os.walk(_).filter(_.ext == "scala"))
+    val configPath = "/home/matsilva/code/silvabyte/AudeticScala/.scalafix.conf"
+
+    if (sourceFiles.nonEmpty) {
+      os.proc(
+        "cs",
+        "launch",
+        "scalafix",
+        "--",
+        "--config",
+        configPath,
+        "--scala-version",
+        "3.7.2",
+        "--syntactic",
+        "--check",
+        sourceFiles.map(_.toString)
+      ).call()
+    }
   }
 }
 
