@@ -232,28 +232,7 @@ object ProductEnricher {
     // )
   }
 
-  // ✨ Batch enrichment with context awareness
-  def enrichSimilarProducts(products: List[Product]): List[(Product, ProductMetadata)] = {
-    val metadata = RequestMetadata(
-      tenantId = Some("store-1"),
-      conversationId = Some("batch-enrichment")  // Maintains context across products
-    )
 
-    // Set context for consistent categorization
-    agent.generateText(
-      "You'll be enriching multiple related products. Ensure consistent categorization.",
-      metadata
-    )
-
-    products.flatMap { product =>
-      enrichProduct(product) match {
-        case Right(enriched) => Some((product, enriched))
-        case Left(error) =>
-          println(s"Failed to enrich ${product.name}: $error")
-          None
-      }
-    }
-  }
 }
 ```
 
@@ -325,20 +304,6 @@ object ProductSystem extends Main {
 
       case Left(errors) =>
         // Schema validation failed
-        cask.Response(s"""{"errors": ${errors.toJson}}""", 400)
-    }
-  }
-
-  // Batch enrichment endpoint
-  @CaskChez.post("/products/enrich-batch", RouteSchema(
-    body = Some(Schema[List[Product]])
-  ))
-  def enrichBatch(validatedRequest: ValidatedRequest) = {
-    validatedRequest.getBody[List[Product]] match {
-      case Right(products) =>
-        val enriched = ProductEnricher.enrichSimilarProducts(products)
-        cask.Response(upickle.default.write(enriched), 200)
-      case Left(errors) =>
         cask.Response(s"""{"errors": ${errors.toJson}}""", 400)
     }
   }
