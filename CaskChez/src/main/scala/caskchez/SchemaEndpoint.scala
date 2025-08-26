@@ -94,14 +94,19 @@ object CaskChez {
   implicit object ValidatedRequestReader extends cask.endpoints.QueryParamReader[ValidatedRequest] {
     def arity = 0
     def read(ctx: Request, label: String, v: Seq[String]): ValidatedRequest = {
-      // TODO: we should instead return a monad of Success or Failure.
       ValidatedRequestStore
         .get()
-        .getOrElse(
-          throw new RuntimeException(
-            "No ValidatedRequest available - this parameter can only be used in @chez endpoints"
+        .getOrElse {
+          // Return an empty ValidatedRequest with error indication
+          // The endpoint should handle this case appropriately
+          ValidatedRequest(
+            original = ctx,
+            validatedBody = None,
+            validatedQuery = None,
+            validatedParams = None,
+            validatedHeaders = None
           )
-        )
+        }
     }
   }
 

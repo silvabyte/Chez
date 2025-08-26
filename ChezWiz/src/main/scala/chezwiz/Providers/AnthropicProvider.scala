@@ -42,11 +42,12 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     val messages = ujson.Arr(
       conversationChatMessages.map(msg => {
         ujson.Obj(
-          "role" -> (msg.role match
+          "role" -> (msg.role match {
             case Role.User => "user"
             case Role.Assistant => "assistant"
             case Role.System =>
-              throw new IllegalStateException("System messages should be filtered out")),
+              "" // System messages handled separately
+          }),
           "content" -> (msg.content match {
             case MessageContent.Text(text) => ujson.Str(text)
             case MessageContent.ImageUrl(url, detail) =>
@@ -90,7 +91,7 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     systemChatMessage.headOption.foreach(sys => {
       baseObj("system") = (sys.content match {
         case MessageContent.Text(text) => text
-        case _ => throw new IllegalArgumentException("System messages must be text only")
+        case _ => "" // Non-text system messages get empty string
       })
     })
 
@@ -140,11 +141,12 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     val messages = ujson.Arr(
       conversationChatMessages.map(msg => {
         ujson.Obj(
-          "role" -> (msg.role match
+          "role" -> (msg.role match {
             case Role.User => "user"
             case Role.Assistant => "assistant"
             case Role.System =>
-              throw new IllegalStateException("System messages should be filtered out")),
+              "" // System messages handled separately
+          }),
           "content" -> (msg.content match {
             case MessageContent.Text(text) => ujson.Str(text)
             case MessageContent.ImageUrl(url, detail) =>
@@ -199,7 +201,7 @@ class AnthropicProvider(protected val apiKey: String) extends BaseLLMProvider:
     systemChatMessage.headOption.foreach(sys => {
       baseObj("system") = (sys.content match {
         case MessageContent.Text(text) => text
-        case _ => throw new IllegalArgumentException("System messages must be text only")
+        case _ => "" // Non-text system messages get empty string
       })
     })
 

@@ -328,7 +328,7 @@ ChezWiz provides a comprehensive hook system that allows you to inject custom lo
 All hooks extend the base `AgentHook` trait:
 
 - **PreRequestHook** - Before sending requests to LLM providers
-- **PostResponseHook** - After receiving responses from LLM providers  
+- **PostResponseHook** - After receiving responses from LLM providers
 - **PreObjectRequestHook** - Before sending object generation requests
 - **PostObjectResponseHook** - After receiving object generation responses
 - **ErrorHook** - When errors occur in any operation
@@ -348,9 +348,9 @@ class LoggingHook extends AgentHook with PreRequestHook with PostResponseHook wi
 
   override def onPostResponse(context: PostResponseContext): Unit = {
     context.response match {
-      case Right(response) => 
+      case Right(response) =>
         println(s"[${context.agentName}] Success: ${context.duration}ms, ${response.usage.map(_.totalTokens).getOrElse(0)} tokens")
-      case Left(error) => 
+      case Left(error) =>
         println(s"[${context.agentName}] Error: $error")
     }
   }
@@ -382,7 +382,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 class MetricsHook extends AgentHook with PreRequestHook with PostResponseHook with ErrorHook {
   private val requestCount = new AtomicLong(0)
-  private val successCount = new AtomicLong(0) 
+  private val successCount = new AtomicLong(0)
   private val errorCount = new AtomicLong(0)
   private val totalDuration = new AtomicLong(0)
 
@@ -392,10 +392,10 @@ class MetricsHook extends AgentHook with PreRequestHook with PostResponseHook wi
 
   override def onPostResponse(context: PostResponseContext): Unit = {
     context.response match {
-      case Right(_) => 
+      case Right(_) =>
         successCount.incrementAndGet()
         totalDuration.addAndGet(context.duration)
-      case Left(_) => 
+      case Left(_) =>
         errorCount.incrementAndGet()
     }
   }
@@ -409,7 +409,7 @@ class MetricsHook extends AgentHook with PreRequestHook with PostResponseHook wi
     val successes = successCount.get()
     val errors = errorCount.get()
     val avgDuration = if (successes > 0) totalDuration.get().toDouble / successes else 0.0
-    
+
     s"Requests: $requests, Success: $successes, Errors: $errors, Avg Duration: ${avgDuration.round}ms"
   }
 }
@@ -477,7 +477,7 @@ class HistoryAnalyticsHook extends AgentHook with HistoryHook {
   override def onHistoryChange(context: HistoryContext): Unit = {
     val currentCount = operationCounts.getOrElse(context.operation, 0)
     operationCounts(context.operation) = currentCount + 1
-    
+
     println(s"History ${context.operation} for ${context.agentName}: size=${context.historySize}")
   }
 
@@ -557,7 +557,7 @@ class FailingHook extends AgentHook with PreRequestHook {
 }
 
 val agent = Agent(
-  name = "Resilient Agent", 
+  name = "Resilient Agent",
   instructions = "I work even with failing hooks.",
   provider = provider,
   model = "gpt-4o-mini",
@@ -647,21 +647,21 @@ val queryResponse = agent.generateEmbedding(queryText)
 (docsResponse, queryResponse) match {
   case (Right(docs), Right(query)) =>
     val queryEmbedding = query.embeddings.head.values
-    
+
     // Calculate similarities
-    val similarities = docs.embeddings.zip(documents).map { 
+    val similarities = docs.embeddings.zip(documents).map {
       case (docEmbedding, text) =>
         val similarity = agent.cosineSimilarity(queryEmbedding, docEmbedding.values)
         (text, similarity)
     }
-    
+
     // Find most similar
     val topMatches = similarities.sortBy(-_._2).take(3)
     println("Top 3 most similar documents:")
     topMatches.foreach { case (text, score) =>
       println(f"  Score: $score%.3f - ${text.take(50)}...")
     }
-    
+
   case _ => println("Error generating embeddings")
 }
 ```
@@ -682,17 +682,17 @@ agent.generateEmbeddings(documents) match {
   case Right(response) =>
     // Build similarity matrix
     val embeddings = response.embeddings.map(_.values)
-    
+
     println("Similarity Matrix:")
     for (i <- embeddings.indices) {
       for (j <- embeddings.indices) {
-        val similarity = if (i == j) 1.0 
+        val similarity = if (i == j) 1.0
           else agent.cosineSimilarity(embeddings(i), embeddings(j))
         print(f"$similarity%.2f ")
       }
       println()
     }
-    
+
     // Find clusters (documents with similarity > threshold)
     val threshold = 0.7
     for {
@@ -705,7 +705,7 @@ agent.generateEmbeddings(documents) match {
       println(s"  - ${documents(i)}")
       println(s"  - ${documents(j)}")
     }
-    
+
   case Left(error) => println(s"Error: $error")
 }
 ```
@@ -743,16 +743,16 @@ Monitor and track embedding operations with hooks:
 ```scala
 import chezwiz.agent.*
 
-class EmbeddingMonitorHook extends AgentHook 
-  with PreEmbeddingHook 
+class EmbeddingMonitorHook extends AgentHook
+  with PreEmbeddingHook
   with PostEmbeddingHook {
-  
+
   override def onPreEmbedding(context: PreEmbeddingContext): Unit = {
     println(s"[${context.agentName}] Generating embedding for ${context.inputSize} texts")
     println(s"  Model: ${context.model}")
     println(s"  Tenant: ${context.metadata.tenantId.getOrElse("default")}")
   }
-  
+
   override def onPostEmbedding(context: PostEmbeddingContext): Unit = {
     context.response match {
       case Right(response) =>
@@ -785,11 +785,13 @@ val agent = Agent(
 ### Supported Embedding Models
 
 #### LM Studio (Local)
+
 - Any embedding model loaded in LM Studio
 - Recommended: `text-embedding-qwen3-embedding-8b`
 - Other options: `nomic-embed-text`, `bge-large`, `e5-large`
 
 #### OpenAI (Coming Soon)
+
 - `text-embedding-3-large` (3072 dimensions)
 - `text-embedding-3-small` (1536 dimensions)
 - `text-embedding-ada-002` (1536 dimensions)
@@ -830,7 +832,7 @@ val chunks = largeBatch.grouped(chunkSize)
 val allEmbeddings = chunks.flatMap { chunk =>
   agent.generateEmbeddings(chunk) match {
     case Right(response) => Some(response.embeddings)
-    case Left(error) => 
+    case Left(error) =>
       println(s"Error processing chunk: $error")
       None
   }
@@ -850,7 +852,7 @@ case class Document(
 
 class SemanticSearchIndex(agent: Agent) {
   private var documents = Map[String, Document]()
-  
+
   def addDocument(id: String, content: String): Unit = {
     agent.generateEmbedding(content) match {
       case Right(response) =>
@@ -861,24 +863,24 @@ class SemanticSearchIndex(agent: Agent) {
         println(s"Failed to index document $id: $error")
     }
   }
-  
+
   def search(query: String, topK: Int = 5): List[(Document, Float)] = {
     agent.generateEmbedding(query) match {
       case Right(response) =>
         val queryEmbedding = response.embeddings.head.values
-        
+
         documents.values.toList
           .filter(_.embedding.isDefined)
           .map { doc =>
             val similarity = agent.cosineSimilarity(
-              queryEmbedding, 
+              queryEmbedding,
               doc.embedding.get
             )
             (doc, similarity)
           }
           .sortBy(-_._2)
           .take(topK)
-          
+
       case Left(error) =>
         println(s"Search failed: $error")
         List.empty
@@ -981,7 +983,7 @@ val customMetrics = new DefaultAgentMetrics()
 val (agent, _) = MetricsFactory.createOpenAIAgentWithMetrics(
   name = "IsolatedAgent",
   instructions = "This agent has separate metrics",
-  apiKey = "your-api-key", 
+  apiKey = "your-api-key",
   model = "gpt-4o",
   customMetrics = Some(customMetrics)
 ).toOption.get
@@ -1034,7 +1036,7 @@ val prometheusMetrics = snapshot.toPrometheusFormat
 // # HELP chezwiz_agent_requests_total Total number of requests
 // # TYPE chezwiz_agent_requests_total counter
 // chezwiz_agent_requests_total{agent="MyAgent"} 1543
-// 
+//
 // # HELP chezwiz_agent_success_rate Request success rate (0-1)
 // # TYPE chezwiz_agent_success_rate gauge
 // chezwiz_agent_success_rate{agent="MyAgent"} 0.987

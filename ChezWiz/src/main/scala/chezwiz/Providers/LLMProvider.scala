@@ -63,7 +63,7 @@ abstract class BaseLLMProvider extends LLMProvider:
 
       case HttpVersion.Http2 =>
         Try {
-          val session = requests.Session(proxy = null)
+          val session = requests.Session()
           val response = session.post(
             url = url,
             headers = headers,

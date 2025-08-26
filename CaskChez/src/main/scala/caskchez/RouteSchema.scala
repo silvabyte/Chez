@@ -61,23 +61,29 @@ case class RouteSchema(
  */
 object RouteSchemaRegistry {
 
-  private var schemas = Map[String, RouteSchema]()
+  // scalafix:off DisableSyntax.var
+  // Disabling because a mutable registry is needed to dynamically register route schemas at runtime
+  // as Cask endpoints are discovered and initialized
+  @volatile private var _schemas = Map[String, RouteSchema]()
+  // scalafix:on DisableSyntax.var
 
   /**
    * Register a route schema with a given path and method
    */
   def register(path: String, method: String, schema: RouteSchema): Unit = {
     val key = s"$method:$path"
-    schemas = schemas.updated(key, schema)
+    _schemas = _schemas.updated(key, schema)
   }
 
   /**
    * Get all registered schemas
    */
-  def getAll: Map[String, RouteSchema] = schemas.toMap
+  def getAll: Map[String, RouteSchema] = _schemas.toMap
 
   /**
    * Clear all registered schemas (useful for testing)
    */
-  def clear(): Unit = schemas = Map.empty
+  def clear(): Unit = {
+    _schemas = Map.empty
+  }
 }

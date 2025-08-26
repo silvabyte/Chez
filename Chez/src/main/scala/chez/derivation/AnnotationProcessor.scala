@@ -74,8 +74,12 @@ object AnnotationProcessor {
     val typeRepr = TypeRepr.of[T]
     val typeSymbol = typeRepr.typeSymbol
 
+    // scalafix:off DisableSyntax.var
+    // Disabling because macros require mutable variables to accumulate annotation values
+    // as we iterate through the annotation tree at compile time
     var titleOpt: Option[String] = None
     var descriptionOpt: Option[String] = None
+    // scalafix:on DisableSyntax.var
 
     // Extract annotations from the class
     for (annotation <- typeSymbol.annotations) {
@@ -125,6 +129,9 @@ object AnnotationProcessor {
         // Find the field by name
         typeSymbol.primaryConstructor.paramSymss.flatten.find(_.name == name) match {
           case Some(fieldSymbol) =>
+            // scalafix:off DisableSyntax.var
+            // Disabling because macros require mutable variables to accumulate annotation values
+            // as we iterate through field annotations at compile time
             var descriptionOpt: Option[String] = None
             var formatOpt: Option[String] = None
             var minLengthOpt: Option[Int] = None
@@ -138,6 +145,7 @@ object AnnotationProcessor {
             var defaultOpt: Option[String | Int | Boolean | Double] = None
             var enumValuesOpt: Option[List[String | Int | Boolean | Double | Null]] = None
             var constOpt: Option[String | Int | Boolean | Double | Null] = None
+            // scalafix:on DisableSyntax.var
 
             // Extract annotations from the field
             for (annotation <- fieldSymbol.annotations) {
@@ -216,7 +224,10 @@ object AnnotationProcessor {
                           value: String | Int | Boolean | Double | Null
                         case Literal(DoubleConstant(value)) =>
                           value: String | Int | Boolean | Double | Null
+                        // scalafix:off DisableSyntax.null
+                        // Disabling because we need to handle null as a valid enum value according to JSON Schema spec
                         case Literal(NullConstant()) => null: String | Int | Boolean | Double | Null
+                        // scalafix:on DisableSyntax.null
                       }
                       if (values.nonEmpty) enumValuesOpt = Some(values)
                     case _ =>
@@ -232,7 +243,10 @@ object AnnotationProcessor {
                     case Apply(_, List(Literal(DoubleConstant(value)))) =>
                       constOpt = Some(value)
                     case Apply(_, List(Literal(NullConstant()))) =>
+                      // scalafix:off DisableSyntax.null
+                      // Disabling because null is a valid const value in JSON Schema
                       constOpt = Some(null)
+                    // scalafix:on DisableSyntax.null
                     case _ =>
                   }
                 case "default" =>
@@ -299,7 +313,10 @@ object AnnotationProcessor {
                   case i: Int => '{ ${ Expr(i) }: String | Int | Boolean | Double | Null }
                   case b: Boolean => '{ ${ Expr(b) }: String | Int | Boolean | Double | Null }
                   case d: Double => '{ ${ Expr(d) }: String | Int | Boolean | Double | Null }
+                  // scalafix:off DisableSyntax.null
+                  // Disabling because we're building expressions for null values in enum lists
                   case null => '{ null: String | Int | Boolean | Double | Null }
+                  // scalafix:on DisableSyntax.null
                 }
                 '{ Some(List(${ Expr.ofSeq(valueExprs) }*)) }
               case None => '{ None }
@@ -313,7 +330,10 @@ object AnnotationProcessor {
                 '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
               case Some(value: Double) =>
                 '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+              // scalafix:off DisableSyntax.null
+              // Disabling because we're building expressions for null const values
               case Some(null) => '{ Some(null: String | Int | Boolean | Double | Null) }
+              // scalafix:on DisableSyntax.null
               case None => '{ None }
             }
             val defaultExpr = defaultOpt match {
@@ -388,6 +408,9 @@ object AnnotationProcessor {
   )(fieldSymbol: quotes.reflect.Symbol): Expr[AnnotationMetadata] = {
     import quotes.reflect.*
 
+    // scalafix:off DisableSyntax.var
+    // Disabling because macros require mutable variables to accumulate field annotation values
+    // during compile-time tree traversal
     var descriptionOpt: Option[String] = None
     var formatOpt: Option[String] = None
     var minLengthOpt: Option[Int] = None
@@ -401,6 +424,7 @@ object AnnotationProcessor {
     var defaultOpt: Option[String | Int | Boolean | Double] = None
     var enumValuesOpt: Option[List[String | Int | Boolean | Double | Null]] = None
     var constOpt: Option[String | Int | Boolean | Double | Null] = None
+    // scalafix:on DisableSyntax.var
 
     // Extract annotations from the field
     for (annotation <- fieldSymbol.annotations) {
@@ -476,7 +500,10 @@ object AnnotationProcessor {
                 case Literal(BooleanConstant(value)) =>
                   value: String | Int | Boolean | Double | Null
                 case Literal(DoubleConstant(value)) => value: String | Int | Boolean | Double | Null
+                // scalafix:off DisableSyntax.null
+                // Disabling because we need to handle null as a valid enum value
                 case Literal(NullConstant()) => null: String | Int | Boolean | Double | Null
+                // scalafix:on DisableSyntax.null
               }
               if (values.nonEmpty) enumValuesOpt = Some(values)
             case _ =>
@@ -492,7 +519,10 @@ object AnnotationProcessor {
             case Apply(_, List(Literal(DoubleConstant(value)))) =>
               constOpt = Some(value)
             case Apply(_, List(Literal(NullConstant()))) =>
+              // scalafix:off DisableSyntax.null
+              // Disabling because null is a valid const value
               constOpt = Some(null)
+            // scalafix:on DisableSyntax.null
             case _ =>
           }
         case "default" =>
@@ -559,7 +589,10 @@ object AnnotationProcessor {
           case i: Int => '{ ${ Expr(i) }: String | Int | Boolean | Double | Null }
           case b: Boolean => '{ ${ Expr(b) }: String | Int | Boolean | Double | Null }
           case d: Double => '{ ${ Expr(d) }: String | Int | Boolean | Double | Null }
+          // scalafix:off DisableSyntax.null
+          // Disabling because we're building expressions for null enum values
           case null => '{ null: String | Int | Boolean | Double | Null }
+          // scalafix:on DisableSyntax.null
         }
         '{ Some(List(${ Expr.ofSeq(valueExprs) }*)) }
       case None => '{ None }
@@ -572,7 +605,10 @@ object AnnotationProcessor {
         '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
       case Some(value: Double) =>
         '{ Some(${ Expr(value) }: String | Int | Boolean | Double | Null) }
+      // scalafix:off DisableSyntax.null
+      // Disabling because we're building expressions for null const values
       case Some(null) => '{ Some(null: String | Int | Boolean | Double | Null) }
+      // scalafix:on DisableSyntax.null
       case None => '{ None }
     }
     val defaultExpr = defaultOpt match {
@@ -616,9 +652,15 @@ object AnnotationProcessor {
           case i: Int => ujson.Num(i)
           case b: Boolean => ujson.Bool(b)
           case d: Double => ujson.Num(d)
+          // scalafix:off DisableSyntax.null
+          // Disabling because we need to convert null enum values to ujson.Null
           case null => ujson.Null
+          // scalafix:on DisableSyntax.null
         }
+        // scalafix:off DisableSyntax.var
+        // Disabling because we need to mutate the result as we apply various metadata properties
         var result: Chez = EnumChez(ujsonValues)
+        // scalafix:on DisableSyntax.var
 
         // Apply general metadata to the enum
         metadata.title.foreach(title => result = result.withTitle(title))
@@ -638,9 +680,12 @@ object AnnotationProcessor {
     }
 
     // Apply format-specific metadata FIRST, before wrapping with general metadata
+    // scalafix:off DisableSyntax.var
+    // Disabling because we need to mutate the result as we apply various metadata enhancements
     var result = chez match {
       case sc: StringChez =>
         var enhanced = sc
+        // scalafix:on DisableSyntax.var
         metadata.format.foreach(f => enhanced = enhanced.copy(format = Some(f)))
         metadata.minLength.foreach(ml => enhanced = enhanced.copy(minLength = Some(ml)))
         metadata.maxLength.foreach(ml => enhanced = enhanced.copy(maxLength = Some(ml)))
@@ -652,7 +697,10 @@ object AnnotationProcessor {
         enhanced
 
       case nc: NumberChez =>
+        // scalafix:off DisableSyntax.var
+        // Disabling because we need to mutate enhanced as we apply numeric constraints
         var enhanced = nc
+        // scalafix:on DisableSyntax.var
         metadata.minimum.foreach(min => enhanced = enhanced.copy(minimum = Some(min)))
         metadata.maximum.foreach(max => enhanced = enhanced.copy(maximum = Some(max)))
         metadata.exclusiveMinimum.foreach(emin =>
@@ -670,7 +718,10 @@ object AnnotationProcessor {
         enhanced
 
       case ic: IntegerChez =>
+        // scalafix:off DisableSyntax.var
+        // Disabling because we need to mutate enhanced as we apply integer constraints
         var enhanced = ic
+        // scalafix:on DisableSyntax.var
         metadata.minimum.foreach(min => enhanced = enhanced.copy(minimum = Some(min.toInt)))
         metadata.maximum.foreach(max => enhanced = enhanced.copy(maximum = Some(max.toInt)))
         metadata.exclusiveMinimum.foreach(emin =>
@@ -688,7 +739,10 @@ object AnnotationProcessor {
         enhanced
 
       case ac: ArrayChez[_] =>
+        // scalafix:off DisableSyntax.var
+        // Disabling because we need to mutate enhanced as we apply array constraints
         var enhanced = ac
+        // scalafix:on DisableSyntax.var
         metadata.minItems.foreach(min => enhanced = enhanced.copy(minItems = Some(min)))
         metadata.maxItems.foreach(max => enhanced = enhanced.copy(maxItems = Some(max)))
         metadata.uniqueItems.foreach(unique => enhanced = enhanced.copy(uniqueItems = Some(unique)))

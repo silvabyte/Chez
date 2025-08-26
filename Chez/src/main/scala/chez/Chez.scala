@@ -53,7 +53,7 @@ trait Chez {
   def withDescription(desc: String): Chez = DescriptionChez(this, desc)
   def withSchema(schema: String): Chez = SchemaChez(this, schema)
   def withId(id: String): Chez = IdChez(this, id)
-  def withDefs(defs: (String, Chez)*): Chez = chez.modifiers.DefsChez(this, defs.toMap)
+  def withDefs(defs: (String, Chez)*): Chez = chez.modifiers.DefsChez(Some(this), defs.toMap)
   def withExamples(examples: ujson.Value*): Chez = ExamplesChez(this, examples.toList)
 }
 
@@ -215,8 +215,8 @@ object Chez {
   def DynamicRef(ref: String): DynamicRefChez = DynamicRefChez(ref)
 
   // Definitions
-  def Defs(defs: (String, Chez)*): DefsChez[Null] = modifiers.DefsChez(null, defs.toMap)
-  def Defs(defs: Map[String, Chez]): DefsChez[Null] = modifiers.DefsChez(null, defs)
+  def Defs(defs: (String, Chez)*): DefsChez = modifiers.DefsChez(None, defs.toMap)
+  def Defs(defs: Map[String, Chez]): DefsChez = modifiers.DefsChez(None, defs)
 
   // Enum factory methods
   def StringEnum(values: String*): EnumChez = EnumChez.fromStrings(values*)

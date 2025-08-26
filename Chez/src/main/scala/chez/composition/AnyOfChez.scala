@@ -29,22 +29,14 @@ case class AnyOfChez(
    */
   override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
     // For anyOf, at least one schema must validate successfully
-    var hasSuccess = false
-    var allErrors = List.empty[chez.ValidationError]
-
-    schemas.foreach { schema =>
-      val result = schema.validate(value, context)
-      if (result.isValid) {
-        hasSuccess = true
-      } else {
-        allErrors = result.errors ++ allErrors
-      }
-    }
+    val results = schemas.map(_.validate(value, context))
+    val hasSuccess = results.exists(_.isValid)
 
     if (hasSuccess) {
       ValidationResult.valid()
     } else {
       // If all schemas fail, return all collected errors
+      val allErrors = results.flatMap(_.errors)
       ValidationResult.invalid(allErrors)
     }
   }

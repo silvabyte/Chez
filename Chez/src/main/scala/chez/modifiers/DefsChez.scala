@@ -14,8 +14,8 @@ import upickle.default.*
  * (replacing the draft-07 "definitions" keyword).
  *
  * This class supports two modes:
- * 1. Wrapper mode: Add $defs to an existing schema (underlying != null)
- * 2. Standalone mode: Create a schema containing only $defs (underlying == null)
+ * 1. Wrapper mode: Add $defs to an existing schema (underlying is Some)
+ * 2. Standalone mode: Create a schema containing only $defs (underlying is None)
  *
  * Example:
  * {
@@ -33,41 +33,41 @@ import upickle.default.*
  *   }
  * }
  */
-case class DefsChez[T <: Chez](
-    underlying: T,
+case class DefsChez(
+    underlying: Option[Chez],
     defsValue: Map[String, Chez]
 ) extends Chez {
 
   override def $defs: Option[Map[String, Chez]] = Some(defsValue)
 
   // Delegate all other core vocabulary to underlying schema (if present)
-  override def $schema: Option[String] = Option(underlying).flatMap(_.$schema)
-  override def $id: Option[String] = Option(underlying).flatMap(_.$id)
-  override def $ref: Option[String] = Option(underlying).flatMap(_.$ref)
-  override def $dynamicRef: Option[String] = Option(underlying).flatMap(_.$dynamicRef)
-  override def $dynamicAnchor: Option[String] = Option(underlying).flatMap(_.$dynamicAnchor)
-  override def $vocabulary: Option[Map[String, Boolean]] = Option(underlying).flatMap(_.$vocabulary)
-  override def $comment: Option[String] = Option(underlying).flatMap(_.$comment)
+  override def $schema: Option[String] = underlying.flatMap(_.$schema)
+  override def $id: Option[String] = underlying.flatMap(_.$id)
+  override def $ref: Option[String] = underlying.flatMap(_.$ref)
+  override def $dynamicRef: Option[String] = underlying.flatMap(_.$dynamicRef)
+  override def $dynamicAnchor: Option[String] = underlying.flatMap(_.$dynamicAnchor)
+  override def $vocabulary: Option[Map[String, Boolean]] = underlying.flatMap(_.$vocabulary)
+  override def $comment: Option[String] = underlying.flatMap(_.$comment)
 
   // Delegate all metadata to underlying schema (if present)
-  override def title: Option[String] = Option(underlying).flatMap(_.title)
-  override def description: Option[String] = Option(underlying).flatMap(_.description)
-  override def default: Option[ujson.Value] = Option(underlying).flatMap(_.default)
-  override def examples: Option[List[ujson.Value]] = Option(underlying).flatMap(_.examples)
-  override def readOnly: Option[Boolean] = Option(underlying).flatMap(_.readOnly)
-  override def writeOnly: Option[Boolean] = Option(underlying).flatMap(_.writeOnly)
-  override def deprecated: Option[Boolean] = Option(underlying).flatMap(_.deprecated)
+  override def title: Option[String] = underlying.flatMap(_.title)
+  override def description: Option[String] = underlying.flatMap(_.description)
+  override def default: Option[ujson.Value] = underlying.flatMap(_.default)
+  override def examples: Option[List[ujson.Value]] = underlying.flatMap(_.examples)
+  override def readOnly: Option[Boolean] = underlying.flatMap(_.readOnly)
+  override def writeOnly: Option[Boolean] = underlying.flatMap(_.writeOnly)
+  override def deprecated: Option[Boolean] = underlying.flatMap(_.deprecated)
 
   override def toJsonSchema: ujson.Value = {
-    val base = if (underlying != null) {
-      underlying.toJsonSchema
-    } else {
-      // Standalone mode: create a new schema with only $defs
-      val schema = ujson.Obj()
-      // Add meta-data keywords if present (from standalone usage)
-      title.foreach(t => schema("title") = ujson.Str(t))
-      description.foreach(d => schema("description") = ujson.Str(d))
-      schema
+    val base = underlying match {
+      case Some(u) => u.toJsonSchema
+      case None =>
+        // Standalone mode: create a new schema with only $defs
+        val schema = ujson.Obj()
+        // Add meta-data keywords if present (from standalone usage)
+        title.foreach(t => schema("title") = ujson.Str(t))
+        description.foreach(d => schema("description") = ujson.Str(d))
+        schema
     }
 
     if (defsValue.nonEmpty) {
@@ -92,13 +92,14 @@ case class DefsChez[T <: Chez](
   override def withId(id: String): Chez = IdChez(this, id)
 
   override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
-    if (underlying != null) {
-      // If there's an underlying schema, delegate validation to it
-      underlying.validate(value, context)
-    } else {
-      // $defs itself doesn't validate anything - it just provides definitions
-      // The actual validation happens when the definitions are referenced
-      ValidationResult.valid()
+    underlying match {
+      case Some(u) =>
+        // If there's an underlying schema, delegate validation to it
+        u.validate(value, context)
+      case None =>
+        // $defs itself doesn't validate anything - it just provides definitions
+        // The actual validation happens when the definitions are referenced
+        ValidationResult.valid()
     }
   }
 

@@ -602,7 +602,14 @@ class MetricsHook(metrics: AgentMetrics) extends AgentHook with PreRequestHook w
 object MetricsFactory {
 
   /** Global metrics instance (can be replaced with custom implementation) */
-  var globalMetrics: AgentMetrics = new DefaultAgentMetrics()
+  // scalafix:off DisableSyntax.var
+  // Disabling because global metrics instance needs to be mutable to allow users to
+  // replace the default metrics implementation with their own custom metrics backend
+  @volatile private var _globalMetrics: AgentMetrics = new DefaultAgentMetrics()
+  // scalafix:on DisableSyntax.var
+
+  def globalMetrics: AgentMetrics = _globalMetrics
+  def setGlobalMetrics(metrics: AgentMetrics): Unit = _globalMetrics = metrics
 
   /** Create an OpenAI agent with metrics enabled */
   def createOpenAIAgentWithMetrics(
