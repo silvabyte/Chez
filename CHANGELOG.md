@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.8] - 2025-08-26
+
+* refactor: improve code quality with scalafix compliance and warning suppression (#8)
+
 ## [0.1.7] - 2025-08-21
 
 * Consolidate OpenAI-compatible providers into unified architecture (#7)
