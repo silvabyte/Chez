@@ -107,12 +107,12 @@ trait Shared extends GitHubDepsModule {
     "-deprecation",
     "-feature",
     "-Wunused:all",
-    "-Wconf:msg=package scala contains object and package with same name.*:s"  // Suppress caps warning
+    "-Wconf:msg=package scala contains object and package with same name.*:s" // Suppress caps warning
   )
 
   // Add JVM options to suppress native access warnings
   def forkArgs = Seq(
-    "--enable-native-access=ALL-UNNAMED"  // Allow native access for file-tree-views library
+    "--enable-native-access=ALL-UNNAMED" // Allow native access for file-tree-views library
   )
 
   def mvnDeps = Task {
@@ -136,7 +136,7 @@ trait Shared extends GitHubDepsModule {
       )
     }
     def testFramework = "utest.runner.Framework"
-    
+
     // Inherit fork arguments for tests as well
     override def forkArgs = super.forkArgs
   }
@@ -145,7 +145,7 @@ trait Shared extends GitHubDepsModule {
   def fix() = Task.Command {
     val sources = allSources().map(_.path)
     val sourceFiles = sources.flatMap(os.walk(_).filter(_.ext == "scala"))
-    val configPath = (os.pwd / ".scalafix.conf").toString
+    val configPath = (os.pwd / os.up / os.up / os.up / ".scalafix.conf").toString
 
     if (sourceFiles.nonEmpty) {
       os.proc(
@@ -166,7 +166,7 @@ trait Shared extends GitHubDepsModule {
   def fixCheck() = Task.Command {
     val sources = allSources().map(_.path)
     val sourceFiles = sources.flatMap(os.walk(_).filter(_.ext == "scala"))
-    val configPath = (os.pwd / ".scalafix.conf").toString
+    val configPath = (os.pwd / os.up / os.up / os.up / ".scalafix.conf").toString
 
     if (sourceFiles.nonEmpty) {
       os.proc(
