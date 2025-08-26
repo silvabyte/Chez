@@ -18,6 +18,12 @@ jobs:
           java-version: "23"
           distribution: "temurin"
 
+      - name: Install Coursier
+        run: |
+          curl -fLo cs https://git.io/coursier-cli-linux
+          chmod +x cs
+          sudo mv cs /usr/local/bin/cs
+
       - name: Compile
         run: make compile
 
