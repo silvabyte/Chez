@@ -145,7 +145,7 @@ trait Shared extends GitHubDepsModule {
   def fix() = Task.Command {
     val sources = allSources().map(_.path)
     val sourceFiles = sources.flatMap(os.walk(_).filter(_.ext == "scala"))
-    val configPath = "/home/matsilva/code/silvabyte/AudeticScala/.scalafix.conf"
+    val configPath = (os.pwd / ".scalafix.conf").toString
 
     if (sourceFiles.nonEmpty) {
       os.proc(
@@ -166,7 +166,7 @@ trait Shared extends GitHubDepsModule {
   def fixCheck() = Task.Command {
     val sources = allSources().map(_.path)
     val sourceFiles = sources.flatMap(os.walk(_).filter(_.ext == "scala"))
-    val configPath = "/home/matsilva/code/silvabyte/AudeticScala/.scalafix.conf"
+    val configPath = (os.pwd / ".scalafix.conf").toString
 
     if (sourceFiles.nonEmpty) {
       os.proc(
