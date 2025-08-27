@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1] - 2025-08-27
+
+* feat: introduce Le Chez brand identity and clean up imports (#11)
+* fix: trigger Maven publish on release created event
+
 ## [0.2.0] - 2025-08-27
 
 * fix: remove artifacts collections from release
