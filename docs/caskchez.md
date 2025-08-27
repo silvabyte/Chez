@@ -12,18 +12,25 @@ CaskChez provides seamless integration with the Cask HTTP framework, enabling au
 - ⚡ **Zero Boilerplate**: Eliminate manual validation code with annotations
 - 🧪 **Comprehensive Validation**: Body, query parameters, path parameters, and headers
 
-## Quick Start
+## Installation
 
-### Dependencies
+### Mill
 
 ```scala
-// build.mill
-def ivyDeps = Agg(
-  ivy"com.lihaoyi::upickle:4.1.0",
-  ivy"com.lihaoyi::cask:0.9.7",
-  // Add Chez and CaskChez modules when published
+mvn"com.silvabyte::chez:0.2.0"
+mvn"com.silvabyte::caskchez:0.2.0"
+```
+
+### SBT
+
+```scala
+libraryDependencies ++= Seq(
+  "com.silvabyte" %% "chez" % "0.2.0",
+  "com.silvabyte" %% "caskchez" % "0.2.0"
 )
 ```
+
+## Quick Start
 
 ### Annotation-Based Schema Definition
 

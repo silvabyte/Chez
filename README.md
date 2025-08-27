@@ -9,7 +9,47 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/silvabyte/scalaschemaz)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-An ecosystem of libraries for JSON Schema generation, HTTP validation, and LLM integration in Scala 3. Each module can be used independently or together for a complete solution.
+An ecosystem of libraries for JSON Schema generation, HTTP validation & Automatic OpenAPI Spec Generation, and LLM integration in Scala 3. Each module can be used independently or together for a complete solution.
+
+## Installation
+
+Choose the modules you need for your project:
+
+### Mill
+
+```scala
+// Just schema validation
+mvn"com.silvabyte::chez:0.2.0"
+
+// Add HTTP validation for Cask web framework
+mvn"com.silvabyte::chez:0.2.0"
+mvn"com.silvabyte::caskchez:0.2.0"
+
+// Full ecosystem with LLM agent support
+mvn"com.silvabyte::chez:0.2.0"
+mvn"com.silvabyte::caskchez:0.2.0"
+mvn"com.silvabyte::chezwiz:0.2.0"
+```
+
+### SBT
+
+```scala
+// Just schema validation
+libraryDependencies += "com.silvabyte" %% "chez" % "0.2.0"
+
+// Add HTTP validation for Cask web framework
+libraryDependencies ++= Seq(
+  "com.silvabyte" %% "chez" % "0.2.0",
+  "com.silvabyte" %% "caskchez" % "0.2.0"
+)
+
+// Full ecosystem with LLM agent support
+libraryDependencies ++= Seq(
+  "com.silvabyte" %% "chez" % "0.2.0",
+  "com.silvabyte" %% "caskchez" % "0.2.0",
+  "com.silvabyte" %% "chezwiz" % "0.2.0"
+)
+```
 
 ## The Ecosystem
 
@@ -22,8 +62,8 @@ An ecosystem of libraries for JSON Schema generation, HTTP validation, and LLM i
 ### 1️⃣ Start with Chez - Define Your Data Model
 
 ```scala
-import chez.derivation.Schema
-import chez.Chez
+import chez.derivation.Schema        // Schema validation from Chez
+import upickle.default.*            // JSON serialization from upickle  
 import ujson._
 
 // Define your domain model with validation rules
@@ -51,7 +91,7 @@ case class Product(
   @Schema.minItems(1)
   @Schema.uniqueItems(true)
   tags: List[String]
-) derives Schema
+) derives Schema, ReadWriter  // Schema from Chez, ReadWriter from upickle
 
 // ✨ Automatic schema generation
 val productSchema = Schema[Product]
@@ -86,6 +126,7 @@ productSchema.validate(validProduct) match {
 ```scala
 import caskchez._
 import cask.main.Main
+import upickle.default.*  // For write() method
 
 // Build a REST API with automatic validation
 object ProductAPI extends Main {
@@ -107,7 +148,7 @@ object ProductAPI extends Main {
       case Right(product) =>
         // Product is guaranteed to be valid here!
         val saved = saveToDatabase(product)
-        cask.Response(upickle.default.write(saved), 200)
+        cask.Response(write(saved), 200)  // write() from upickle via ReadWriter
         // Returns: 200 OK with saved product
 
       case Left(errors) =>
@@ -131,7 +172,7 @@ object ProductAPI extends Main {
     val tags = validatedRequest.getQueryParam[List[String]]("tags").toOption
 
     val products = findProducts(minPrice, tags)
-    upickle.default.write(products)
+    write(products)  // Clean serialization via ReadWriter
   }
 
   // ✨ Automatic OpenAPI documentation
@@ -149,6 +190,8 @@ object ProductAPI extends Main {
 ```scala
 import chezwiz.agent._
 import chezwiz.agent.providers.OpenAIProvider
+import chez.derivation.Schema        // Schema from Chez
+import upickle.default.*            // ReadWriter from upickle
 
 // Define enriched metadata that AI will generate
 case class ProductMetadata(
@@ -178,7 +221,7 @@ case class ProductMetadata(
 
   @Schema.description("Search keywords")
   searchKeywords: List[String]
-) derives Schema
+) derives Schema, ReadWriter  // Schema from Chez, ReadWriter from upickle
 
 // AI enrichment service
 object ProductEnricher {
@@ -245,13 +288,15 @@ object ProductEnricher {
 ### 🎯 Putting It All Together
 
 ```scala
+import upickle.default.*  // For JSON serialization
+
 // Complete system: User creates product → AI enriches it → Save enhanced product
 object ProductSystem extends Main {
 
   case class EnrichedProduct(
     product: Product,
     metadata: ProductMetadata
-  ) derives Schema
+  ) derives Schema, ReadWriter  // Both from Chez and upickle
 
   // API endpoint that creates AND enriches products with AI
   @CaskChez.post("/products", RouteSchema(
@@ -294,7 +339,7 @@ object ProductSystem extends Main {
             //   }
             // }
             cask.Response(
-              upickle.default.write(enriched),
+              write(enriched),  // Clean serialization via ReadWriter
               200,
               headers = Seq("Content-Type" -> "application/json")
             )
@@ -316,26 +361,6 @@ object ProductSystem extends Main {
 
   initialize()
 }
-```
-
-## Installation
-
-Each module can be used independently:
-
-```scala
-// build.mill - Choose what you need
-
-// Just schema validation
-ivy"com.silvabyte::chez:0.2.0"
-
-// Add HTTP validation
-ivy"com.silvabyte::chez:0.2.0"
-ivy"com.silvabyte::caskchez:0.2.0"
-
-// Full ecosystem with LLM support
-ivy"com.silvabyte::chez:0.2.0"
-ivy"com.silvabyte::caskchez:0.2.0"
-ivy"com.silvabyte::chezwiz:0.2.0"
 ```
 
 ## Key Features by Module
@@ -372,25 +397,36 @@ ivy"com.silvabyte::chezwiz:0.2.0"
 - **[ChezWiz Manual](./docs/chezwiz.md)** - LLM agent development
 - **[Custom Providers](./docs/custom-providers.md)** - Local LLM integration
 
-## Quick Start
+## Running Examples
 
 ```bash
-# Clone and explore examples
+# Clone the repository
 git clone https://github.com/silvabyte/Chez.git
 cd Chez
 
-# Run all tests
-./mill __.test
+# Run tests for all modules
+make test
 
-# Run specific module tests
-./mill Chez.test
-./mill CaskChez.test
-./mill ChezWiz.test
+# Run individual module tests
+make test-chez       # Test core schema library
+make test-caskchez   # Test HTTP validation
+make test-chezwiz    # Test LLM agents
 
-# Run examples
-./mill Chez.run
-./mill CaskChez.run
-./mill ChezWiz.run
+# Run example applications
+make chez            # Run Chez examples
+make caskchez        # Run CaskChez API server example
+
+# Run ChezWiz examples (requires API keys)
+# First, set your environment variables:
+export OPENAI_API_KEY="your-openai-key"
+export ANTHROPIC_API_KEY="your-anthropic-key"  # Optional
+make wiz             # Run ChezWiz agent examples
+
+# Other useful commands
+make clean           # Clean build artifacts
+make format          # Format code with scalafmt
+make compile         # Compile all modules
+make publish-local   # Publish to local ivy repository
 ```
 
 ## License

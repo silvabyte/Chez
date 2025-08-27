@@ -35,12 +35,6 @@ help:
 	@echo "  make check     - Full check (compile + test + lint)"
 	@echo "  make release   - Prepare release (check + assembly)"
 	@echo ""
-	@echo "Publishing:"
-	@echo "  make publish-local    - Publish to local Ivy repo"
-	@echo "  make publish-m2       - Publish to local Maven repo"
-	@echo "  make publish-central  - Publish to Maven Central"
-	@echo "  make publish-dry-run  - Test publishing config"
-	@echo ""
 	@echo "Use 'make <target> -n' to see what commands will run"
 
 # ============================================================================
@@ -156,15 +150,9 @@ wiz-local:
 # ============================================================================
 # DEVELOPMENT TOOLS
 # ============================================================================
-.PHONY: repl console
-repl:
-	@./mill Chez.console
-console: repl
-
-.PHONY: assembly jar
+.PHONY: assembly
 assembly:
 	@./mill __.assembly
-jar: assembly
 
 .PHONY: docs
 docs:
@@ -188,36 +176,6 @@ ci: clean check
 .PHONY: release
 release: check assembly docs
 	@echo "📦 Release artifacts ready!"
-
-# ============================================================================
-# PUBLISHING
-# ============================================================================
-.PHONY: publish-local
-publish-local:
-	@./mill __.publishLocal
-	@echo "✅ Published to local Ivy repository (~/.ivy2/local)"
-
-.PHONY: publish-m2
-publish-m2:
-	@./mill __.publishM2Local
-	@echo "✅ Published to local Maven repository (~/.m2/repository)"
-
-.PHONY: publish-central
-publish-central:
-	@echo "Publishing to Maven Central..."
-	@echo "Make sure you have set:"
-	@echo "  - MILL_SONATYPE_USERNAME"
-	@echo "  - MILL_SONATYPE_PASSWORD" 
-	@echo "  - MILL_PGP_SECRET_BASE64"
-	@echo "  - MILL_PGP_PASSPHRASE"
-	@./mill mill.javalib.SonatypeCentralPublishModule/
-	@echo "✅ Published to Maven Central!"
-
-.PHONY: publish-dry-run
-publish-dry-run:
-	@echo "Dry run - checking publishing configuration..."
-	@./mill __.publishLocal --transitive=false
-	@echo "✅ Dry run complete - check ~/.ivy2/local for artifacts"
 
 # ============================================================================
 # PROJECT INFO
