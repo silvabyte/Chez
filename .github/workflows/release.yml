@@ -42,6 +42,7 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
+      # see .xrelease/yml
       # xrelease will:
       # 1. Update version in package.json
       # 2. Generate/update CHANGELOG.md

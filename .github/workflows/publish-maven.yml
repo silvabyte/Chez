@@ -3,9 +3,9 @@ name: Publish to Maven Central
 on:
   # Manual trigger for testing
   workflow_dispatch:
-  # Automatically publish when a release is created
+  # Automatically publish when a release is created or published
   release:
-    types: [published]
+    types: [created, published]
 
 jobs:
   publish:
