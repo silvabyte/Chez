@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.0] - 2025-08-27
+
+* fix: remove artifacts collections from release
+* feat: add Maven Central publishing support (#10)
+* Remove AgentFactory and improve documentation with progressive examples (#9)
+
 ## [0.1.8] - 2025-08-26
 
 * refactor: improve code quality with scalafix compliance and warning suppression (#8)
