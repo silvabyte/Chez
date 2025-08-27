@@ -11,7 +11,7 @@ object UserCrudAPITest extends TestSuite {
   val tests = Tests {
 
     test("Health Check") {
-      TestServer.withServer { (host, routes) =>
+      TestServer.withServer { (host, _) =>
         val response = requests.get(s"$host/health")
         assert(response.statusCode == 200)
         val body = ujson.read(response.text())
@@ -191,7 +191,7 @@ object UserCrudAPITest extends TestSuite {
     }
 
     test("Malformed JSON Request") {
-      TestServer.withServer { (host, routes) =>
+      TestServer.withServer { (host, _) =>
         try {
           val response = requests.post(
             url = s"$host/users",
@@ -215,7 +215,7 @@ object UserCrudAPITest extends TestSuite {
     }
 
     test("Empty Request Body") {
-      TestServer.withServer { (host, routes) =>
+      TestServer.withServer { (host, _) =>
         try {
           val response = requests.post(
             url = s"$host/users",

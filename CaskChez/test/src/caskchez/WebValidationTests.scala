@@ -2,8 +2,6 @@ package caskchez
 
 import utest.*
 import _root_.chez.*
-import _root_.chez.primitives.*
-import _root_.chez.complex.*
 import upickle.default.*
 import java.io.ByteArrayInputStream
 

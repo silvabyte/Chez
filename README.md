@@ -9,7 +9,7 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/silvabyte/scalaschemaz)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A powerful ecosystem of libraries for JSON Schema generation, HTTP validation, and LLM integration in Scala 3. Each module can be used independently or together for a complete solution.
+An ecosystem of libraries for JSON Schema generation, HTTP validation, and LLM integration in Scala 3. Each module can be used independently or together for a complete solution.
 
 ## The Ecosystem
 
@@ -100,9 +100,9 @@ object ProductAPI extends Main {
   ))
   def createProduct(validatedRequest: ValidatedRequest) = {
     // User sends: POST /products
-    // { "id": "LAP-4521", "name": "UltraBook Pro", "price": 1299.99, 
+    // { "id": "LAP-4521", "name": "UltraBook Pro", "price": 1299.99,
     //   "stock": 10, "tags": ["laptop"] }
-    
+
     validatedRequest.getBody[Product] match {
       case Right(product) =>
         // Product is guaranteed to be valid here!
@@ -203,9 +203,9 @@ object ProductEnricher {
       tenantId = Some("store-1"),
       userId = Some("system")
     )
-    
+
     // Input: Basic product from user
-    // Product(id="LAP-4521", name="UltraBook Pro 15", price=1299.99, 
+    // Product(id="LAP-4521", name="UltraBook Pro 15", price=1299.99,
     //         stock=10, tags=List("laptop"))
 
     // AI analyzes the product and generates structured metadata
@@ -225,7 +225,7 @@ object ProductEnricher {
          """.stripMargin,
       metadata
     ).map(_.data)
-    
+
     // Output: AI-generated metadata (schema-validated!)
     // ProductMetadata(
     //   category = "Electronics",
@@ -265,9 +265,9 @@ object ProductSystem extends Main {
   def createProduct(validatedRequest: ValidatedRequest) = {
     // User submits minimal product:
     // POST /products
-    // { "id": "LAP-4521", "name": "UltraBook Pro 15", 
+    // { "id": "LAP-4521", "name": "UltraBook Pro 15",
     //   "price": 1299.99, "stock": 10, "tags": ["laptop"] }
-    
+
     validatedRequest.getBody[Product] match {
       case Right(product) =>
         // Step 1: CaskChez validated the product ✅
@@ -285,7 +285,7 @@ object ProductSystem extends Main {
             //   "product": { "id": "LAP-4521", "name": "UltraBook Pro 15", ... },
             //   "metadata": {
             //     "category": "Electronics",
-            //     "subCategory": "Computers & Laptops", 
+            //     "subCategory": "Computers & Laptops",
             //     "tags": ["laptop", "ultrabook", "portable", "professional"],
             //     "seoDescription": "The UltraBook Pro 15 delivers exceptional...",
             //     "features": ["Ultra-slim design", "All-day battery", ...],
