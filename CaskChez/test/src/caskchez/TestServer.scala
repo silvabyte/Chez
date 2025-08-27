@@ -1,7 +1,7 @@
 package caskchez
 
 import io.undertow.Undertow
-import scala.util.{Try, Random}
+import scala.util.Random
 
 /**
  * Test server for running CaskChez API tests

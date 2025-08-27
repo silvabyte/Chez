@@ -1,7 +1,7 @@
 package chez.derivation
 
 import scala.quoted.*
-import scala.compiletime.*
+
 import chez.*
 import chez.primitives.*
 import chez.complex.*

@@ -1,9 +1,10 @@
 package chezwiz.agent.examples
 
+import upickle.default.ReadWriter
 import chezwiz.agent.*
 import chezwiz.agent.providers.{OpenAIProvider, AnthropicProvider}
 import chez.derivation.Schema
-import upickle.default.*
+
 import java.util.concurrent.atomic.AtomicLong
 import scala.collection.mutable
 

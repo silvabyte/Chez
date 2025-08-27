@@ -1,6 +1,5 @@
 package chezwiz.agent
 
-import upickle.default.*
 import chez.derivation.Schema
 
 /**

@@ -4,10 +4,7 @@ import scala.deriving.*
 import scala.compiletime.*
 import scala.quoted.*
 import chez.*
-import chez.primitives.*
-import chez.complex.*
-import chez.derivation.SchemaAnnotations.*
-import chez.derivation.CollectionSchemas.given
+
 import chez.validation.ValidationContext
 import upickle.default.*
 
@@ -76,7 +73,6 @@ object Schema {
    * Derive schema for product types (case classes) - original method
    */
   inline def deriveProduct[T](p: Mirror.ProductOf[T]): Chez = {
-    val typeName = constValue[p.MirroredLabel]
     val elemLabels = getElemLabels[p.MirroredElemLabels]
     val elemSchemas = getElemSchemas[T, p.MirroredElemTypes]
     val properties = elemLabels.zip(elemSchemas).toMap
@@ -92,7 +88,6 @@ object Schema {
    * Derive schema for product types (case classes) with annotation processing
    */
   inline def deriveProductWithAnnotations[T](p: Mirror.ProductOf[T]): Chez = {
-    val typeName = constValue[p.MirroredLabel]
     val elemLabels = getElemLabels[p.MirroredElemLabels]
 
     // Extract field annotations for all fields
@@ -222,7 +217,7 @@ object Schema {
           properties = updatedProperties,
           required = updatedRequired
         )
-      case other =>
+      case _ =>
         // For non-object schemas, wrap in an object with just the type field
         chez.Chez.Object(
           properties = Map("type" -> chez.Chez.String(const = Some(typeName))),

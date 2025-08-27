@@ -5,7 +5,6 @@ import chezwiz.agent.{
   ChatRequest,
   ChatResponse,
   ChezError,
-  HistoryOperation,
   MessageContent,
   ObjectRequest,
   ObjectResponse,

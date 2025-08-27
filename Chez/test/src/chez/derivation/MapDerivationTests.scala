@@ -5,7 +5,6 @@ import chez.*
 import chez.primitives.*
 import chez.complex.*
 import chez.derivation.CollectionSchemas.given
-import upickle.default.*
 
 object MapDerivationTests extends TestSuite {
 

@@ -2,7 +2,6 @@ package caskchez
 
 import utest._
 import upickle.default._
-import _root_.chez._
 
 object ComprehensiveUserCrudAPITest extends TestSuite {
 
@@ -201,7 +200,7 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
 
     test("Advanced Error Handling and Recovery") {
       test("Multiple Validation Errors") {
-        TestServer.withServer { (host, routes) =>
+        TestServer.withServer { (host, _) =>
           // Test request with multiple validation issues
           try {
             val multiErrorJson =
@@ -232,7 +231,7 @@ object ComprehensiveUserCrudAPITest extends TestSuite {
       }
 
       test("Malformed Request Recovery") {
-        TestServer.withServer { (host, routes) =>
+        TestServer.withServer { (host, _) =>
           val malformedRequests = List(
             """{"name": "Test" "email": "test@example.com"}""", // Missing comma
             """{"name": "Test", "email": "test@example.com",}""", // Trailing comma

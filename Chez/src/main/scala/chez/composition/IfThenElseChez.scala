@@ -2,7 +2,6 @@ package chez.composition
 
 import chez.Chez
 import chez.validation.{ValidationResult, ValidationContext}
-import upickle.default.*
 
 /**
  * If-Then-Else conditional schema - JSON Schema 2020-12 conditional validation

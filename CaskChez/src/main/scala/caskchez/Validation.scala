@@ -334,7 +334,8 @@ object ValidationHelpers {
       // Try parsing as number
       Try(value.toDouble) match {
         case Success(num) if value.contains(".") => ujson.Num(num)
-        case Success(num) if num.isWhole => ujson.Num(num.toLong)
+        // Explicit .toDouble needed as ujson.Num expects Double; avoids deprecated implicit Long->Double conversion
+        case Success(num) if num.isWhole => ujson.Num(num.toLong.toDouble)
         case Success(num) => ujson.Num(num)
         case Failure(_) => ujson.Str(value)
       }

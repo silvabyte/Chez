@@ -6,7 +6,6 @@ import chez.primitives.*
 import chez.complex.*
 import chez.composition.*
 import chez.validation.{ValidationContext, ValidationResult}
-import upickle.default.*
 
 object AnyOfChezTests extends TestSuite {
 

@@ -2,7 +2,6 @@ package chez.modifiers
 
 import chez.Chez
 import chez.validation.{ValidationResult, ValidationContext}
-import upickle.default.*
 
 /**
  * Wrapper for adding description metadata to a schema

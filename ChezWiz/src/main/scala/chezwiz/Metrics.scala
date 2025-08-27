@@ -3,9 +3,10 @@ package chezwiz.agent
 import chezwiz.agent.providers.{OpenAIProvider, AnthropicProvider}
 import java.time.Instant
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
+import upickle.default.ReadWriter
+import upickle.default.{read, write}
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
-import upickle.default.*
 
 /**
  * Comprehensive observability and metrics system for ChezWiz agents.

@@ -1,9 +1,10 @@
 package chezwiz.agent.examples
 
+import upickle.default.ReadWriter
 import chezwiz.agent.{Agent, RequestMetadata, ChatMessage, Role}
 import chezwiz.agent.providers.{OpenAICompatibleProvider, HttpVersion}
 import scribe.Logging
-import upickle.default.*
+
 import chez.derivation.Schema
 
 object OpenAICompatibleExample extends App with Logging {

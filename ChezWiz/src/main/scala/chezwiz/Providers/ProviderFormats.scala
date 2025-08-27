@@ -1,6 +1,6 @@
 package chezwiz.agent.providers
 
-import upickle.default.*
+import upickle.default.ReadWriter
 import ujson.Value
 import chezwiz.agent.{ChatResponse, Usage, ObjectResponse}
 

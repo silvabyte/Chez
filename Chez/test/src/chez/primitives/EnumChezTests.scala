@@ -1,7 +1,7 @@
 package chez.primitives
 
 import utest.*
-import upickle.default.*
+
 import chez.primitives.EnumChez
 import chez.validation.ValidationContext
 import chez.*
