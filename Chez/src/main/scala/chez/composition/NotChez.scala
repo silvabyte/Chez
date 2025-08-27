@@ -2,7 +2,6 @@ package chez.composition
 
 import chez.Chez
 import chez.validation.{ValidationResult, ValidationContext}
-import upickle.default.*
 
 /**
  * Not composition schema - validates if the instance is NOT valid against the schema

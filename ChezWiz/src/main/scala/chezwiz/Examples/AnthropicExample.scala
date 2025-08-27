@@ -1,5 +1,6 @@
 package chezwiz.agent.examples
 
+import upickle.default.ReadWriter
 import chezwiz.agent.{Agent, RequestMetadata}
 import chezwiz.agent.providers.AnthropicProvider
 import scribe.Logging

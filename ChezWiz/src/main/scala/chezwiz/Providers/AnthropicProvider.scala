@@ -1,6 +1,6 @@
 package chezwiz.agent.providers
 
-import upickle.default.*
+import upickle.default.{read, write}
 import chezwiz.agent.{
   ChatRequest,
   ChatResponse,

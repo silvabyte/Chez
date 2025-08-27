@@ -1,9 +1,9 @@
 package chezwiz.agent
 
-import upickle.default.*
 import ujson.Value
 import chez.*
 import chez.derivation.Schema
+import upickle.default.ReadWriter
 import chez.derivation.CollectionSchemas.given
 
 sealed trait Role derives Schema, ReadWriter

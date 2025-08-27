@@ -1,12 +1,7 @@
 package chez
 
-import upickle.default.*
 import chez.primitives.*
 import chez.complex.*
-import chez.composition.*
-import chez.references.*
-
-import scala.util.{Try, Success, Failure}
 
 /**
  * Type-level computation for mapping Chez schemas to Scala types

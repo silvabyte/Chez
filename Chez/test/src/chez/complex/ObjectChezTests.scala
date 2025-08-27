@@ -5,7 +5,6 @@ import chez.*
 import chez.primitives.*
 import chez.complex.*
 import chez.validation.*
-import upickle.default.*
 
 object ObjectChezTests extends TestSuite {
 

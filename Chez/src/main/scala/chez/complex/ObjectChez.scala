@@ -2,7 +2,7 @@ package chez.complex
 
 import chez.Chez
 import chez.validation.{ValidationResult, ValidationContext}
-import upickle.default.*
+
 import scala.util.matching.Regex
 
 /**
@@ -162,7 +162,7 @@ case class ObjectChez(
       value.value.keys.filter(propName => regex.findFirstIn(propName).isDefined)
     }.toSet
 
-    val additionalProps = value.value.keySet -- definedProperties -- patternMatchedProperties
+    val additionalProps = value.value.keySet.diff(definedProperties).diff(patternMatchedProperties)
 
     val additionalPropErrors = additionalProperties match {
       case Some(false) =>

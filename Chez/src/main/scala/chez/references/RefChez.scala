@@ -2,7 +2,6 @@ package chez.references
 
 import chez.Chez
 import chez.validation.{ValidationResult, ValidationContext}
-import upickle.default.*
 
 /**
  * JSON Schema $ref keyword implementation

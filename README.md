@@ -1,5 +1,11 @@
 # Chez: Type-Safe JSON Schema Ecosystem for Scala 3
 
+<div align="center">
+  <img src="assets/lechez.png" alt="Le Chez - The smoking cheese that judges your schemas" width="400">
+  
+  *Le Chez says: "Your schemas are probably wrong"*
+</div>
+
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/silvabyte/scalaschemaz)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

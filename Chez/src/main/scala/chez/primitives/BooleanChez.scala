@@ -2,7 +2,6 @@ package chez.primitives
 
 import chez.Chez
 import chez.validation.{ValidationResult, ValidationContext}
-import upickle.default.*
 
 /**
  * Boolean schema type with JSON Schema 2020-12 validation keywords

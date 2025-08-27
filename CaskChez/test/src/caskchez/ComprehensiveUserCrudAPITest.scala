@@ -2,7 +2,6 @@ package caskchez
 
 import utest._
 import upickle.default._
-import _root_.chez._
 
 object ComprehensiveUserCrudAPITest extends TestSuite {
 

@@ -1,6 +1,8 @@
 package chezwiz.agent
 
 import scribe.Logging
+import upickle.default.Reader
+import upickle.default.{read, write}
 import chezwiz.agent.providers.LLMProvider
 import chezwiz.agent.{
   ChatRequest,
@@ -16,7 +18,7 @@ import chezwiz.agent.{
   EmbeddingInput
 }
 import ujson.Value
-import upickle.default.*
+
 import chez.derivation.Schema
 import chez.Chez
 import java.util.UUID
