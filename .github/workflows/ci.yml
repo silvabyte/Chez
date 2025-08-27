@@ -24,8 +24,8 @@ jobs:
           chmod +x cs
           sudo mv cs /usr/local/bin/cs
 
-      - name: Compile
-        run: make compile
+      - name: Build
+        run: make build
 
       # skip for now, will revisit this
       # - name: Lint for smells
