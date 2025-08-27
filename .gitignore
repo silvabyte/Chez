@@ -15,7 +15,6 @@ out/
 .bsp/
 .idea/
 .idea_modules/
-.mill-version
 
 bucket/
 work/

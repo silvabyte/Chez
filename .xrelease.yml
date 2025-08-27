@@ -11,11 +11,6 @@ release:
     enabled: true
     template: conventional
 
-  # Pre-release checks
-  checks:
-    - type: compile
-      command: "make compile"
-
   # Release actions actions
   actions:
     - type: custom
@@ -24,7 +19,3 @@ release:
     - type: commit-push
     - type: git-tag
     - type: github-release
-      assets:
-        - "out/Chez/assembly.dest/out.jar"
-        - "out/ChezWiz/assembly.dest/out.jar"
-        - "out/CaskChez/assembly.dest/out.jar"
