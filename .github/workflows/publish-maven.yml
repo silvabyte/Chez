@@ -1,0 +1,42 @@
+name: Publish to Maven Central
+
+on:
+  # Manual trigger for testing
+  workflow_dispatch:
+  # Automatically publish when a release is created
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: "23"
+          distribution: "temurin"
+
+      - name: Install Coursier
+        run: |
+          curl -fLo cs https://git.io/coursier-cli-linux
+          chmod +x cs
+          sudo mv cs /usr/local/bin/cs
+
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.MAVEN_GPG_SECRET_BASE64 }}" | base64 -d | gpg --batch --import
+          # List keys to verify import
+          gpg --list-secret-keys
+
+      - name: Publish to Maven Central
+        run: ./mill mill.javalib.SonatypeCentralPublishModule/
+        env:
+          MILL_PGP_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          MILL_PGP_SECRET_BASE64: ${{ secrets.MAVEN_GPG_SECRET_BASE64 }}
+          MILL_SONATYPE_PASSWORD: ${{ secrets.MAVEN_REPO_SECRET }}
+          MILL_SONATYPE_USERNAME: ${{ vars.MAVEN_REPO_USERNAME }}
