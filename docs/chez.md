@@ -2,6 +2,20 @@
 
 Chez is a comprehensive JSON Schema library for Scala 3 that provides TypeBox-like ergonomics with compile-time type safety and runtime JSON Schema compliance.
 
+## Installation
+
+### Mill
+
+```scala
+mvn"com.silvabyte::chez:0.2.0"
+```
+
+### SBT
+
+```scala
+libraryDependencies += "com.silvabyte" %% "chez" % "0.2.0"
+```
+
 ## Schema Derivation (Recommended)
 
 The main hotness of Chez is automatic schema derivation from case classes with annotations:

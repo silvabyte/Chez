@@ -2,6 +2,24 @@
 
 **ChezWiz** is a type-safe LLM agent library for Scala 3 that provides structured text generation and conversation management with multi-provider support (OpenAI, Anthropic) and built-in JSON schema validation using the Chez library.
 
+## Installation
+
+### Mill
+
+```scala
+mvn"com.silvabyte::chez:0.2.0"
+mvn"com.silvabyte::chezwiz:0.2.0"
+```
+
+### SBT
+
+```scala
+libraryDependencies ++= Seq(
+  "com.silvabyte" %% "chez" % "0.2.0",
+  "com.silvabyte" %% "chezwiz" % "0.2.0"
+)
+```
+
 ## Features
 
 ✅ **Multi-provider LLM support** (OpenAI, Anthropic, Custom Endpoints)  
