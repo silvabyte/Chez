@@ -1,7 +1,6 @@
 import utest.*
 import chezwiz.agent.{
   Agent,
-  AgentFactory,
   AgentMetrics,
   AgentMetricsSnapshot,
   ChatMessage,

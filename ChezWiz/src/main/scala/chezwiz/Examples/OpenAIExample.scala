@@ -1,6 +1,6 @@
 package chezwiz.agent.examples
 
-import chezwiz.agent.{Agent, AgentFactory, RequestMetadata}
+import chezwiz.agent.{Agent, RequestMetadata}
 import chezwiz.agent.providers.OpenAIProvider
 import scribe.Logging
 import upickle.default.*
@@ -204,29 +204,27 @@ object OpenAIExample extends App with Logging:
     }
   }
 
-  // Example 6: Using AgentFactory for OpenAI
-  def exampleAgentFactory(): Unit = {
-    logger.info("Example 6: Using AgentFactory")
+  // Example 6: Creating OpenAI Agent directly
+  def exampleAgentDirect(): Unit = {
+    logger.info("Example 6: Creating OpenAI Agent directly")
 
     val apiKey = Config.OPENAI_API_KEY
+    val provider = new OpenAIProvider(apiKey)
 
-    AgentFactory.createOpenAIAgent(
-      name = "FactoryAgent",
-      instructions = "You are created by the AgentFactory. Be helpful and concise.",
-      apiKey = apiKey,
+    val agent = Agent(
+      name = "DirectAgent",
+      instructions = "You are created directly. Be helpful and concise.",
+      provider = provider,
       model = "gpt-4o-mini",
       temperature = Some(0.7)
-    ) match {
-      case Right(agent) =>
-        val metadata = RequestMetadata()
-        agent.generateText("What are your capabilities?", metadata) match {
-          case Right(response) =>
-            logger.info(s"Response: ${response.content}")
-          case Left(error) =>
-            logger.error(s"Error: $error")
-        }
+    )
+
+    val metadata = RequestMetadata()
+    agent.generateText("What are your capabilities?", metadata) match {
+      case Right(response) =>
+        logger.info(s"Response: ${response.content}")
       case Left(error) =>
-        logger.error(s"Failed to create agent: $error")
+        logger.error(s"Error: $error")
     }
   }
 
@@ -245,7 +243,7 @@ object OpenAIExample extends App with Logging:
     println()
     exampleTemperatureAndTokens()
     println()
-    exampleAgentFactory()
+    exampleAgentDirect()
   } catch {
     case e: Exception =>
       logger.error(s"Error running examples: ${e.getMessage}")

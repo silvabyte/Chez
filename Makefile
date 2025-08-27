@@ -1,383 +1,221 @@
-# ScalaSchemaz - Comprehensive Development Makefile
-# Provides convenient commands for testing, examples, compilation, and project management
+# Chez Project Makefile
+# Quick commands for development, testing, and project management
+
+.DEFAULT_GOAL := help
+SHELL := /bin/bash
 
 # ============================================================================
-# BUILD & COMPILATION
+# HELP
 # ============================================================================
-#
-# Compile all modules 
-.PHONY: compile
-compile:
-	@echo "🔨 Compiling all modules..."
-	./mill Chez.compile
-	./mill CaskChez.compile
-	./mill ChezWiz.compile
+.PHONY: help
+help:
+	@echo "Chez Project Commands"
+	@echo "===================="
+	@echo ""
+	@echo "Core:"
+	@echo "  make build     - Compile all modules"
+	@echo "  make test      - Run all tests"
+	@echo "  make clean     - Clean build artifacts"
+	@echo "  make format    - Format code with scalafmt"
+	@echo "  make lint      - Run scalafix linting"
+	@echo ""
+	@echo "Testing:"
+	@echo "  make t         - Quick test (alias for test)"
+	@echo "  make tc        - Test Chez module"
+	@echo "  make tca       - Test CaskChez module"
+	@echo "  make tw        - Test ChezWiz module"
+	@echo "  make watch     - Run tests in watch mode"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make demo      - Run all Chez examples"
+	@echo "  make wiz       - Run all ChezWiz AI examples"
+	@echo ""
+	@echo "Development:"
+	@echo "  make repl      - Start Scala REPL"
+	@echo "  make check     - Full check (compile + test + lint)"
+	@echo "  make release   - Prepare release (check + assembly)"
+	@echo ""
+	@echo "Use 'make <target> -n' to see what commands will run"
 
-# Compile only the Chez core module
-.PHONY: compile-chez
-compile-chez:
-	@echo "🔨 Compiling Chez module..."
-	./mill Chez.compile
+# ============================================================================
+# CORE COMMANDS
+# ============================================================================
+.PHONY: build b
+build:
+	@./mill __.compile
+b: build
 
-# Compile only the CaskChez web framework module
-.PHONY: compile-cask
-compile-cask:
-	@echo "🔨 Compiling CaskChez module..."
-	./mill CaskChez.compile
+.PHONY: test t
+test:
+	@./mill __.test
+t: test
 
-# Alias for compile command
-.PHONY: build
-build: compile
-
-# Create executable JAR assembly
-.PHONY: assembly
-assembly:
-	@echo "📦 Creating assembly JAR..."
-	./mill Chez.assembly
-	./mill CaskChez.assembly
-	./mill ChezWiz.assembly
-
-# Clean build artifacts
 .PHONY: clean
 clean:
-	@echo "🧹 Cleaning build artifacts..."
-	./mill clean
-	rm -rf out/
+	@./mill clean
+	@rm -rf out/
 
-# Deep clean - removes all build artifacts including IDE files
-.PHONY: clean-all
-clean-all: clean
-	@echo "🧹 Deep cleaning..."
-	rm -rf .bloop .bsp .metals out target
-	@echo "✅ Deep clean completed!"
+.PHONY: format fmt
+format:
+	@./mill mill.scalalib.scalafmt.ScalafmtModule/reformatAll
+fmt: format
+
+.PHONY: lint fix
+lint:
+	@./mill __.fix
+fix: lint
 
 # ============================================================================
-# TESTING
+# MODULE-SPECIFIC TESTING
 # ============================================================================
+.PHONY: tc test-chez
+tc:
+	@./mill Chez.test
+test-chez: tc
 
-# Run all tests for the project
-.PHONY: test
-test:
-	@echo "🧪 Running all tests..."
-	./mill Chez.test
-	./mill CaskChez.test
-	./mill ChezWiz.test
-	#
-# Run only ChezWiz module tests
-.PHONY: test-wiz
-test-wiz:
-	@echo "🧪 Running ChezWiz tests..."
-	./mill ChezWiz.test
+.PHONY: tca test-cask
+tca:
+	@./mill CaskChez.test
+test-cask: tca
 
-# Run only Chez module tests
-.PHONY: test-chez
-test-chez:
-	@echo "🧪 Running Chez tests..."
-	./mill Chez.test
+.PHONY: tw test-wiz
+tw:
+	@./mill ChezWiz.test
+test-wiz: tw
 
-# Run only CaskChez module tests
-.PHONY: test-cask
-test-cask:
-	@echo "🧪 Running CaskChez tests..."
-	./mill CaskChez.test
+# Specific test suites
+.PHONY: tp test-primitives
+tp:
+	@./mill Chez.test chez.primitives
+test-primitives: tp
 
-# Run CaskChez integration tests (UserCrud API)
-.PHONY: test-integration
-test-integration:
-	@echo "🧪 Running CaskChez integration tests..."
-	./mill CaskChez.test caskchez.UserCrudAPITest
+.PHONY: td test-derivation
+td:
+	@./mill Chez.test chez.derivation
+test-derivation: td
 
-# Run comprehensive CaskChez integration tests (all scenarios)
-.PHONY: test-comprehensive
-test-comprehensive:
-	@echo "🧪 Running comprehensive CaskChez integration tests..."
-	./mill CaskChez.test caskchez.ComprehensiveUserCrudAPITest
+.PHONY: tv test-validation
+tv:
+	@./mill Chez.test chez.validation
+test-validation: tv
 
-# Run primitive type tests (String, Number, Boolean, etc.)
-.PHONY: test-primitives
-test-primitives:
-	@echo "🧪 Running primitive type tests..."
-	./mill Chez.test chez.primitives
+.PHONY: ti test-integration
+ti:
+	@./mill CaskChez.test caskchez.UserCrudAPITest
+test-integration: ti
 
-# Run schema derivation tests
-.PHONY: test-derivation
-test-derivation:
-	@echo "🧪 Running schema derivation tests..."
-	./mill Chez.test chez.derivation
+# ============================================================================
+# WATCH MODE
+# ============================================================================
+.PHONY: watch w
+watch:
+	@echo "👀 Watching for changes... (Ctrl+C to stop)"
+	@./mill -w __.compile
+w: watch
 
-# Run complex type tests (Array, Object)
-.PHONY: test-complex
-test-complex:
-	@echo "🧪 Running complex type tests..."
-	./mill Chez.test chez.complex
-
-# Run validation framework tests
-.PHONY: test-validation
-test-validation:
-	@echo "🧪 Running validation framework tests..."
-	./mill Chez.test chez.validation
-
-# Run web validation tests (T8 - CaskChez request validation)
-.PHONY: test-web-validation
-test-web-validation:
-	@echo "🧪 Running web validation tests (T8)..."
-	./mill CaskChez.test caskchez.WebValidationTests
-
-# Run tests in watch mode - reruns on file changes
-.PHONY: test-watch
-test-watch:
-	@echo "🧪 Running tests in watch mode..."
-	@echo "ℹ️  Press Ctrl+C to stop watching"
-	while true; do \
-		clear; \
-		./mill Chez.test; \
-		echo ""; \
-		echo "👀 Watching for changes... (Ctrl+C to stop)"; \
-		sleep 3; \
-	done
-
-# Quick smoke test to verify basic functionality
-.PHONY: quick-test
-quick-test:
-	@echo "⚡ Running quick smoke test..."
-	./mill Chez.test chez.primitives.StringChezTests
-	./mill CaskChez.test caskchez.WebValidationTests
+.PHONY: watch-test wt
+watch-test:
+	@echo "👀 Running tests on change... (Ctrl+C to stop)"
+	@./mill -w __.test
+wt: watch-test
 
 # ============================================================================
 # EXAMPLES & DEMOS
 # ============================================================================
-#
+.PHONY: demo examples
+demo:
+	@./mill Chez.test.runMain chez.examples.BasicUsage
+	@./mill Chez.test.runMain chez.examples.ComplexTypes
+	@./mill Chez.test.runMain chez.examples.Validation
+examples: demo
 
-# ChezWiz AI Agent examples
+.PHONY: wiz wiz-demo
+wiz:
+	@./mill ChezWiz.runMain chezwiz.agent.examples.Examples
+wiz-demo: wiz
 
-# Runs all ChezWiz examples
-.PHONY: example-wiz
-example-wiz:
-	@echo "🚀 Running All ChezWiz examples..."
-	./mill ChezWiz.runMain chezwiz.agent.examples.Examples
+# Individual provider examples
+.PHONY: wiz-openai
+wiz-openai:
+	@./mill ChezWiz.runMain chezwiz.agent.examples.OpenAIExample
 
-# Run OpenAI Compatible Provider example
-.PHONY: example-unified
-example-unified:
-	@echo "🔗 Running OpenAI Compatible Provider example..."
-	@echo "ℹ️  This works with any OpenAI-compatible endpoint (LLamaCPP, LM Studio, etc.)"
-	@echo "ℹ️  Set LLAMA_CPP_URL and LLAMA_CPP_MODEL environment variables to configure"
-	@echo "ℹ️  Default: LLAMA_CPP_URL=http://localhost:39080/v1"
-	@echo "ℹ️  Default: LLAMA_CPP_MODEL=qwen3-coder-30b-q5"
-	./mill ChezWiz.runMain chezwiz.agent.examples.OpenAICompatibleExample
+.PHONY: wiz-anthropic
+wiz-anthropic:
+	@./mill ChezWiz.runMain chezwiz.agent.examples.AnthropicExample
 
-# Run OpenAI integration example
-.PHONY: example-openai
-example-openai:
-	@echo "🤖 Running OpenAI integration example..."
-	@echo "ℹ️  Set OPENAI_API_KEY environment variable"
-	@echo ""
-	./mill ChezWiz.runMain chezwiz.agent.examples.OpenAIExample
-
-# Run Anthropic (Claude) integration example
-.PHONY: example-anthropic
-example-anthropic:
-	@echo "🤖 Running Anthropic integration example..."
-	@echo "ℹ️  Set ANTHROPIC_API_KEY environment variable"
-	@echo ""
-	./mill ChezWiz.runMain chezwiz.agent.examples.AnthropicExample
-
-# Run LM Studio embeddings example
-.PHONY: example-embeddings
-example-embeddings:
-	@echo "🧬 Running LM Studio Embeddings example..."
-	@echo "ℹ️  Prerequisites:"
-	@echo "  1. Install LM Studio from https://lmstudio.ai"
-	@echo "  2. Download an embedding model (e.g., text-embedding-qwen3-embedding-8b)"
-	@echo "  3. Start LM Studio server (default: http://localhost:1234)"
-	@echo ""
-	@echo "ℹ️  Configuration (via .env file or environment):"
-	@echo "  - LM_STUDIO_URL: LM Studio server URL (default: http://localhost:1234/v1)"
-	@echo "  - LM_STUDIO_EMBEDDING_MODEL: Embedding model name (default: text-embedding-qwen3-embedding-8b)"
-	@echo "  - ENV_DIR: Directory containing .env file (default: current directory)"
-	@echo ""
-	./mill ChezWiz.runMain chezwiz.agent.examples.LMStudioEmbeddingExample
-
-# Run all providers comparison example
-.PHONY: example-all-providers
-example-all-providers:
-	@echo "🤖 Running all providers comparison example..."
-	@echo "ℹ️  Set the following environment variables as needed:"
-	@echo "  - OPENAI_API_KEY"
-	@echo "  - ANTHROPIC_API_KEY"
-	@echo "  - LM_STUDIO_URL and LM_STUDIO_MODEL"
-	@echo "  - OLLAMA_URL and OLLAMA_MODEL"
-	@echo "  - AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_KEY"
-	@echo ""
-	./mill ChezWiz.runMain chezwiz.agent.examples.AllProvidersExample
-
-# Run basic usage example showing core functionality
-.PHONY: example-basic
-example-basic:
-	@echo "🚀 Running Basic Usage example..."
-	./mill Chez.test.runMain chez.examples.BasicUsage
-
-# Run complex types example demonstrating advanced features
-.PHONY: example-complex
-example-complex:
-	@echo "🚀 Running Complex Types example..."
-	./mill Chez.test.runMain chez.examples.ComplexTypes
-
-# Run validation example showing schema validation features
-.PHONY: example-validation
-example-validation:
-	@echo "🚀 Running Validation example..."
-	./mill Chez.test.runMain chez.examples.Validation
-
-# Run annotation example demonstrating schema annotations
-.PHONY: example-annotation
-example-annotation:
-	@echo "🚀 Running Annotation example..."
-	./mill Chez.test.runMain chez.examples.runAnnotationExample
-
-# Run enum example showing Scala 3 enum support
-.PHONY: example-enum
-example-enum:
-	@echo "🚀 Running Enum example..."
-	./mill Chez.test.runMain chez.examples.EnumExample
-
-# Run sealed trait example showing discriminated union support
-.PHONY: example-sealed-trait
-example-sealed-trait:
-	@echo "🚀 Running Sealed Trait example..."
-	./mill Chez.test.runMain chez.examples.SealedTraitExample
-
-# Run mirror derivation example showing compile-time reflection
-.PHONY: example-mirror
-example-mirror:
-	@echo "🚀 Running Mirror Derivation example..."
-	./mill Chez.test.runMain chez.examples.runMirrorDerivedExamples
-
-# Run default parameter detection example
-.PHONY: example-defaults
-example-defaults:
-	@echo "🚀 Running Default Parameter example..."
-	./mill Chez.test.runMain chez.examples.DefaultParameterTest
-
-# Run all examples in sequence
-.PHONY: examples
-examples:
-	@echo "🚀 Running ALL examples..."
-	@echo "=================================="
-	make example-basic
-	@echo ""
-	make example-complex
-	@echo ""
-	make example-validation
-	@echo ""
-	make example-annotation
-	@echo ""
-	make example-enum
-	@echo ""
-	make example-sealed-trait
-	@echo ""
-	make example-mirror
-	@echo ""
-	make example-defaults
-	@echo ""
-	@echo "✅ All examples completed!"
-
-# Alias for examples command compile
-.PHONY: demo
-demo: examples
-
-# Format source code (requires scalafmt setup)
-.PHONY: format
-format:
-	@echo "🎨 Code formatting..."
-	./mill mill.scalalib.scalafmt.ScalafmtModule/reformatAll
-
-# Run linting (compile warnings)
-.PHONY: lint
-lint: compile
-	./mill __.fix
-
+.PHONY: wiz-local
+wiz-local:
+	@./mill ChezWiz.runMain chezwiz.agent.examples.OpenAICompatibleExample
 
 # ============================================================================
-# PROJECT MANAGEMENT
+# DEVELOPMENT TOOLS
 # ============================================================================
+.PHONY: repl console
+repl:
+	@./mill Chez.console
+console: repl
 
-# Show project information and configuration
-.PHONY: info
-info:
-	@echo "📊 ScalaSchemaz Project Information"
-	@echo "=================================="
-	@echo "🔸 Scala Version: 3.6.2"
-	@echo "🔸 Build Tool: Mill"
-	@echo "🔸 Test Framework: utest"
-	@echo "🔸 Main Dependencies: upickle, os-lib, cask, requests"
-	@echo "🔸 Modules: Chez (core), CaskChez (web framework), ChezWiz (AI agents)"
-	@echo ""
-	@echo "🧪 Available Test Commands:"
-	@echo "  make test                 - Run all tests"
-	@echo "  make test-chez           - Run Chez core tests"
-	@echo "  make test-cask           - Run CaskChez tests"
-	@echo "  make test-integration    - Run UserCrud API integration tests"
-	@echo "  make test-comprehensive  - Run comprehensive integration tests (all scenarios)"
-	@echo "  make test-web-validation - Run T8 web validation tests (unit)"
-	@echo "  make test-validation     - Run Chez validation framework tests"
-	@echo ""
+.PHONY: assembly jar
+assembly:
+	@./mill __.assembly
+jar: assembly
 
-# Show version information for tools and dependencies
-.PHONY: version
-version:
-	@echo "📋 Version Information:"
-	@echo "  Scala: $$(./mill Chez.scalaVersion)"
-	@echo "  Mill: $$(./mill --version 2>/dev/null || echo 'Unknown')"
-	@echo "  Java: $$(java -version 2>&1 | head -1)"
-
-# Show project directory tree
-.PHONY: tree
-tree:
-	@echo "📁 Project Structure:"
-	@tree -I 'out|.git|.metals|.bloop|.bsp|target|node_modules' -L 3 || \
-	 find . -type d -name "out" -prune -o -type d -name ".git" -prune -o -type d -print | head -20
-
-# List available Mill modules
-.PHONY: modules
-modules:
-	@echo "📦 Available Mill modules:"
-	./mill resolve __ | grep -E "^(Chez|CaskChez)$$"
-
-# Show Mill targets for Chez module
-.PHONY: targets
-targets:
-	@echo "🎯 Available Mill targets for Chez:"
-	./mill resolve Chez._ | grep -E "(compile|test|run|repl|assembly)" | sort
-
-# Show Mill help
-.PHONY: mill-help
-mill-help:
-	@echo "🏭 Mill Build Tool Help:"
-	./mill --help
-
-# ============================================================================
-# ADVANCED COMMANDS
-# ============================================================================
-
-# Full project check - compile and test
-.PHONY: check
-check: compile test
-	@echo "✅ Full project check completed!"
-
-# Continuous integration check
-.PHONY: ci
-ci: check
-	@echo "🤖 CI pipeline completed successfully!"
-
-# Run performance benchmarks (placeholder)
-.PHONY: benchmark
-benchmark:
-	@echo "⏱️  Benchmarking..."
-	@echo "ℹ️  No benchmarks configured yet"
-
-# Generate documentation
 .PHONY: docs
 docs:
-	@echo "📖 Generating documentation..."
-	./mill Chez.docJar
+	@./mill __.docJar
+
+.PHONY: deps
+deps:
+	@./mill mill.scalalib.Dependency/showUpdates
+
+# ============================================================================
+# CI/CD COMMANDS
+# ============================================================================
+.PHONY: check
+check: build test lint
+	@echo "✅ All checks passed!"
+
+.PHONY: ci
+ci: clean check
+	@echo "✅ CI pipeline complete!"
+
+.PHONY: release
+release: check assembly docs
+	@echo "📦 Release artifacts ready!"
+
+# ============================================================================
+# PROJECT INFO
+# ============================================================================
+.PHONY: info
+info:
+	@echo "Chez Project"
+	@echo "============"
+	@echo "Scala:     3.6.2+"
+	@echo "Build:     Mill"
+	@echo "Test:      utest"
+	@echo "Modules:   Chez (core), CaskChez (web), ChezWiz (AI)"
+	@echo ""
+	@echo "Run 'make help' for available commands"
+
+.PHONY: version
+version:
+	@./mill version
+
+# ============================================================================
+# UTILITIES
+# ============================================================================
+.PHONY: tree
+tree:
+	@tree -I 'out|.git|.metals|.bloop|.bsp|target|node_modules' -L 2
+
+.PHONY: loc
+loc:
+	@find . -name "*.scala" -not -path "./out/*" | xargs wc -l | tail -1
+
+# Clean everything including IDE files
+.PHONY: clean-all purge
+clean-all:
+	@./mill clean
+	@rm -rf out/ .bloop .bsp .metals target
+	@echo "✅ Deep clean complete!"
+purge: clean-all

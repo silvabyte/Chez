@@ -188,10 +188,10 @@ object UserCrudAPI extends cask.MainRoutes {
       case Right(query) =>
         val page = query.page.getOrElse(1)
         val limit = query.limit.getOrElse(10)
-        
+
         // Apply filters and pagination
         val filteredUsers = users.values.filter { user =>
-          val matchesSearch = query.search.isEmpty || 
+          val matchesSearch = query.search.isEmpty ||
             user.name.toLowerCase.contains(query.search.get.toLowerCase)
           val matchesActive = query.active.isEmpty || user.isActive == query.active.get
           matchesSearch && matchesActive
@@ -255,7 +255,7 @@ object UserCrudAPI extends cask.MainRoutes {
             val emailConflict = updates.email.exists { newEmail =>
               newEmail != existingUser.email && users.values.exists(_.email == newEmail)
             }
-            
+
             if (emailConflict) {
               write(ErrorResponse("email_exists", s"Email ${updates.email.get} is already registered"))
             } else {
@@ -760,7 +760,7 @@ class UserAPITest extends utest.TestSuite {
         data = requests.RequestBlob.ByteSourceRequestBlob(write(validRequest)),
         headers = Map("Content-Type" -> "application/json")
       )
-      
+
       assert(response.statusCode == 200)
       val user = read[routes.User](response.text())
       assert(user.name == "John Doe")

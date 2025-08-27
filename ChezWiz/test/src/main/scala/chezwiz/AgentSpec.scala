@@ -1,7 +1,6 @@
 import utest.*
 import chezwiz.agent.{
   Agent,
-  AgentFactory,
   ChatMessage,
   ChatRequest,
   ChatResponse,
@@ -227,52 +226,32 @@ object AgentSpec extends TestSuite:
       assert(history(0).role == Role.System)
     }
 
-    test("AgentFactory creates OpenAI agent successfully") {
-      val result = AgentFactory.createOpenAIAgent(
+    test("Agent creates with OpenAI provider successfully") {
+      val provider = new OpenAIProvider("test-key")
+      val agent = Agent(
         name = "OpenAI Test",
         instructions = "Test instructions",
-        apiKey = "test-key",
+        provider = provider,
         model = "gpt-4o-mini"
       )
 
-      result match
-        case Right(agent) =>
-          assert(agent.name == "OpenAI Test")
-          assert(agent.model == "gpt-4o-mini")
-          assert(agent.provider.name == "OpenAI")
-        case Left(error) => throw new Exception(s"Unexpected error: $error")
+      assert(agent.name == "OpenAI Test")
+      assert(agent.model == "gpt-4o-mini")
+      assert(agent.provider.name == "OpenAI")
     }
 
-    test("AgentFactory creates Anthropic agent successfully") {
-      val result = AgentFactory.createAnthropicAgent(
+    test("Agent creates with Anthropic provider successfully") {
+      val provider = new AnthropicProvider("test-key")
+      val agent = Agent(
         name = "Anthropic Test",
         instructions = "Test instructions",
-        apiKey = "test-key",
+        provider = provider,
         model = "claude-3-5-haiku-20241022"
       )
 
-      result match
-        case Right(agent) =>
-          assert(agent.name == "Anthropic Test")
-          assert(agent.model == "claude-3-5-haiku-20241022")
-          assert(agent.provider.name == "Anthropic")
-        case Left(error) => throw new Exception(s"Unexpected error: $error")
-    }
-
-    test("AgentFactory fails with unsupported model") {
-      val result = AgentFactory.createOpenAIAgent(
-        name = "Test",
-        instructions = "Test",
-        apiKey = "test-key",
-        model = "unsupported-model"
-      )
-
-      result match
-        case Right(_) => throw new Exception("Should have failed")
-        case Left(ChezError.ModelNotSupported(model, provider, _)) =>
-          assert(model == "unsupported-model")
-          assert(provider == "OpenAI")
-        case Left(error) => throw new Exception(s"Expected ModelNotSupported but got: $error")
+      assert(agent.name == "Anthropic Test")
+      assert(agent.model == "claude-3-5-haiku-20241022")
+      assert(agent.provider.name == "Anthropic")
     }
 
     test("ChatMessage serialization works correctly") {

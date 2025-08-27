@@ -1,6 +1,6 @@
 package chezwiz.agent.examples
 
-import chezwiz.agent.{Agent, AgentFactory, RequestMetadata}
+import chezwiz.agent.{Agent, RequestMetadata}
 import chezwiz.agent.providers.AnthropicProvider
 import scribe.Logging
 import upickle.default.*
@@ -215,33 +215,31 @@ object AnthropicExample extends App with Logging:
     }
   }
 
-  // Example 6: Using AgentFactory for Anthropic
-  def exampleAgentFactory(): Unit = {
-    logger.info("Example 6: Using AgentFactory for Anthropic")
+  // Example 6: Creating Anthropic Agent directly
+  def exampleAgentDirect(): Unit = {
+    logger.info("Example 6: Creating Anthropic Agent directly")
 
     val apiKey = Config.ANTHROPIC_API_KEY
+    val provider = new AnthropicProvider(apiKey)
 
-    AgentFactory.createAnthropicAgent(
-      name = "FactoryClaude",
-      instructions = "You are Claude created via AgentFactory. Be helpful and thoughtful.",
-      apiKey = apiKey,
+    val agent = Agent(
+      name = "DirectClaude",
+      instructions = "You are Claude created directly. Be helpful and thoughtful.",
+      provider = provider,
       model = "claude-3-5-sonnet-20241022",
       temperature = Some(0.7),
       maxTokens = Some(500)
+    )
+
+    val metadata = RequestMetadata()
+    agent.generateText(
+      "What are the key principles of good API design?",
+      metadata
     ) match {
-      case Right(agent) =>
-        val metadata = RequestMetadata()
-        agent.generateText(
-          "What are the key principles of good API design?",
-          metadata
-        ) match {
-          case Right(response) =>
-            logger.info(s"Response: ${response.content}")
-          case Left(error) =>
-            logger.error(s"Error: $error")
-        }
+      case Right(response) =>
+        logger.info(s"Response: ${response.content}")
       case Left(error) =>
-        logger.error(s"Failed to create agent: $error")
+        logger.error(s"Error: $error")
     }
   }
 
@@ -326,7 +324,7 @@ object AnthropicExample extends App with Logging:
     println()
     exampleTemperatureVariations()
     println()
-    exampleAgentFactory()
+    exampleAgentDirect()
     println()
     exampleComplexStructuredOutput()
   } catch {
