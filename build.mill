@@ -1,4 +1,4 @@
-import mill._, scalalib._
+import mill._, scalalib._, publish._
 import scala.util.{Try, Success, Failure}
 
 case class GitHubDependency(
@@ -98,7 +98,17 @@ trait GitHubDepsModule extends ScalaModule {
   }
 }
 
-trait Shared extends GitHubDepsModule {
+trait PublishSettings extends SonatypeCentralPublishModule {
+
+  def publishVersion = Task.Input {
+    val packageJsonPath = os.pwd / os.up / os.up / os.up / "package.json"
+    val packageJson = os.read(packageJsonPath)
+    val json = upickle.default.read[ujson.Value](packageJson)
+    json.obj("version").str
+  }
+}
+
+trait Shared extends GitHubDepsModule with PublishSettings {
   def scalaVersion = "3.7.2"
 
   // Suppress the "caps" warning which is a known Scala 3 issue
@@ -187,12 +197,26 @@ trait Shared extends GitHubDepsModule {
 }
 
 object Chez extends Shared {
+  override def artifactName = "chez"
+
   override def mvnDeps = Task {
     super.mvnDeps() ++ Seq()
   }
+
+  override def pomSettings = PomSettings(
+    description = "Chez - Type-safe JSON Schema library for Scala 3",
+    organization = "com.silvabyte",
+    url = "https://github.com/silvabyte/Chez",
+    licenses = Seq(License.MIT),
+    versionControl = VersionControl.github("silvabyte", "Chez"),
+    developers = Seq(
+      Developer("matsilva", "Mat Silva", "https://github.com/matsilva")
+    )
+  )
 }
 
 object CaskChez extends Shared {
+  override def artifactName = "caskchez"
   override def moduleDeps: Seq[Shared] = Seq(Chez)
   override def mvnDeps = Task {
     super.mvnDeps() ++ Seq(
@@ -200,9 +224,21 @@ object CaskChez extends Shared {
       mvn"com.lihaoyi::scalatags:0.13.1"
     )
   }
+
+  override def pomSettings = PomSettings(
+    description = "CaskChez - HTTP API framework with automatic validation using Chez schemas",
+    organization = "com.silvabyte",
+    url = "https://github.com/silvabyte/Chez",
+    licenses = Seq(License.MIT),
+    versionControl = VersionControl.github("silvabyte", "Chez"),
+    developers = Seq(
+      Developer("matsilva", "Mat Silva", "https://github.com/matsilva")
+    )
+  )
 }
 
 object ChezWiz extends Shared {
+  override def artifactName = "chezwiz"
   override def moduleDeps: Seq[Shared] = Seq(Chez)
   override def mvnDeps = Task {
     super.mvnDeps() ++ Seq(
@@ -211,4 +247,14 @@ object ChezWiz extends Shared {
     )
   }
 
+  override def pomSettings = PomSettings(
+    description = "ChezWiz - AI/LLM agent framework using Chez schemas",
+    organization = "com.silvabyte",
+    url = "https://github.com/silvabyte/Chez",
+    licenses = Seq(License.MIT),
+    versionControl = VersionControl.github("silvabyte", "Chez"),
+    developers = Seq(
+      Developer("matsilva", "Mat Silva", "https://github.com/matsilva")
+    )
+  )
 }
