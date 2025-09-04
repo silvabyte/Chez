@@ -87,6 +87,12 @@ import caskchez.openapi.config.OpenAPIConfig
 def openapi(): String = "" // auto-generated spec
 ```
 
+Example:
+
+```bash
+curl -s http://localhost:8082/openapi | jq '.info.title, .openapi'
+```
+
 6. Optional: Add a tiny ChezWiz endpoint
 
 ```scala
