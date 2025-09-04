@@ -57,14 +57,12 @@ libraryDependencies ++= Seq(
 - CaskChez (web): Schema‑first HTTP validation + OpenAPI for Cask
 - ChezWiz (AI): Type‑safe LLM agents with structured output
 
-For full docs, see `docs/README.md`. For commands, run `make help`.
+For full docs, see [docs/README.md](./docs/README.md). For commands, run `make help`.
 
 ## Zero to App
 
-Build a tiny, validated API in minutes. See `docs/zero-to-app.md`.
+Build a tiny, validated API in minutes. See [docs/zero-to-app.md](./docs/zero-to-app.md).
 For local commands, run `make help`.
-
- 
 
 ## Highlights
 
@@ -74,14 +72,14 @@ For local commands, run `make help`.
 
 ## Documentation
 
-- Overview: `docs/README.md`
-- Getting Started: `docs/getting-started.md`
-- Zero to App: `docs/zero-to-app.md`
-- Chez (core): `docs/chez.md`
-- CaskChez (web): `docs/caskchez.md`
-- ChezWiz (AI): `docs/chezwiz.md`
-- Concepts: `docs/concepts.md`
-- Troubleshooting: `docs/troubleshooting.md`
+- Overview: [docs/README.md](./docs/README.md)
+- Getting Started: [docs/getting-started.md](./docs/getting-started.md)
+- Zero to App: [docs/zero-to-app.md](./docs/zero-to-app.md)
+- Chez (core): [docs/chez.md](./docs/chez.md)
+- CaskChez (web): [docs/caskchez.md](./docs/caskchez.md)
+- ChezWiz (AI): [docs/chezwiz.md](./docs/chezwiz.md)
+- Concepts: [docs/concepts.md](./docs/concepts.md)
+- Troubleshooting: [docs/troubleshooting.md](./docs/troubleshooting.md)
 
 ## Running Examples & Commands
 
