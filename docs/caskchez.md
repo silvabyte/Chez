@@ -136,6 +136,12 @@ import caskchez.openapi.config.OpenAPIConfig
 def openapi(): String = ""  // auto‑generated JSON
 ```
 
+## Client SDK
+
+Generate a TypeScript client from your running CaskChez API using the OpenAPI endpoint. See the step‑by‑step guide:
+
+- TypeScript SDK: [../docs/typescript-sdk.md](./typescript-sdk.md)
+
 ## Error Shape
 
 - Invalid requests return a structured JSON error:
