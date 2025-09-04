@@ -1,29 +1,20 @@
 import utest.*
 import chezwiz.agent.{
   Agent,
-  AgentMetrics,
   AgentMetricsSnapshot,
-  ChatMessage,
   ChatRequest,
   ChatResponse,
   ChezError,
   DefaultAgentMetrics,
-  ErrorContext,
   ErrorMetrics,
   HookRegistry,
-  MessageContent,
   MetricsFactory,
   MetricsHook,
   ModelMetrics,
   ObjectRequest,
   ObjectResponse,
   OperationMetrics,
-  PostObjectResponseContext,
-  PostResponseContext,
-  PreObjectRequestContext,
-  PreRequestContext,
   RequestMetadata,
-  Role,
   ScopeMetrics,
   Usage
 }
@@ -201,7 +192,7 @@ object MetricsSpec extends TestSuite:
           assert(agent.name == "FactoryTestAgent")
           assert(agent.model == "gpt-4o-mini")
 
-          val metadata = RequestMetadata(
+          val _ = RequestMetadata(
             tenantId = Some("factory-tenant"),
             userId = Some("factory-user"),
             conversationId = Some("factory-conversation")
@@ -209,7 +200,7 @@ object MetricsSpec extends TestSuite:
 
           // This would normally make a real API call, but our test setup prevents that
           // The important thing is that the agent was created with metrics hooks
-          val snapshot = metrics.getSnapshot("FactoryTestAgent")
+          val _ = metrics.getSnapshot("FactoryTestAgent")
         // Snapshot might be None initially if no operations have been performed
         // But the metrics system should be ready to track operations
 

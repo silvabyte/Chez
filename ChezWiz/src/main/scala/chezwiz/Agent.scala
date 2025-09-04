@@ -2,7 +2,7 @@ package chezwiz.agent
 
 import scribe.Logging
 import upickle.default.Reader
-import upickle.default.{read, write}
+import upickle.default.read
 import chezwiz.agent.providers.LLMProvider
 import chezwiz.agent.{
   ChatRequest,
@@ -17,10 +17,8 @@ import chezwiz.agent.{
   EmbeddingResponse,
   EmbeddingInput
 }
-import ujson.Value
-
 import chez.derivation.Schema
-import chez.Chez
+import scala.annotation.unused
 import java.util.UUID
 
 case class AgentConfig(
@@ -35,7 +33,7 @@ case class AgentConfig(
     idGenerator: () => String = () => UUID.randomUUID().toString
 )
 
-class Agent(config: AgentConfig, initialHistory: Vector[ChatMessage] = Vector.empty)
+class Agent(config: AgentConfig, @unused initialHistory: Vector[ChatMessage] = Vector.empty)
     extends Logging:
 
   // Scoped history storage: Map[ScopeKey, Vector[ChatMessage]]

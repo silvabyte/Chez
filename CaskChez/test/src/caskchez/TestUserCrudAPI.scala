@@ -1,6 +1,7 @@
 package caskchez
 
 import cask._
+import scala.annotation.unused
 import _root_.chez._
 import caskchez._
 import caskchez.CaskChez
@@ -141,7 +142,7 @@ class TestUserCrudAPI extends cask.MainRoutes {
       )
     )
   )
-  def listUsers(validatedRequest: ValidatedRequest): String = {
+  def listUsers(@unused validatedRequest: ValidatedRequest): String = {
     val userList = users.values.toList.sortBy(_.id)
     write(userList)
   }
@@ -158,7 +159,7 @@ class TestUserCrudAPI extends cask.MainRoutes {
       )
     )
   )
-  def getUser(id: String, validatedRequest: ValidatedRequest): String = {
+  def getUser(id: String, @unused validatedRequest: ValidatedRequest): String = {
     users.get(id) match {
       case Some(user) =>
         write(user)
@@ -183,7 +184,7 @@ class TestUserCrudAPI extends cask.MainRoutes {
       )
     )
   )
-  def deleteUser(id: String, validatedRequest: ValidatedRequest): String = {
+  def deleteUser(id: String, @unused validatedRequest: ValidatedRequest): String = {
     users.get(id) match {
       case Some(user) =>
         users.remove(id)

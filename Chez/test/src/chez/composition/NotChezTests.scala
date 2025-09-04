@@ -215,7 +215,7 @@ object NotChezTests extends TestSuite {
         assert(result.isValid)
 
         val oldValue = ujson.Num(70)
-        val oldResult = schema.validate(oldValue, context)
+        val _ = schema.validate(oldValue, context)
         assert(result.isValid)
 
         // Should fail - inside range

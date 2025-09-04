@@ -1,13 +1,13 @@
 package chezwiz.agent.providers
 
-import upickle.default.{read, write}
+import upickle.default.read
 import chezwiz.agent.{
   ChatRequest,
   ChatResponse,
   ObjectRequest,
   ObjectResponse,
   Role,
-  Usage,
+  
   ChezError,
   MessageContent,
   MessageContentPart

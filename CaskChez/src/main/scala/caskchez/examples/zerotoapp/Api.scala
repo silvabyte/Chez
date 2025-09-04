@@ -1,6 +1,7 @@
 package caskchez.examples.zerotoapp
 
 import cask._
+import scala.annotation.unused
 import caskchez.*
 import caskchez.CaskChez.ValidatedRequestReader
 import chez.derivation.Schema
@@ -50,7 +51,7 @@ object ZeroToAppApi extends cask.MainRoutes {
       responses = Map(200 -> ApiResponse("OK", Schema[List[User]]))
     )
   )
-  def list(req: ValidatedRequest) = {
+  def list(@unused req: ValidatedRequest) = {
     // TODO: Add filters/pagination later if needed
     write(users.values.toList)
   }

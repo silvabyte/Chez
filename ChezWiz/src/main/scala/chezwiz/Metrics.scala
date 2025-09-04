@@ -1,10 +1,9 @@
 package chezwiz.agent
 
 import chezwiz.agent.providers.{OpenAIProvider, AnthropicProvider}
-import java.time.Instant
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import upickle.default.ReadWriter
-import upickle.default.{read, write}
+import upickle.default.write
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
