@@ -34,11 +34,12 @@ val json = Obj("name"->"Ada","email"->"ada@lovelace.org","age"->28)
 schema.validate(json) // Right(()) or Left(List(...))
 ```
 
-## Annotations (common)
+## Annotations
 
-- Strings: `minLength`, `maxLength`, `pattern`, `format`
-- Numbers: `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`, `multipleOf`
+- Strings: `minLength`, `maxLength`, `pattern`, `format`, `const`
+- Numbers: `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`, `multipleOf`, `const`
 - Arrays: `minItems`, `maxItems`, `uniqueItems`
+- Enums: `enumValues("a", 1, true, 3.14, null)`
 - Metadata: `title`, `description`, `examples`, `deprecated`, `readOnly`, `writeOnly`
 - Defaults: `default(value)` (type‑safe)
 
@@ -46,7 +47,7 @@ schema.validate(json) // Right(()) or Left(List(...))
 
 - `A | B` → JSON Schema `oneOf`
 - `Option[T]` → optional field (may be absent)
-- Nullable: `@Schema.nullable(true)` to allow null for present fields
+- Nullable: use `.nullable` (e.g., `Chez.String().nullable`)
 
 ## Tips
 
