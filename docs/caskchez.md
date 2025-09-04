@@ -36,12 +36,14 @@ libraryDependencies ++= Seq(
 import chez.derivation.Schema
 import upickle.default.*
 
+@Schema.title("CreateUser")
 case class CreateUser(
   @Schema.minLength(1) name: String,
   @Schema.format("email") email: String,
   @Schema.minimum(0) age: Int
 ) derives Schema, ReadWriter
 
+@Schema.title("User")
 case class User(id: String, name: String, email: String, age: Int) derives Schema, ReadWriter
 ```
 

@@ -22,6 +22,7 @@ libraryDependencies += "com.silvabyte" %% "chez" % "0.2.0"
 import chez.derivation.Schema
 import ujson.*
 
+@Schema.title("User")
 case class User(
   @Schema.minLength(1) name: String,
   @Schema.format("email") email: String,
@@ -51,4 +52,3 @@ schema.validate(json) // Right(()) or Left(List(...))
 
 - Validate at boundaries and use errors to drive responses.
 - Pair with upickle for read/write when you need typed data.
-

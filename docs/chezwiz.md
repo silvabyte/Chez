@@ -27,6 +27,7 @@ import chezwiz.agent.*
 import chezwiz.agent.providers.OpenAIProvider
 import chez.derivation.Schema
 
+@Schema.title("Summary")
 case class Summary(@Schema.minLength(1) text: String) derives Schema
 
 val agent = Agent(
@@ -73,4 +74,3 @@ val agent = Agent("Local", "You are helpful.", local, model = "local-model")
 
 - `make wiz` (requires `OPENAI_API_KEY` or a local LLM endpoint)
 - Local LLM: ensure your server exposes `/v1` and a valid model ID.
-

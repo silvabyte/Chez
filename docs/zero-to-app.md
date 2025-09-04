@@ -23,12 +23,14 @@ package quickstart
 
 import chez.derivation.Schema
 
+@Schema.title("CreateUser")
 case class CreateUser(
   @Schema.minLength(1) name: String,
   @Schema.format("email") email: String,
   @Schema.minimum(0) age: Int
 ) derives Schema
 
+@Schema.title("User")
 case class User(
   id: String,
   name: String,
