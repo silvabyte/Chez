@@ -57,23 +57,14 @@ libraryDependencies ++= Seq(
 - CaskChez (web): Schema‑first HTTP validation + OpenAPI for Cask
 - ChezWiz (AI): Type‑safe LLM agents with structured output
 
-For full docs, see [docs/README.md](./docs/README.md). For commands, run `make help`.
-
 ## Zero to App
 
 Build a tiny, validated API in minutes. See [docs/zero-to-app.md](./docs/zero-to-app.md).
 For local commands, run `make help`.
 
-## Highlights
-
-- Chez: Derive JSON Schema from types, annotate constraints, validate JSON
-- CaskChez: Schema‑first HTTP validation for Cask, OpenAPI 3.1.1 out‑of‑the‑box
-- ChezWiz: Typed LLM agents across providers, structured output via Chez schemas
-
 ## Documentation
 
-- Overview: [docs/README.md](./docs/README.md)
-- Getting Started: [docs/getting-started.md](./docs/getting-started.md)
+- Getting Started: [docs/README.md](./docs/README.md)
 - Zero to App: [docs/zero-to-app.md](./docs/zero-to-app.md)
 - Chez (core): [docs/chez.md](./docs/chez.md)
 - CaskChez (web): [docs/caskchez.md](./docs/caskchez.md)
@@ -88,10 +79,6 @@ For local commands, run `make help`.
 - Run examples: `make chez`, `make caskchez`, `make wiz`
 - ChezWiz examples require `OPENAI_API_KEY` (or a local LLM endpoint)
 - Test everything: `make test` (override `MODULE=Chez|CaskChez|ChezWiz`)
-
-## Developer Quickstart
-
-See `docs/getting-started.md` for a concise setup and command guide.
 
 ## License
 
