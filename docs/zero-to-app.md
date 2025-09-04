@@ -144,6 +144,30 @@ def summarize(req: ValidatedRequest) = {
 
 Run again and POST to `/summaries` (requires `OPENAI_API_KEY`), or point Wiz at a local OpenAI‑compatible server.
 
+7. Infer Interests (no AI required)
+
+The Zero‑to‑App server includes an endpoint that normalizes interests from a free‑text profile summary. This version is AI‑free by default and can later be swapped to a ChezWiz Agent.
+
+```bash
+# Create a user first (if you haven’t already)
+curl -s -X POST localhost:8082/users \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Ada","email":"ada@lovelace.org","age":28}' | jq
+
+# Infer interests for user id 1 from a profile summary
+curl -s -X POST localhost:8082/users/1/interests/infer \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Scala backend engineer into APIs, functional programming, ML and DevOps."}' | jq
+
+# Example output (shape):
+# {
+#   "primary": ["scala","backend","api"],
+#   "secondary": ["functional","ml","devops"],
+#   "tags": ["scala","backend","api","functional","ml","devops"],
+#   "notes": null
+# }
+```
+
 Troubleshooting
 
 - 400s: ensure `Content-Type: application/json` and valid JSON
