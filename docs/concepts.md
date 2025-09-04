@@ -22,4 +22,3 @@
 - Arrays: `minItems`, `maxItems`, `uniqueItems`
 - Metadata: `title`, `description`, `examples`, `deprecated`, `readOnly`, `writeOnly`
 - Defaults: `default(value)` (type‑safe)
-

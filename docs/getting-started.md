@@ -43,7 +43,7 @@ Run `make help` for the full list.
 - `make caskchez`: Start the CaskChez API example on port 8082
 - `make wiz`: Run ChezWiz examples (requires API keys or a local LLM)
 
-ChezWiz environment variables:
+ChezWiz examples environment variables:
 
 ```bash
 export OPENAI_API_KEY="your-openai-key"           # OpenAI provider
@@ -51,4 +51,3 @@ export ANTHROPIC_API_KEY="your-anthropic-key"     # Anthropic provider (optional
 ```
 
 Local LLMs via OpenAI‑compatible endpoints (no key by default) are supported (LM Studio, Ollama, llama.cpp).
-
