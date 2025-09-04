@@ -80,6 +80,7 @@ For local commands, run `make help`.
 - ChezWiz (AI): [docs/chezwiz.md](./docs/chezwiz.md)
 - Concepts: [docs/concepts.md](./docs/concepts.md)
 - Troubleshooting: [docs/troubleshooting.md](./docs/troubleshooting.md)
+- TypeScript SDK: [docs/typescript-sdk.md](./docs/typescript-sdk.md)
 
 ## Running Examples & Commands
 

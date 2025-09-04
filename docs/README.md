@@ -15,5 +15,6 @@ Start with Getting Started, then jump into each module’s quickstart.
 - Chez (core): [chez.md](./chez.md)
 - CaskChez (web): [caskchez.md](./caskchez.md)
 - ChezWiz (AI): [chezwiz.md](./chezwiz.md)
+- TypeScript SDK: [typescript-sdk.md](./typescript-sdk.md)
 
 Run `make help` for commands you can use during development.
