@@ -55,6 +55,54 @@ object ZeroToAppApi extends cask.MainRoutes {
     write(users.values.toList)
   }
 
+  // POST /users/:id/interests/infer — derive interests from a profile summary
+  // This endpoint demonstrates how to normalize inferred interests into a
+  // typed model. For a production-quality version, wire to ChezWiz Agent.
+  @CaskChez.post(
+    "/users/:id/interests/infer",
+    RouteSchema(
+      summary = Some("Infer user interests from free text"),
+      description = Some("Provide a profile summary text; get normalized interests"),
+      body = Some(Schema[ProfileSummary]),
+      responses = Map(200 -> ApiResponse("OK", Schema[UserInterests]))
+    )
+  )
+  def inferInterests(id: String, req: ValidatedRequest) = {
+    // Look up user (optional here; you might validate existence)
+    val _ = id
+    req.getBody[ProfileSummary] match {
+      case Right(in) =>
+        // TODO: Replace naive normalization with ChezWiz Agent integration.
+        // Pseudocode example (uncomment if you add ChezWiz dependency):
+        //
+        // import chezwiz.agent.*
+        // import chezwiz.agent.providers.OpenAIProvider
+        // val agent = Agent(
+        //   name = "InterestsNormalizer",
+        //   instructions = "Extract and normalize user interests. Use concise, lowercase tags",
+        //   provider = new OpenAIProvider(sys.env("OPENAI_API_KEY")),
+        //   model = "gpt-4o-mini"
+        // )
+        // val result = agent.generateObject[UserInterests](
+        //   s"""Normalize interests from this profile:\n${in.text}""",
+        //   RequestMetadata(userId = Some(id))
+        // )
+        // result.fold(_ => fallback, _.data)
+
+        val tokens = in.text.toLowerCase.split("[^a-z0-9]+").filter(_.nonEmpty)
+        val keywords = Set("scala", "java", "kotlin", "functional", "backend", "api", "ai", "ml", "devops")
+        val hits = tokens.filter(keywords.contains).distinct.toList
+        val interests = UserInterests(
+          primary = hits.take(3),
+          secondary = hits.drop(3).take(5),
+          tags = hits
+        )
+        write(interests)
+      case Left(err) =>
+        write(ujson.Obj("error" -> "validation_failed", "message" -> err.message))
+    }
+  }
+
   // Optional: Add swagger endpoint per docs (Step 5)
   // @CaskChez.swagger("/openapi", OpenAPIConfig(title = "Quickstart API", summary = Some("Zero to App demo")))
   // def openapi(): String = ""
