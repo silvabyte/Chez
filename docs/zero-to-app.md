@@ -17,6 +17,8 @@ Prereqs
 
 1. Create a User model (Chez)
 
+Open `CaskChez/src/main/scala/caskchez/examples/zerotoapp/Models.scala` and add/update:
+
 ```scala
 // File: Chez/src/main/scala/quickstart/Models.scala
 package quickstart
@@ -41,12 +43,7 @@ case class User(
 
 2. Add a minimal API (CaskChez)
 
-```scala
-// Prefer using the stubs shipped in this repo:
-//   CaskChez/src/main/scala/caskchez/examples/zerotoapp/Api.scala
-//   CaskChez/src/main/scala/caskchez/examples/zerotoapp/Models.scala
-// These stubs compile and run out of the box; open them and follow the TODOs.
-```
+Open `CaskChez/src/main/scala/caskchez/examples/zerotoapp/Api.scala`. The basic POST/GET endpoints are scaffolded; proceed to run it.
 
 3. Run it
 
@@ -72,6 +69,8 @@ curl -s -X POST localhost:8082/users \
 ```
 
 5. Serve OpenAPI (optional)
+
+Open `CaskChez/src/main/scala/caskchez/examples/zerotoapp/Api.scala` and add this endpoint method:
 
 ```scala
 // Add this endpoint to quickstart.Api
