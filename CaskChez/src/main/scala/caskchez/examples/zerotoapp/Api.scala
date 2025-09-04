@@ -16,7 +16,7 @@ import upickle.default.*
  */
 object ZeroToAppApi extends cask.MainRoutes {
 
-  // TODO: Replace with a persistent store if desired. This in-memory map is fine for quick start.
+  // NOTE: In the real world, you'd use a real database to back this rest API.
   private var users: Map[String, User] = Map.empty
 
   // POST /users — create a user
@@ -72,7 +72,7 @@ object ZeroToAppApi extends cask.MainRoutes {
     val _ = id
     req.getBody[ProfileSummary] match {
       case Right(in) =>
-        // TODO: Replace naive normalization with ChezWiz Agent integration.
+        // TODO: Replace the current naive normalization with ChezWiz Agent integration.
         // Pseudocode example (uncomment if you add ChezWiz dependency):
         //
         // import chezwiz.agent.*
@@ -89,6 +89,8 @@ object ZeroToAppApi extends cask.MainRoutes {
         // )
         // result.fold(_ => fallback, _.data)
 
+        // Naive Implementation
+        //
         val tokens = in.text.toLowerCase.split("[^a-z0-9]+").filter(_.nonEmpty)
         val keywords = Set("scala", "java", "kotlin", "functional", "backend", "api", "ai", "ml", "devops")
         val hits = tokens.filter(keywords.contains).distinct.toList
