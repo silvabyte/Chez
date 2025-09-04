@@ -30,7 +30,7 @@ libraryDependencies ++= Seq(
 
 ## Quickstart (5 minutes)
 
-1) Define models with Chez annotations and upickle codecs
+1. Define models with Chez annotations and upickle codecs
 
 ```scala
 import chez.derivation.Schema
@@ -47,7 +47,7 @@ case class CreateUser(
 case class User(id: String, name: String, email: String, age: Int) derives Schema, ReadWriter
 ```
 
-2) Add a validated endpoint
+2. Add a validated endpoint
 
 ```scala
 import cask.main.Main
@@ -74,7 +74,7 @@ object Api extends Main {
 }
 ```
 
-3) Run and test
+3. Run and test
 
 ```bash
 ./mill CaskChez.runMain caskchez.examples.UserCrudAPI   # full example server
@@ -145,7 +145,12 @@ def openapi(): String = ""  // auto‑generated JSON
   "error": "Validation failed",
   "message": "Request validation failed",
   "details": [
-    { "type": "RequestBodyError", "message": "Missing required field: email", "path": "/body", "field": "email" }
+    {
+      "type": "RequestBodyError",
+      "message": "Missing required field: email",
+      "path": "/body",
+      "field": "email"
+    }
   ]
 }
 ```
@@ -173,5 +178,5 @@ def openapi(): String = ""  // auto‑generated JSON
 
 ## Examples
 
-- Full CRUD with OpenAPI: `CaskChez/src/main/scala/caskchez/examples/UserCrudAPI.scala`
-- OpenAPI generation sample: `CaskChez/src/main/scala/caskchez/examples/OpenAPITest.scala`
+- Full CRUD with OpenAPI: [CaskChez/src/main/scala/caskchez/examples/UserCrudAPI.scala](../CaskChez/src/main/scala/caskchez/examples/UserCrudAPI.scala)
+- OpenAPI generation sample: [CaskChez/src/main/scala/caskchez/examples/OpenAPITest.scala](../CaskChez/src/main/scala/caskchez/examples/OpenAPITest.scala)
