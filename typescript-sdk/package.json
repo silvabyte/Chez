@@ -3,12 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "openapi-ts": "openapi-ts"
+    "openapi-ts": "openapi-ts",
+    "demo": "tsx src/demo.ts"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "@hey-api/openapi-ts": "^0.78.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
   }
 }

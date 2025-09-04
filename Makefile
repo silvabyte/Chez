@@ -1,215 +1,33 @@
-# Chez Project Makefile
-# Quick commands for development, testing, and project management
+################################################################################
+# Chez Project Makefile (modular)
+#
+# This top-level Makefile delegates real logic to files in makefiles/.
+# It provides a clean help output and variables you can override.
+################################################################################
 
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
 
-# ============================================================================
-# HELP
-# ============================================================================
-.PHONY: help
-help:
-	@echo "Chez Project Commands"
-	@echo "===================="
-	@echo ""
-	@echo "Core:"
-	@echo "  make build     - Compile all modules"
-	@echo "  make test      - Run all tests"
-	@echo "  make clean     - Clean build artifacts"
-	@echo "  make format    - Format code with scalafmt"
-	@echo "  make lint      - Run scalafix linting"
-	@echo ""
-	@echo "Testing:"
-	@echo "  make t         - Quick test (alias for test)"
-	@echo "  make tc        - Test Chez module"
-	@echo "  make tca       - Test CaskChez module"
-	@echo "  make tw        - Test ChezWiz module"
-	@echo "  make watch     - Run tests in watch mode"
-	@echo ""
-	@echo "Examples:"
-	@echo "  make demo      - Run all Chez examples"
-	@echo "  make wiz       - Run all ChezWiz AI examples"
-	@echo ""
-	@echo "Development:"
-	@echo "  make repl      - Start Scala REPL"
-	@echo "  make check     - Full check (compile + test + lint)"
-	@echo "  make release   - Prepare release (check + assembly)"
-	@echo ""
-	@echo "Use 'make <target> -n' to see what commands will run"
+# Core variables (override via `make VAR=...`)
+# Path to mill launcher
+MILL ?= ./mill
+# Target module: one of `__`, `Chez`, `CaskChez`, `ChezWiz`
+MODULE ?= __
+# Optional test suite/class to run (e.g., chez.primitives.StringChezTests)
+SUITE ?=
+# Set to 1 to run in watch mode where supported
+WATCH ?= 0
 
-# ============================================================================
-# CORE COMMANDS
-# ============================================================================
-.PHONY: build b
-build:
-	@./mill __.compile
-b: build
-
-.PHONY: test t
-test:
-	@./mill __.test
-t: test
-
-.PHONY: clean
-clean:
-	@./mill clean
-	@rm -rf out/
-
-.PHONY: format fmt
-format:
-	@./mill mill.scalalib.scalafmt.ScalafmtModule/reformatAll
-fmt: format
-
-.PHONY: lint fix
-lint:
-	@./mill __.fix
-fix: lint
-
-# ============================================================================
-# MODULE-SPECIFIC TESTING
-# ============================================================================
-.PHONY: tc test-chez
-tc:
-	@./mill Chez.test
-test-chez: tc
-
-.PHONY: tca test-cask
-tca:
-	@./mill CaskChez.test
-test-cask: tca
-
-.PHONY: tw test-wiz
-tw:
-	@./mill ChezWiz.test
-test-wiz: tw
-
-# Specific test suites
-.PHONY: tp test-primitives
-tp:
-	@./mill Chez.test chez.primitives
-test-primitives: tp
-
-.PHONY: td test-derivation
-td:
-	@./mill Chez.test chez.derivation
-test-derivation: td
-
-.PHONY: tv test-validation
-tv:
-	@./mill Chez.test chez.validation
-test-validation: tv
-
-.PHONY: ti test-integration
-ti:
-	@./mill CaskChez.test caskchez.UserCrudAPITest
-test-integration: ti
-
-# ============================================================================
-# WATCH MODE
-# ============================================================================
-.PHONY: watch w
-watch:
-	@echo "👀 Watching for changes... (Ctrl+C to stop)"
-	@./mill -w __.compile
-w: watch
-
-.PHONY: watch-test wt
-watch-test:
-	@echo "👀 Running tests on change... (Ctrl+C to stop)"
-	@./mill -w __.test
-wt: watch-test
-
-# ============================================================================
-# EXAMPLES & DEMOS
-# ============================================================================
-.PHONY: demo examples
-demo:
-	@./mill Chez.test.runMain chez.examples.BasicUsage
-	@./mill Chez.test.runMain chez.examples.ComplexTypes
-	@./mill Chez.test.runMain chez.examples.Validation
-examples: demo
-
-.PHONY: wiz wiz-demo
-wiz:
-	@./mill ChezWiz.runMain chezwiz.agent.examples.Examples
-wiz-demo: wiz
-
-# Individual provider examples
-.PHONY: wiz-openai
-wiz-openai:
-	@./mill ChezWiz.runMain chezwiz.agent.examples.OpenAIExample
-
-.PHONY: wiz-anthropic
-wiz-anthropic:
-	@./mill ChezWiz.runMain chezwiz.agent.examples.AnthropicExample
-
-.PHONY: wiz-local
-wiz-local:
-	@./mill ChezWiz.runMain chezwiz.agent.examples.OpenAICompatibleExample
-
-# ============================================================================
-# DEVELOPMENT TOOLS
-# ============================================================================
-.PHONY: assembly
-assembly:
-	@./mill __.assembly
-
-.PHONY: docs
-docs:
-	@./mill __.docJar
-
-.PHONY: deps
-deps:
-	@./mill mill.scalalib.Dependency/showUpdates
-
-# ============================================================================
-# CI/CD COMMANDS
-# ============================================================================
-.PHONY: check
-check: build test lint
-	@echo "✅ All checks passed!"
-
-.PHONY: ci
-ci: clean check
-	@echo "✅ CI pipeline complete!"
-
-.PHONY: release
-release: check assembly docs
-	@echo "📦 Release artifacts ready!"
-
-# ============================================================================
-# PROJECT INFO
-# ============================================================================
-.PHONY: info
-info:
-	@echo "Chez Project"
-	@echo "============"
-	@echo "Scala:     3.6.2+"
-	@echo "Build:     Mill"
-	@echo "Test:      utest"
-	@echo "Modules:   Chez (core), CaskChez (web), ChezWiz (AI)"
-	@echo ""
-	@echo "Run 'make help' for available commands"
-
-.PHONY: version
-version:
-	@./mill version
-
-# ============================================================================
-# UTILITIES
-# ============================================================================
-.PHONY: tree
-tree:
-	@tree -I 'out|.git|.metals|.bloop|.bsp|target|node_modules' -L 2
-
-.PHONY: loc
-loc:
-	@find . -name "*.scala" -not -path "./out/*" | xargs wc -l | tail -1
-
-# Clean everything including IDE files
-.PHONY: clean-all purge
-clean-all:
-	@./mill clean
-	@rm -rf out/ .bloop .bsp .metals target
-	@echo "✅ Deep clean complete!"
-purge: clean-all
+# Include modular makefiles
+MAKEFILES_DIR := makefiles
+-include $(MAKEFILES_DIR)/common.mk
+-include $(MAKEFILES_DIR)/build.mk
+-include $(MAKEFILES_DIR)/test.mk
+-include $(MAKEFILES_DIR)/watch.mk
+-include $(MAKEFILES_DIR)/examples.mk
+-include $(MAKEFILES_DIR)/dev.mk
+-include $(MAKEFILES_DIR)/ci.mk
+-include $(MAKEFILES_DIR)/info.mk
+-include $(MAKEFILES_DIR)/util.mk
+-include $(MAKEFILES_DIR)/sdk.mk

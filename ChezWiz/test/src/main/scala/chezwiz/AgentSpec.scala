@@ -13,7 +13,7 @@ import chezwiz.agent.{
   Usage
 }
 import chezwiz.agent.providers.*
-import chezwiz.agent.providers.{OpenAIResponse, ErrorResponse}
+ 
 import chez.derivation.Schema
 import upickle.default.*
 

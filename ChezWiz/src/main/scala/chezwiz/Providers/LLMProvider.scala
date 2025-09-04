@@ -11,6 +11,7 @@ import chezwiz.agent.{
   EmbeddingInput
 }
 import scala.util.{Try, Success, Failure}
+import scala.annotation.unused
 
 enum HttpVersion:
   case Http11
@@ -34,7 +35,7 @@ trait LLMProvider:
   // Embedding support
   def supportsEmbeddings: Boolean = false
   def supportedEmbeddingModels: List[String] = List.empty
-  def embed(request: EmbeddingRequest): Either[ChezError, EmbeddingResponse] =
+  def embed(@unused request: EmbeddingRequest): Either[ChezError, EmbeddingResponse] =
     Left(ChezError.ConfigurationError(s"Provider $name does not support embeddings"))
 
   def embedBatch(texts: List[String], model: String): Either[ChezError, EmbeddingResponse] =

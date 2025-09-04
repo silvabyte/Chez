@@ -1,5 +1,4 @@
 import utest.*
-import chezwiz.agent.{ChatMessage, ChatRequest, ChezError, MessageContent, ObjectRequest, Role}
 import chezwiz.agent.providers.*
 
 object ProviderSpec extends TestSuite:

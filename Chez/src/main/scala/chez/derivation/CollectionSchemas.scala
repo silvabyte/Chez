@@ -1,6 +1,7 @@
 package chez.derivation
 
 import scala.compiletime.*
+import scala.annotation.unused
 import chez.*
 import chez.complex.*
 
@@ -19,7 +20,7 @@ object CollectionSchemas {
    * - Map[String, V]: Uses additionalPropertiesSchema to allow any string key with V schema
    * - Map[K, V] where K != String: Uses patternProperties with ".*" pattern for any key
    */
-  inline given [K, V](using kSchema: Schema[K], vSchema: Schema[V]): Schema[Map[K, V]] = {
+  inline given [K, V](using @unused kSchema: Schema[K], vSchema: Schema[V]): Schema[Map[K, V]] = {
     // Use compile-time type checking to determine key type
     inline erasedValue[K] match {
       case _: String =>

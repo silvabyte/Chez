@@ -151,6 +151,19 @@ object UserCrudAPI extends cask.MainRoutes {
       message: String
   ) derives Schema, ReadWriter
 
+  object ExampleData {
+    val user1 = User("1", "Alice Smith", "alice@example.com", 25, isActive = true)
+    val createUser = CreateUserRequest("John Doe", "john@example.com", 30, isActive = true)
+    val updateUser = UpdateUserRequest(name = Some("Jane Doe"), email = None, age = Some(31), isActive = None)
+    val listQuery = UserListQuery(page = Some(1), limit = Some(10), search = Some("ali"), active = Some(true))
+    val validationError = ErrorResponse(
+      error = "validation_failed",
+      message = "Email already exists",
+      details = List("Use a different email")
+    )
+    val success = SuccessResponse(message = "User deleted successfully")
+  }
+
   // === CRUD ENDPOINTS ===
 
   @CaskChez.post(
@@ -160,15 +173,24 @@ object UserCrudAPI extends cask.MainRoutes {
       description =
         Some("Creates a new user with automatic validation and returns the created user"),
       tags = List("users"),
-      body = Some(Schema[CreateUserRequest]),
+      body = Some(Schema[CreateUserRequest].withExamples(ujson.read(write(ExampleData.createUser)))),
       responses = Map(
-        201 -> ApiResponse("User created successfully", Schema[User]),
-        400 -> ApiResponse("Validation error", Schema[ErrorResponse]),
-        409 -> ApiResponse("Email already exists", Schema[ErrorResponse])
+        201 -> ApiResponse(
+          "User created successfully",
+          Schema[User].withExamples(ujson.read(write(ExampleData.user1)))
+        ),
+        400 -> ApiResponse(
+          "Validation error",
+          Schema[ErrorResponse].withExamples(ujson.read(write(ExampleData.validationError)))
+        ),
+        409 -> ApiResponse(
+          "Email already exists",
+          Schema[ErrorResponse].withExamples(ujson.read(write(ExampleData.validationError)))
+        )
       )
     )
   )
-  def createUser(validatedRequest: ValidatedRequest): String = {
+  def createUser(validatedRequest: ValidatedRequest): cask.Response[String] = {
     validatedRequest.getBody[CreateUserRequest] match {
       case Right(request) =>
         // Check if email already exists
@@ -179,7 +201,11 @@ object UserCrudAPI extends cask.MainRoutes {
             message = s"Email ${request.email} is already registered",
             details = List("Please use a different email address")
           )
-          write(error)
+          cask.Response(
+            data = write(error),
+            statusCode = 409,
+            headers = Seq("Content-Type" -> "application/json")
+          )
         } else {
           val newId = (users.keySet.asScala.map(_.toInt).maxOption.getOrElse(0) + 1).toString
           val user = User(
@@ -190,7 +216,11 @@ object UserCrudAPI extends cask.MainRoutes {
             isActive = request.isActive
           )
           users.put(newId, user)
-          write(user)
+          cask.Response(
+            data = write(user),
+            statusCode = 201,
+            headers = Seq("Content-Type" -> "application/json")
+          )
         }
 
       case Left(error) =>
@@ -199,7 +229,11 @@ object UserCrudAPI extends cask.MainRoutes {
           message = error.message,
           details = List("Please check your request data")
         )
-        write(errorResponse)
+        cask.Response(
+          data = write(errorResponse),
+          statusCode = 400,
+          headers = Seq("Content-Type" -> "application/json")
+        )
     }
   }
 
@@ -209,9 +243,12 @@ object UserCrudAPI extends cask.MainRoutes {
       summary = Some("List users"),
       description = Some("Retrieves a paginated list of users with optional filtering"),
       tags = List("users"),
-      query = Some(Schema[UserListQuery]),
+      query = Some(Schema[UserListQuery].withExamples(ujson.read(write(ExampleData.listQuery)))),
       responses = Map(
-        200 -> ApiResponse("Users retrieved successfully", Schema[UserListResponse])
+        200 -> ApiResponse(
+          "Users retrieved successfully",
+          Schema[UserListResponse].withExamples(ujson.read(write(ExampleData.success)))
+        )
       )
     )
   )
@@ -263,8 +300,14 @@ object UserCrudAPI extends cask.MainRoutes {
       description = Some("Retrieves a specific user by their unique identifier"),
       tags = List("users"),
       responses = Map(
-        200 -> ApiResponse("User found", Schema[User]),
-        404 -> ApiResponse("User not found", Schema[ErrorResponse])
+        200 -> ApiResponse(
+          "User found",
+          Schema[User].withExamples(ujson.read(write(ExampleData.user1)))
+        ),
+        404 -> ApiResponse(
+          "User not found",
+          Schema[ErrorResponse].withExamples(ujson.read(write(ExampleData.validationError)))
+        )
       )
     )
   )
@@ -289,12 +332,24 @@ object UserCrudAPI extends cask.MainRoutes {
       summary = Some("Update user"),
       description = Some("Updates an existing user with partial data"),
       tags = List("users"),
-      body = Some(Schema[UpdateUserRequest]),
+      body = Some(Schema[UpdateUserRequest].withExamples(ujson.read(write(ExampleData.updateUser)))),
       responses = Map(
-        200 -> ApiResponse("User updated successfully", Schema[User]),
-        400 -> ApiResponse("Validation error", Schema[ErrorResponse]),
-        404 -> ApiResponse("User not found", Schema[ErrorResponse]),
-        409 -> ApiResponse("Email already exists", Schema[ErrorResponse])
+        200 -> ApiResponse(
+          "User updated successfully",
+          Schema[User].withExamples(ujson.read(write(ExampleData.user1)))
+        ),
+        400 -> ApiResponse(
+          "Validation error",
+          Schema[ErrorResponse].withExamples(ujson.read(write(ExampleData.validationError)))
+        ),
+        404 -> ApiResponse(
+          "User not found",
+          Schema[ErrorResponse].withExamples(ujson.read(write(ExampleData.validationError)))
+        ),
+        409 -> ApiResponse(
+          "Email already exists",
+          Schema[ErrorResponse].withExamples(ujson.read(write(ExampleData.validationError)))
+        )
       )
     )
   )
@@ -351,8 +406,14 @@ object UserCrudAPI extends cask.MainRoutes {
       description = Some("Deletes a user by their unique identifier"),
       tags = List("users"),
       responses = Map(
-        200 -> ApiResponse("User deleted successfully", Schema[SuccessResponse]),
-        404 -> ApiResponse("User not found", Schema[ErrorResponse])
+        200 -> ApiResponse(
+          "User deleted successfully",
+          Schema[SuccessResponse].withExamples(ujson.read(write(ExampleData.success)))
+        ),
+        404 -> ApiResponse(
+          "User not found",
+          Schema[ErrorResponse].withExamples(ujson.read(write(ExampleData.validationError)))
+        )
       )
     )
   )

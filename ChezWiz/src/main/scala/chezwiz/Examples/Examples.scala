@@ -6,7 +6,6 @@ import chezwiz.agent.providers.{OpenAIProvider, AnthropicProvider}
 import chez.derivation.Schema
 
 import java.util.concurrent.atomic.AtomicLong
-import scala.collection.mutable
 
 object Examples extends App {
   Config.initialize(sys.env.getOrElse("ENV_DIR", os.pwd.toString))

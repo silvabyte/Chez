@@ -3,15 +3,13 @@ package chezwiz.agent.test
 import utest.*
 import chezwiz.agent.{
   Agent,
-  ChatRequest,
-  ChatResponse,
   ChezError,
+  ChatRequest,
+  ObjectRequest,
   Embedding,
   EmbeddingInput,
   EmbeddingRequest,
   EmbeddingResponse,
-  ObjectRequest,
-  ObjectResponse,
   PreEmbeddingContext,
   PostEmbeddingContext,
   RequestMetadata,

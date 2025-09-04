@@ -2,10 +2,9 @@ package chez.derivation
 
 import utest.*
 import chez.*
-import chez.primitives.*
 import chez.complex.*
 import chez.derivation.CollectionSchemas.given
-import upickle.default.{write, read}
+ 
 
 object EnumDerivationTests extends TestSuite {
 

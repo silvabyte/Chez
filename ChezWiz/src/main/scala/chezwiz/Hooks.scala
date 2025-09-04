@@ -1,6 +1,6 @@
 package chezwiz.agent
 
-import chez.derivation.Schema
+ 
 
 /**
  * Hook system for ChezWiz agents providing lifecycle events for observability,
