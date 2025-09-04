@@ -12,6 +12,15 @@ info: ## Show project info
 	@echo "Run 'make help' for available commands"
 
 .PHONY: version
-version: ## Show mill version
+version: ## Show project version (from build)
+	@printf "Project version: %s\n" "$$($(MILL) show Chez.publishVersion | sed -n 's/.*"\(.*\)".*/\1/p' | tail -n1)"
+
+.PHONY: mill-version
+mill-version: ## Show Mill version
 	@$(MILL) version
 
+.PHONY: versions
+versions: ## Show project, Scala, and Mill versions
+	@printf "Project: %s\n" "$$($(MILL) show Chez.publishVersion | sed -n 's/.*"\(.*\)".*/\1/p' | tail -n1)"
+	@printf "Scala:   %s\n" "$$($(MILL) show Chez.scalaVersion | sed -n 's/.*"\(.*\)".*/\1/p' | tail -n1)"
+	@printf "Mill:    %s\n" "$$($(MILL) version | tail -n1)"

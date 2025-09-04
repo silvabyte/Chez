@@ -55,3 +55,8 @@ wiz-demo: examples-chezwiz ## Alias: Run ChezWiz examples bundle
 wiz-openai: example-chezwiz-openai ## Alias: Run ChezWiz OpenAI examples
 wiz-anthropic: example-chezwiz-anthropic ## Alias: Run ChezWiz Anthropic examples
 wiz-local: example-chezwiz-local ## Alias: Run ChezWiz local examples
+
+# Zero to App quickstart (CaskChez)
+.PHONY: example-caskchez-zeroapp
+example-caskchez-zeroapp: ## Start Zero to App quickstart server (blocks)
+	@$(MILL) CaskChez.runMain caskchez.examples.zerotoapp.ZeroToAppApi

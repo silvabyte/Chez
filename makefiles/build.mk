@@ -17,10 +17,9 @@ fmt: format ## Alias for format
 
 .PHONY: format-check
 format-check: ## Check scalafmt without rewriting
-	@$(MILL) mill.scalalib.scalafmt.ScalafmtModule/check
+	@$(MILL) mill.scalalib.scalafmt.ScalafmtModule/checkFormatAll
 
 .PHONY: lint fix
 lint: ## Run scalafix (lint/fixes)
 	@$(MILL) __.fix
 fix: lint ## Alias for lint
-
