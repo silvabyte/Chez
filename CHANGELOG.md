@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.0] - 2025-09-05
+
+* refactor: remove MetricsFactory (#17)
+* docs: add detailed documentation for Chez and ChezWiz (#16)
+* chore: remove z-a section (#15)
+* docs: consolidate Getting Started in docs/README.md (#14)
+* docs: overhaul docs, add Zero-to-App flow, and scaffold runnable example (#13)
+* docs: improve installation instructions and modernize code examples (#12)
+
 ## [0.2.1] - 2025-08-27
 
 * feat: introduce Le Chez brand identity and clean up imports (#11)
