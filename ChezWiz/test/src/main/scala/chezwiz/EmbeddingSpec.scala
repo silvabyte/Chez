@@ -122,11 +122,6 @@ object EmbeddingSpec extends TestSuite:
     }
 
     test("Embedding request body building") {
-      val provider = OpenAICompatibleProvider(
-        baseUrl = "http://localhost:1234/v1",
-        modelId = "text-embedding-qwen3-embedding-8b"
-      )
-
       // Test with private method access via reflection (for testing purposes)
       // In a real test, we'd mock the HTTP response instead
       val request = EmbeddingRequest(

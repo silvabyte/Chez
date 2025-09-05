@@ -2,8 +2,8 @@ package chez.examples
 
 import chez.*
 import chez.derivation.Schema
-import chez.derivation.CollectionSchemas.given
 import scala.util.{Try, Success, Failure}
+import chez.derivation.CollectionSchemas.given_Schema_Map
 
 /**
  * Comprehensive examples demonstrating sealed trait schema derivation

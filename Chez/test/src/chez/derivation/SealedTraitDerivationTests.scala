@@ -3,7 +3,6 @@ package chez.derivation
 import utest.*
 import chez.*
 import chez.complex.*
- 
 
 object SealedTraitDerivationTests extends TestSuite {
 
@@ -605,6 +604,7 @@ object SealedTraitDerivationTests extends TestSuite {
         val circle = Circle(5.0)
         val rectangle = Rectangle(10.0, 20.0)
         val triangle = Triangle(8.0, 12.0)
+        val _ = (circle, rectangle, triangle)
 
         // Verify schemas can be summoned
         val circleSchema = summon[Schema[Circle]]

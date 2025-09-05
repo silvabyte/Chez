@@ -3,8 +3,6 @@ package chez.derivation
 import utest.*
 import chez.*
 import chez.complex.*
-import chez.derivation.CollectionSchemas.given
- 
 
 object EnumDerivationTests extends TestSuite {
 
@@ -263,6 +261,8 @@ object EnumDerivationTests extends TestSuite {
       }
 
       test("Set of enums") {
+        import chez.derivation.CollectionSchemas.given_Schema_Set
+        val _ = summon[Schema[Set[Status]]]
         case class UniqueStatuses(name: String, statuses: Set[Status]) derives Schema
 
         val schema = Schema[UniqueStatuses]
@@ -283,6 +283,8 @@ object EnumDerivationTests extends TestSuite {
       }
 
       test("Vector of enums") {
+        import chez.derivation.CollectionSchemas.given_Schema_Vector
+        val _ = summon[Schema[Vector[Priority]]]
         case class OrderedStatuses(name: String, statuses: Vector[Priority]) derives Schema
 
         val schema = Schema[OrderedStatuses]
@@ -303,6 +305,8 @@ object EnumDerivationTests extends TestSuite {
       }
 
       test("Map with enum values") {
+        import chez.derivation.CollectionSchemas.given_Schema_Map
+        val _ = summon[Schema[Map[String, Status]]]
         case class StatusMap(name: String, userStatuses: Map[String, Status]) derives Schema
 
         val schema = Schema[StatusMap]
@@ -326,6 +330,7 @@ object EnumDerivationTests extends TestSuite {
       test("Case class with nested case class containing enum") {
         case class UserProfile(name: String, settings: UserSettings) derives Schema
         case class UserSettings(theme: Color, priority: Priority) derives Schema
+        val _ = summon[Schema[UserSettings]]
 
         val schema = Schema[UserProfile]
         val json = schema.toJsonSchema
@@ -355,6 +360,7 @@ object EnumDerivationTests extends TestSuite {
         case class MaybeSettings(name: String, settings: Option[UserSettingsWithEnum])
             derives Schema
         case class UserSettingsWithEnum(theme: Color) derives Schema
+        val _ = summon[Schema[UserSettingsWithEnum]]
 
         val schema = Schema[MaybeSettings]
         val json = schema.toJsonSchema

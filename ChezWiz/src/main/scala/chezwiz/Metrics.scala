@@ -1,6 +1,4 @@
 package chezwiz.agent
-
-import chezwiz.agent.providers.{OpenAIProvider, AnthropicProvider}
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import upickle.default.ReadWriter
 import upickle.default.write
@@ -592,97 +590,5 @@ class MetricsHook(metrics: AgentMetrics) extends AgentHook with PreRequestHook w
 
   override def onHistoryChange(context: HistoryContext): Unit = {
     metrics.recordHistoryOperation(context.agentName, context.operation, context.metadata)
-  }
-}
-
-// ============================================================================
-// Convenience Factory
-// ============================================================================
-
-/** Factory for creating agents with built-in metrics */
-object MetricsFactory {
-
-  /** Global metrics instance (can be replaced with custom implementation) */
-  // scalafix:off DisableSyntax.var
-  // Disabling because global metrics instance needs to be mutable to allow users to
-  // replace the default metrics implementation with their own custom metrics backend
-  @volatile private var _globalMetrics: AgentMetrics = new DefaultAgentMetrics()
-  // scalafix:on DisableSyntax.var
-
-  def globalMetrics: AgentMetrics = _globalMetrics
-  def setGlobalMetrics(metrics: AgentMetrics): Unit = _globalMetrics = metrics
-
-  /** Create an OpenAI agent with metrics enabled */
-  def createOpenAIAgentWithMetrics(
-      name: String,
-      instructions: String,
-      apiKey: String,
-      model: String,
-      temperature: Option[Double] = None,
-      maxTokens: Option[Int] = None,
-      customMetrics: Option[AgentMetrics] = None,
-      additionalHooks: HookRegistry = HookRegistry.empty
-  ): Either[ChezError, (Agent, AgentMetrics)] = {
-    val metricsInstance = customMetrics.getOrElse(globalMetrics)
-    val metricsHook = new MetricsHook(metricsInstance)
-
-    val hooks = additionalHooks
-      .addPreRequestHook(metricsHook)
-      .addPostResponseHook(metricsHook)
-      .addPreObjectRequestHook(metricsHook)
-      .addPostObjectResponseHook(metricsHook)
-      .addErrorHook(metricsHook)
-      .addHistoryHook(metricsHook)
-
-    val provider = new OpenAIProvider(apiKey)
-    val agent = Agent(name, instructions, provider, model, temperature, maxTokens, hooks)
-    Right(agent -> metricsInstance)
-  }
-
-  /** Create an Anthropic agent with metrics enabled */
-  def createAnthropicAgentWithMetrics(
-      name: String,
-      instructions: String,
-      apiKey: String,
-      model: String,
-      temperature: Option[Double] = None,
-      maxTokens: Option[Int] = None,
-      customMetrics: Option[AgentMetrics] = None,
-      additionalHooks: HookRegistry = HookRegistry.empty
-  ): Either[ChezError, (Agent, AgentMetrics)] = {
-    val metricsInstance = customMetrics.getOrElse(globalMetrics)
-    val metricsHook = new MetricsHook(metricsInstance)
-
-    val hooks = additionalHooks
-      .addPreRequestHook(metricsHook)
-      .addPostResponseHook(metricsHook)
-      .addPreObjectRequestHook(metricsHook)
-      .addPostObjectResponseHook(metricsHook)
-      .addErrorHook(metricsHook)
-      .addHistoryHook(metricsHook)
-
-    val provider = new AnthropicProvider(apiKey)
-    val agent = Agent(name, instructions, provider, model, temperature, maxTokens, hooks)
-    Right(agent -> metricsInstance)
-  }
-
-  /** Get current metrics for an agent */
-  def getMetrics(agentName: String): Option[AgentMetricsSnapshot] = {
-    globalMetrics.getSnapshot(agentName)
-  }
-
-  /** Get all agent metrics */
-  def getAllMetrics: Map[String, AgentMetricsSnapshot] = {
-    globalMetrics.getAllSnapshots
-  }
-
-  /** Export all metrics in Prometheus format */
-  def exportPrometheus: String = {
-    getAllMetrics.values.map(_.toPrometheusFormat).mkString("\n\n")
-  }
-
-  /** Export all metrics as JSON */
-  def exportJson: String = {
-    write(getAllMetrics)
   }
 }

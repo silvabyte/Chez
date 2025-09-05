@@ -1,7 +1,6 @@
 package chezwiz.agent.examples
 
 import dotenv.{DotEnv}
- 
 
 object Config {
   // scalafix:off DisableSyntax.var
