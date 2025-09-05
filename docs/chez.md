@@ -43,6 +43,8 @@ schema.validate(json) // Right(()) or Left(List(...))
 - Metadata: `title`, `description`, `examples`, `deprecated`, `readOnly`, `writeOnly`
 - Defaults: `default(value)` (type‑safe)
 
+→ [Annotations: Full Docs](./chez/annotations.md)
+
 ## Unions, Option, Nulls
 
 - `A | B` → JSON Schema `oneOf`
