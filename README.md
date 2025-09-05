@@ -57,11 +57,6 @@ libraryDependencies ++= Seq(
 - CaskChez (web): Schema‑first HTTP validation + OpenAPI for Cask
 - ChezWiz (AI): Type‑safe LLM agents with structured output
 
-## Zero to App
-
-Build a tiny, validated API in minutes. See [docs/zero-to-app.md](./docs/zero-to-app.md).
-For local commands, run `make help`.
-
 ## Documentation
 
 - Getting Started: [docs/README.md](./docs/README.md)
