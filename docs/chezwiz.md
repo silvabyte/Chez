@@ -65,10 +65,14 @@ val agent = Agent("Local", "You are helpful.", local, model = "local-model")
 - Provide `RequestMetadata(tenantId, userId, conversationId)` to scope history.
 - Use `generateTextWithoutHistory` for stateless calls.
 
+→ [Detailed Guide: Metadata & Scoping](./chezwiz/metadata-and-scoping.md)
+
 ## Hooks & Metrics
 
 - Register hooks for logging/metrics/tracing; combine multiple hooks.
 - Built‑in metrics helpers available; export to Prometheus or JSON if desired.
+
+→ [Detailed Guide: Hooks & Metrics](./chezwiz/hooks-and-metrics.md)
 
 ## Run Examples
 
