@@ -17,18 +17,18 @@ Welcome to the Chez ecosystem — three Scala 3 libraries that work great togeth
 Mill:
 
 ```scala
-mvn"com.silvabyte::chez:0.2.0"        // Core schemas
-mvn"com.silvabyte::caskchez:0.2.0"    // HTTP validation + OpenAPI
-mvn"com.silvabyte::chezwiz:0.2.0"     // LLM agents
+mvn"com.silvabyte::chez:0.3.0"        // Core schemas
+mvn"com.silvabyte::caskchez:0.3.0"    // HTTP validation + OpenAPI
+mvn"com.silvabyte::chezwiz:0.3.0"     // LLM agents
 ```
 
 SBT:
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.silvabyte" %% "chez" % "0.2.0",
-  "com.silvabyte" %% "caskchez" % "0.2.0",
-  "com.silvabyte" %% "chezwiz" % "0.2.0"
+  "com.silvabyte" %% "chez" % "0.3.0",
+  "com.silvabyte" %% "caskchez" % "0.3.0",
+  "com.silvabyte" %% "chezwiz" % "0.3.0"
 )
 ```
 

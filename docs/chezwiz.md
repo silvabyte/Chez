@@ -7,16 +7,16 @@ LLM agents with multi‑provider support (OpenAI, Anthropic, OpenAI‑compatible
 Mill:
 
 ```scala
-mvn"com.silvabyte::chez:0.2.0"
-mvn"com.silvabyte::chezwiz:0.2.0"
+mvn"com.silvabyte::chez:0.3.0"
+mvn"com.silvabyte::chezwiz:0.3.0"
 ```
 
 SBT:
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.silvabyte" %% "chez" % "0.2.0",
-  "com.silvabyte" %% "chezwiz" % "0.2.0"
+  "com.silvabyte" %% "chez" % "0.3.0",
+  "com.silvabyte" %% "chezwiz" % "0.3.0"
 )
 ```
 

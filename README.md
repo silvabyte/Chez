@@ -19,35 +19,35 @@ Choose the modules you need for your project:
 
 ```scala
 // Just schema validation
-mvn"com.silvabyte::chez:0.2.0"
+mvn"com.silvabyte::chez:0.3.0"
 
 // Add HTTP validation for Cask web framework
-mvn"com.silvabyte::chez:0.2.0"
-mvn"com.silvabyte::caskchez:0.2.0"
+mvn"com.silvabyte::chez:0.3.0"
+mvn"com.silvabyte::caskchez:0.3.0"
 
 // Full ecosystem with LLM agent support
-mvn"com.silvabyte::chez:0.2.0"
-mvn"com.silvabyte::caskchez:0.2.0"
-mvn"com.silvabyte::chezwiz:0.2.0"
+mvn"com.silvabyte::chez:0.3.0"
+mvn"com.silvabyte::caskchez:0.3.0"
+mvn"com.silvabyte::chezwiz:0.3.0"
 ```
 
 ### SBT
 
 ```scala
 // Just schema validation
-libraryDependencies += "com.silvabyte" %% "chez" % "0.2.0"
+libraryDependencies += "com.silvabyte" %% "chez" % "0.3.0"
 
 // Add HTTP validation for Cask web framework
 libraryDependencies ++= Seq(
-  "com.silvabyte" %% "chez" % "0.2.0",
-  "com.silvabyte" %% "caskchez" % "0.2.0"
+  "com.silvabyte" %% "chez" % "0.3.0",
+  "com.silvabyte" %% "caskchez" % "0.3.0"
 )
 
 // Full ecosystem with LLM agent support
 libraryDependencies ++= Seq(
-  "com.silvabyte" %% "chez" % "0.2.0",
-  "com.silvabyte" %% "caskchez" % "0.2.0",
-  "com.silvabyte" %% "chezwiz" % "0.2.0"
+  "com.silvabyte" %% "chez" % "0.3.0",
+  "com.silvabyte" %% "caskchez" % "0.3.0",
+  "com.silvabyte" %% "chezwiz" % "0.3.0"
 )
 ```
 

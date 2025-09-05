@@ -7,13 +7,13 @@ Define schemas next to your types with annotations, derive JSON Schema automatic
 Mill:
 
 ```scala
-mvn"com.silvabyte::chez:0.2.0"
+mvn"com.silvabyte::chez:0.3.0"
 ```
 
 SBT:
 
 ```scala
-libraryDependencies += "com.silvabyte" %% "chez" % "0.2.0"
+libraryDependencies += "com.silvabyte" %% "chez" % "0.3.0"
 ```
 
 ## Quickstart

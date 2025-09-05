@@ -15,16 +15,16 @@ Type‑safe, annotation‑driven request validation and OpenAPI 3.1.1 for the Ca
 - Mill:
 
 ```scala
-mvn"com.silvabyte::chez:0.2.0"
-mvn"com.silvabyte::caskchez:0.2.0"
+mvn"com.silvabyte::chez:0.3.0"
+mvn"com.silvabyte::caskchez:0.3.0"
 ```
 
 - SBT:
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.silvabyte" %% "chez" % "0.2.0",
-  "com.silvabyte" %% "caskchez" % "0.2.0"
+  "com.silvabyte" %% "chez" % "0.3.0",
+  "com.silvabyte" %% "caskchez" % "0.3.0"
 )
 ```
 
