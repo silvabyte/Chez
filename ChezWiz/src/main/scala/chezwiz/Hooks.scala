@@ -1,7 +1,5 @@
 package chezwiz.agent
 
- 
-
 /**
  * Hook system for ChezWiz agents providing lifecycle events for observability,
  * logging, and custom business logic.

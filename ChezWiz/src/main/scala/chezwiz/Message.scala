@@ -1,10 +1,13 @@
 package chezwiz.agent
 
 import chez.derivation.Schema
-import chez.derivation.CollectionSchemas.given
 import chez.Chez
 import upickle.default.ReadWriter
- 
+
+given schemaVectorFloat: Schema[Vector[Float]] = {
+  import chez.derivation.CollectionSchemas.given_Schema_Vector
+  summon[Schema[Vector[Float]]]
+}
 
 sealed trait Role derives Schema, ReadWriter
 

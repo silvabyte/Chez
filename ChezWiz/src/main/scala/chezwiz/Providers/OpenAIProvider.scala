@@ -7,7 +7,6 @@ import chezwiz.agent.{
   ObjectRequest,
   ObjectResponse,
   Role,
-  
   ChezError,
   MessageContent,
   MessageContentPart

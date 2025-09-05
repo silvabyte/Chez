@@ -1,102 +1,50 @@
 # Hooks & Metrics
 
-ChezWiz provides a comprehensive hook system for observability and metrics collection, enabling you to monitor agent performance, log interactions, and implement custom business logic.
+ChezWiz provides a comprehensive hook system for observability and metrics collection, enabling you to monitor agent performance, log interactions, and implement custom behavior.
 
 ## Hook System
 
-Hooks are lifecycle events that fire during agent operations. Each hook type receives specific context data:
+Hooks are lifecycle events that fire during agent operations. Each hook type receives specific context data.
 
 ### Available Hook Types
 
-- **PreRequestHook**: Before sending requests to LLM providers
-- **PostResponseHook**: After receiving responses from LLM providers
-- **PreObjectRequestHook**: Before structured object generation requests
-- **PostObjectResponseHook**: After structured object generation responses
-- **ErrorHook**: When errors occur during operations
-- **HistoryHook**: When conversation history changes
-- **ScopeChangeHook**: When conversation scope changes
-- **PreEmbeddingHook**: Before embedding requests
-- **PostEmbeddingHook**: After embedding responses
+- PreRequestHook: Before sending requests to LLM providers
+- PostResponseHook: After receiving responses from LLM providers
+- PreObjectRequestHook: Before structured object generation requests
+- PostObjectResponseHook: After structured object generation responses
+- ErrorHook: When errors occur during operations
+- HistoryHook: When conversation history changes
+- ScopeChangeHook: When conversation scope changes
+- PreEmbeddingHook: Before embedding requests
+- PostEmbeddingHook: After embedding responses
 
 ### Creating Custom Hooks
-
-Implement hook traits for custom functionality:
 
 ```scala
 import chezwiz.agent.*
 
 class LoggingHook extends PreRequestHook with PostResponseHook {
-  def onPreRequest(context: PreRequestContext): Unit = {
-    println(s"[${context.agentName}] Starting request: ${context.request.messages.last.content}")
-  }
+  def onPreRequest(ctx: PreRequestContext): Unit =
+    println(s"[${ctx.agentName}] → ${ctx.request.messages.last.content}")
 
-  def onPostResponse(context: PostResponseContext): Unit = {
-    context.response match {
-      case Right(response) =>
-        println(s"[${context.agentName}] Success in ${context.duration}ms")
-      case Left(error) =>
-        println(s"[${context.agentName}] Error: ${error}")
-    }
-  }
+  def onPostResponse(ctx: PostResponseContext): Unit = ctx.response match
+    case Right(_) => println(s"[${ctx.agentName}] ✓ ${ctx.duration}ms")
+    case Left(err) => println(s"[${ctx.agentName}] ✗ $err")
 }
 ```
 
 ### Registering Hooks
 
-Use `HookRegistry` to combine multiple hooks:
+Use `HookRegistry` to combine multiple hooks.
 
 ```scala
 val logging = new LoggingHook()
-val metrics = new MetricsHook(new DefaultAgentMetrics())
-
-val hooks = HookRegistry.empty
-  .addPreRequestHook(logging)
-  .addPostResponseHook(logging)
-  .addPreRequestHook(metrics)
-  .addPostResponseHook(metrics)
-
-val agent = Agent("MyAgent", "You are helpful", provider, "gpt-4o", hooks = hooks)
-```
-
-## Built‑in Metrics
-
-ChezWiz includes a comprehensive metrics system that tracks performance, usage, and errors automatically.
-
-### Quick Setup with MetricsFactory
-
-The easiest way to get metrics is using `MetricsFactory`:
-
-```scala
-import chezwiz.agent.MetricsFactory
-
-val result = MetricsFactory.createOpenAIAgentWithMetrics(
-  name = "ProductionAgent",
-  instructions = "You are a helpful assistant",
-  apiKey = sys.env("OPENAI_API_KEY"),
-  model = "gpt-4o"
-)
-
-result match {
-  case Right((agent, metrics)) =>
-    // Use agent normally, metrics collected automatically
-    agent.generateText("Hello world", metadata)
-
-    // View metrics
-    val snapshot = metrics.getSnapshot("ProductionAgent")
-    println(snapshot.map(_.summary))
-  case Left(error) => println(s"Setup failed: $error")
-}
-```
-
-### Manual Metrics Setup
-
-For more control, use `MetricsHook` directly:
-
-```scala
 val metrics = new DefaultAgentMetrics()
 val metricsHook = new MetricsHook(metrics)
 
 val hooks = HookRegistry.empty
+  .addPreRequestHook(logging)
+  .addPostResponseHook(logging)
   .addPreRequestHook(metricsHook)
   .addPostResponseHook(metricsHook)
   .addPreObjectRequestHook(metricsHook)
@@ -104,46 +52,65 @@ val hooks = HookRegistry.empty
   .addErrorHook(metricsHook)
   .addHistoryHook(metricsHook)
 
-val agent = Agent("MyAgent", "Instructions", provider, "gpt-4o", hooks = hooks)
+val agent = Agent("MyAgent", "You are helpful", provider, "gpt-4o", hooks = hooks)
 ```
 
-### Metrics Data
+## Built‑in Metrics
 
-Collected metrics include:
+ChezWiz includes a metrics implementation that tracks performance, usage, and errors via hooks. There is no factory; wire metrics explicitly as above.
 
-- **Request counts**: Total, successful, failed
-- **Performance**: Average/min/max duration, success rates
-- **Usage**: Token consumption by model and operation
-- **Scope analytics**: Per‑tenant/user/conversation metrics
-- **Error tracking**: Error types, frequencies, samples
-- **Recent activity**: Request rates and trends
+### What’s Collected
 
-### Exporting Metrics
+- Request counts: total, successful, failed
+- Performance: avg/min/max duration, success rate
+- Usage: tokens by model and operation
+- Scope analytics: per tenant/user/conversation
+- Error tracking: types, counts, sample message
+- Recent activity: request rate (last hour)
 
-Export metrics in multiple formats:
+### Accessing Metrics
+
+Per‑agent snapshot:
 
 ```scala
-val snapshot = metrics.getSnapshot("MyAgent")
-
-// Human‑readable summary
-println(snapshot.map(_.summary))
-
-// Prometheus format
-println(snapshot.map(_.toPrometheusFormat))
-
-// JSON export
-println(snapshot.map(_.toJson))
-
-// Global metrics export
-println(MetricsFactory.exportPrometheus)
-println(MetricsFactory.exportJson)
+metrics.getSnapshot("MyAgent").foreach { snap =>
+  println(snap.summary)             // human-readable
+  println(snap.toPrometheusFormat)  // Prometheus exposition
+  println(snap.toJson)              // JSON
+}
 ```
 
-## Hook Context Data
+Collect all snapshots from a shared metrics instance (recommended when reusing a single `metrics` across agents):
 
-Each hook receives rich context information:
+```scala
+val all: Map[String, AgentMetricsSnapshot] = metrics.getAllSnapshots
+val prometheusAll = all.values.map(_.toPrometheusFormat).mkString("\n\n")
+import upickle.default.write
+val jsonAll = write(all)
+```
 
-### PreRequestContext
+### Share One Metrics Instance Across Agents
+
+```scala
+val metrics = new DefaultAgentMetrics()
+def withMetrics(h: HookRegistry) = h
+  .addPreRequestHook(new MetricsHook(metrics))
+  .addPostResponseHook(new MetricsHook(metrics))
+  .addPreObjectRequestHook(new MetricsHook(metrics))
+  .addPostObjectResponseHook(new MetricsHook(metrics))
+  .addErrorHook(new MetricsHook(metrics))
+  .addHistoryHook(new MetricsHook(metrics))
+
+val a1 = Agent("A1", "...", provider1, "model-1", hooks = withMetrics(HookRegistry.empty))
+val a2 = Agent("A2", "...", provider2, "model-2", hooks = withMetrics(HookRegistry.empty))
+
+// Export combined metrics
+metrics.getAllSnapshots.values.foreach(s => println(s.summary))
+```
+
+## Hook Context Types
+
+Core contexts passed to hooks:
 
 ```scala
 case class PreRequestContext(
@@ -153,11 +120,7 @@ case class PreRequestContext(
   metadata: RequestMetadata,
   timestamp: Long
 )
-```
 
-### PostResponseContext
-
-```scala
 case class PostResponseContext(
   agentName: String,
   model: String,
@@ -169,11 +132,7 @@ case class PostResponseContext(
 ) {
   def duration: Long = responseTimestamp - requestTimestamp
 }
-```
 
-### ErrorContext
-
-```scala
 case class ErrorContext(
   agentName: String,
   model: String,
@@ -187,7 +146,7 @@ case class ErrorContext(
 
 ## Advanced Patterns
 
-### Combining Multiple Metrics Systems
+### Combining Multiple Metrics Backends
 
 ```scala
 val customMetrics = new MyCustomMetrics()
@@ -206,23 +165,8 @@ val hooks = HookRegistry.empty
 ### Conditional Hook Execution
 
 ```scala
-class ConditionalLoggingHook extends PreRequestHook {
-  def onPreRequest(context: PreRequestContext): Unit = {
-    if (context.metadata.tenantId.contains("debug")) {
-      println(s"Debug request: ${context.request}")
-    }
-  }
-}
+class ConditionalLoggingHook extends PreRequestHook:
+  def onPreRequest(ctx: PreRequestContext): Unit =
+    if ctx.metadata.tenantId.contains("debug") then
+      println(s"Debug request: ${ctx.request}")
 ```
-
-### Global Metrics Access
-
-```scala
-// Replace global metrics instance
-MetricsFactory.setGlobalMetrics(new MyCustomMetrics())
-
-// Access global metrics
-val allMetrics = MetricsFactory.getAllMetrics
-val agentMetrics = MetricsFactory.getMetrics("MyAgent")
-```
-

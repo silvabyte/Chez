@@ -8,7 +8,6 @@ import chezwiz.agent.{
   DefaultAgentMetrics,
   ErrorMetrics,
   HookRegistry,
-  MetricsFactory,
   MetricsHook,
   ModelMetrics,
   ObjectRequest,
@@ -177,37 +176,6 @@ object MetricsSpec extends TestSuite:
       assert(snap.textGenerations.count == 2)
       assert(snap.objectGenerations.count == 1)
       assert(snap.modelMetrics.contains("mock-model-1"))
-    }
-
-    test("MetricsFactory creates agents with automatic metrics") {
-      val result = MetricsFactory.createOpenAIAgentWithMetrics(
-        name = "FactoryTestAgent",
-        instructions = "You are a helpful assistant",
-        apiKey = "test-key",
-        model = "gpt-4o-mini"
-      )
-
-      result match {
-        case Right((agent, metrics)) =>
-          assert(agent.name == "FactoryTestAgent")
-          assert(agent.model == "gpt-4o-mini")
-
-          val _ = RequestMetadata(
-            tenantId = Some("factory-tenant"),
-            userId = Some("factory-user"),
-            conversationId = Some("factory-conversation")
-          )
-
-          // This would normally make a real API call, but our test setup prevents that
-          // The important thing is that the agent was created with metrics hooks
-          val _ = metrics.getSnapshot("FactoryTestAgent")
-        // Snapshot might be None initially if no operations have been performed
-        // But the metrics system should be ready to track operations
-
-        case Left(error) =>
-          // Expected with test API key - the important thing is the factory method works
-          assert(error.isInstanceOf[ChezError.ModelNotSupported] || error.isInstanceOf[ChezError])
-      }
     }
 
     test("AgentMetricsSnapshot export formats work correctly") {

@@ -202,35 +202,42 @@ object Examples extends App {
   def builtInMetrics(): Unit = {
     println("\n=== Built-in Metrics System ===")
 
-    // Use factory method for automatic metrics
-    MetricsFactory.createOpenAIAgentWithMetrics(
-      "Production",
-      "Production agent with metrics",
-      Config.OPENAI_API_KEY,
-      "gpt-4o-mini"
-    ) match {
-      case Right((agent, metrics)) =>
-        println("✅ Agent with built-in metrics created")
+    // Manually wire metrics using hooks
+    val metrics = new DefaultAgentMetrics()
+    val metricsHook = new MetricsHook(metrics)
+    val hooks = HookRegistry.empty
+      .addPreRequestHook(metricsHook)
+      .addPostResponseHook(metricsHook)
+      .addPreObjectRequestHook(metricsHook)
+      .addPostObjectResponseHook(metricsHook)
+      .addErrorHook(metricsHook)
+      .addHistoryHook(metricsHook)
 
-        // Run operations with different metadata scopes
-        val users = List("alice", "bob", "charlie")
-        users.foreach { user =>
-          val userMetadata = RequestMetadata(
-            tenantId = Some("company"),
-            userId = Some(user),
-            conversationId = Some(s"session-$user")
-          )
+    val agent = Agent(
+      name = "Production",
+      instructions = "Production agent with metrics",
+      provider = new OpenAIProvider(Config.OPENAI_API_KEY),
+      model = "gpt-4o-mini",
+      hooks = hooks
+    )
+    println("✅ Agent with built-in metrics created")
 
-          agent.generateText(s"Hello from $user", userMetadata)
-        }
+    // Run operations with different metadata scopes
+    val users = List("alice", "bob", "charlie")
+    users.foreach { user =>
+      val userMetadata = RequestMetadata(
+        tenantId = Some("company"),
+        userId = Some(user),
+        conversationId = Some(s"session-$user")
+      )
 
-        // Print comprehensive metrics
-        metrics.getSnapshot("Production").foreach { snapshot =>
-          println(s"\n📈 Production Metrics:")
-          println(snapshot.summary)
-        }
+      agent.generateText(s"Hello from $user", userMetadata)
+    }
 
-      case Left(error) => println(s"Failed to create production agent: $error")
+    // Print comprehensive metrics
+    metrics.getSnapshot("Production").foreach { snapshot =>
+      println(s"\n📈 Production Metrics:")
+      println(snapshot.summary)
     }
   }
 
