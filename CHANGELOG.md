@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.1] - 2025-09-09
+
+* refactor: remove LLMProvider abstraction (#18)
+* docs: update version
+
 ## [0.3.0] - 2025-09-05
 
 * refactor: remove MetricsFactory (#17)
