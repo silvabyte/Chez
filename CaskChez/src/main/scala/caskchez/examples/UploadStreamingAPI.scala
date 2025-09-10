@@ -1,0 +1,104 @@
+package caskchez.examples
+
+import cask._
+import scala.annotation.unused
+import upickle.default._
+import caskchez._
+import caskchez.CaskChez.ValidatedRequestReader
+import caskchez.CaskChez
+import io.undertow.server.handlers.form.FormParserFactory
+
+class trace(header: String = "X-Trace") extends scala.annotation.Annotation with cask.router.RawDecorator {
+  def wrapFunction(ctx: cask.Request, delegate: Delegate) = {
+    delegate(ctx, Map()).map(resp => resp.copy(headers = resp.headers :+ (header -> "true")))
+  }
+}
+
+class UploadStreamingAPI extends cask.MainRoutes {
+
+  case class UploadResponse(fields: Map[String, String], files: List[(String, Long)]) derives ReadWriter
+
+  @cask.decorators.compress()
+  @trace()
+  @CaskChez.post(
+    "/demo/upload",
+    RouteSchema(
+      summary = Some("Multipart upload"),
+      description = Some("Accepts multipart/form-data without consuming body"),
+      tags = List("demo"),
+      responses = Map(200 -> ApiResponse("OK", _root_.chez.Chez.String()))
+    )
+  )
+  def upload(r: ValidatedRequest): String = {
+    val parser = FormParserFactory.builder().build().createParser(r.original.exchange)
+    val form = parser.parseBlocking()
+    var fields = Map.empty[String, String]
+    var files = List.empty[(String, Long)]
+    val it = form.iterator()
+    while (it.hasNext) {
+      val name = it.next()
+      val vs = form.get(name).iterator()
+      while (vs.hasNext) {
+        val v = vs.next()
+        if (v.isFileItem) {
+          val fi = v.getFileItem
+          files = files :+ (name -> fi.getFileSize)
+        } else fields = fields.updated(name, v.getValue)
+      }
+    }
+    write(UploadResponse(fields, files))
+  }
+
+  @cask.decorators.compress()
+  @trace()
+  @CaskChez.get(
+    "/demo/stream/:size",
+    RouteSchema(
+      summary = Some("Streaming response"),
+      description = Some("Streams N bytes to client"),
+      tags = List("demo"),
+      responses = Map(200 -> ApiResponse("OK", _root_.chez.Chez.String()))
+    )
+  )
+  def stream(size: String, @unused r: ValidatedRequest): cask.Response[geny.Readable] = {
+    val n = size.toIntOption.getOrElse(0)
+    val readable = new geny.Readable {
+      def readBytesThrough[T](f: java.io.InputStream => T): T = {
+        val is = new java.io.InputStream {
+          private var remaining = n
+          def read(): Int = {
+            if (remaining <= 0) -1
+            else {
+              remaining -= 1
+              'a'.toInt
+            }
+          }
+        }
+        try f(is)
+        finally is.close()
+      }
+    }
+    cask.Response(
+      data = readable,
+      statusCode = 200,
+      headers = Seq("Content-Type" -> "application/octet-stream")
+    )
+  }
+
+  @cask.decorators.compress()
+  @trace("X-Custom-Trace")
+  @CaskChez.get(
+    "/demo/decorated",
+    RouteSchema(
+      summary = Some("Decorated route"),
+      description = Some("Shows custom and built-in decorators with CaskChez"),
+      tags = List("demo"),
+      responses = Map(200 -> ApiResponse("OK", _root_.chez.Chez.String()))
+    )
+  )
+  def decorated(r: ValidatedRequest): String = {
+    "decorated-ok"
+  }
+
+  initialize()
+}
