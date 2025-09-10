@@ -67,26 +67,11 @@ class UploadStreamingAPI extends cask.MainRoutes {
       responses = Map(200 -> ApiResponse("OK", _root_.chez.Chez.String()))
     )
   )
-  def stream(size: String, @unused r: ValidatedRequest): cask.Response[geny.Readable] = {
-    val n = size.toIntOption.getOrElse(0)
-    val readable = new geny.Readable {
-      def readBytesThrough[T](f: java.io.InputStream => T): T = {
-        val is = new java.io.InputStream {
-          private var remaining = n
-          def read(): Int = {
-            if (remaining <= 0) -1
-            else {
-              remaining -= 1
-              'a'.toInt
-            }
-          }
-        }
-        try f(is)
-        finally is.close()
-      }
-    }
+  def stream(size: String, @unused r: ValidatedRequest): cask.Response[String] = {
+    val n = math.max(0, size.toIntOption.getOrElse(0))
+    val data = "a" * n
     cask.Response(
-      data = readable,
+      data = data,
       statusCode = 200,
       headers = Seq("Content-Type" -> "application/octet-stream")
     )
