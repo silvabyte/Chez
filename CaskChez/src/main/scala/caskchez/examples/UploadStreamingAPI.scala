@@ -8,6 +8,7 @@ import caskchez.CaskChez.ValidatedRequestReader
 import caskchez.CaskChez
 import io.undertow.server.handlers.form.FormParserFactory
 import os.*
+import os.Source.*
 
 class trace(header: String = "X-Trace") extends scala.annotation.Annotation with cask.router.RawDecorator {
   def wrapFunction(ctx: cask.Request, delegate: Delegate) = {
@@ -54,6 +55,32 @@ class UploadStreamingAPI extends cask.MainRoutes {
       os.write.over(outDir / "note.txt", txt)
     }
     upickle.default.write(UploadResponse(fields, files))
+  }
+
+  @cask.decorators.compress()
+  @trace()
+  @CaskChez.post(
+    "/demo/upload-stream",
+    RouteSchema(
+      summary = Some("Streaming upload"),
+      description = Some("Accepts raw request body as a stream (geny.Readable)"),
+      tags = List("demo"),
+      responses = Map(200 -> ApiResponse("OK", _root_.chez.Chez.String()))
+    )
+  )
+  def uploadStream(r: ValidatedRequest): String = {
+    val headers = r.original.headers
+    val fileName = headers.get("x-file-name").flatMap(_.headOption).getOrElse("upload.bin")
+    val outDir = os.temp.dir(prefix = "caskchez-upload-")
+    val dest = outDir / fileName
+    // cask.Request implements geny.Readable & geny.Writable; os.Source.WritableSource enables writing it
+    os.write.over(dest, r.original)
+    val size = os.size(dest)
+    upickle.default.write(ujson.Obj(
+      "fileName" -> fileName,
+      "size" -> size,
+      "path" -> dest.toString
+    ))
   }
 
   @cask.decorators.compress()
