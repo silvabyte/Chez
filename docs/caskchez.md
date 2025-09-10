@@ -9,6 +9,8 @@ Type‑safe, annotation‑driven request validation and OpenAPI 3.1.1 for the Ca
 - Typed access: `ValidatedRequest.getBody[T]`, `getQuery[T]`, `getQueryParam(name)`
 - Route registry: centralized `RouteSchemaRegistry` for introspection/OpenAPI
 - OpenAPI 3.1.1: serve specs with `@CaskChez.swagger("/openapi", OpenAPIConfig(...))`
+- Decorators pass‑through: use built‑in Cask decorators and your own
+- Multipart uploads and streaming responses: body left untouched for non‑JSON
 
 ## Install
 
@@ -86,6 +88,29 @@ curl -s -X POST http://localhost:8082/users \
   -d '{"name":"Ada","email":"ada@lovelace.org","age":28}'
 ```
 
+### Run the Multipart/Streaming Demo
+
+Start the demo server in one terminal:
+
+```bash
+make example-caskchez-upload
+# or customize host/port
+PORT=9000 make example-caskchez-upload
+```
+
+In another terminal, try the curl demos:
+
+```bash
+# multipart upload
+make example-caskchez-upload-curl-upload
+
+# streaming 1024 bytes
+make example-caskchez-upload-curl-stream
+
+# custom + built-in decorators (gzip + header)
+make example-caskchez-upload-curl-decorated
+```
+
 ## How It Works
 
 - Define a `RouteSchema` alongside your handler; decorate with `@CaskChez.<method>("/path", schema)`.
@@ -93,7 +118,7 @@ curl -s -X POST http://localhost:8082/users \
 - Handlers receive `ValidatedRequest` to access typed data using upickle:
   - `getBody[T: ReadWriter]`, `getQuery[T: ReadWriter]`
   - `getQueryParam(name)`, `getParam(name)`, `getHeader(name)`
-- Responses: first successful `responses` status in your `RouteSchema` is used as the status code wrapper for GET/PUT/PATCH/DELETE. Body content is whatever you return (commonly `write(model)`).
+- Responses: first successful `responses` status in your `RouteSchema` is used as the status code wrapper for GET/PUT/PATCH/DELETE. Body content is whatever you return (commonly `write(model)`). For streaming or file responses, return a `cask.Response` and CaskChez passes it through unchanged.
 
 ## RouteSchema Essentials
 
@@ -169,15 +194,23 @@ Generate a TypeScript client from your running CaskChez API using the OpenAPI en
 - Path params via method args: `def get(id: String, req: ValidatedRequest)`
 - Introspect schemas: `RouteSchemaRegistry.getAll`
 
+## Multipart, Streaming, and Decorators
+
+See the focused guide:
+
+- Multipart + Streaming + Decorators: [./caskchez/multipart-and-decorators.md](./caskchez/multipart-and-decorators.md)
+
 ## Testing
 
 - Run module tests: `./mill CaskChez.test` or `make test-caskchez`
-- Example server: `./mill CaskChez.runMain caskchez.examples.UserCrudAPI`
+- Example servers:
+  - CRUD: `./mill CaskChez.runMain caskchez.examples.UserCrudAPI`
+  - Upload/Streaming: `make example-caskchez-upload`
 - Single suite: `./mill CaskChez.test caskchez.UserCrudAPITest`
 
 ## Troubleshooting
 
-- Content‑Type: send `Content-Type: application/json` for request bodies.
+- Content‑Type: send `Content-Type: application/json` for JSON bodies. For multipart/streaming, body is not pre‑consumed.
 - Port in use: example server listens on `8082`; change `override def port` or stop the other process.
 - Body parse errors: ensure valid JSON; errors surface under `RequestBodyError` with a parse message.
 - Unexpected 200/204 status: GET/PUT/PATCH/DELETE use the first success response status in `responses`.
@@ -186,3 +219,4 @@ Generate a TypeScript client from your running CaskChez API using the OpenAPI en
 
 - Full CRUD with OpenAPI: [CaskChez/src/main/scala/caskchez/examples/UserCrudAPI.scala](../CaskChez/src/main/scala/caskchez/examples/UserCrudAPI.scala)
 - OpenAPI generation sample: [CaskChez/src/main/scala/caskchez/examples/OpenAPITest.scala](../CaskChez/src/main/scala/caskchez/examples/OpenAPITest.scala)
+ - Upload/Streaming + Decorators: [CaskChez/src/main/scala/caskchez/examples/UploadStreamingAPI.scala](../CaskChez/src/main/scala/caskchez/examples/UploadStreamingAPI.scala)

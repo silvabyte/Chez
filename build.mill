@@ -221,7 +221,8 @@ object CaskChez extends Shared {
   override def mvnDeps = Task {
     super.mvnDeps() ++ Seq(
       mvn"com.lihaoyi::cask:0.9.7",
-      mvn"com.lihaoyi::scalatags:0.13.1"
+      mvn"com.lihaoyi::scalatags:0.13.1",
+      mvn"com.lihaoyi::os-lib:0.10.1"
     )
   }
 

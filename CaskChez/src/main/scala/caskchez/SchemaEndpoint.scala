@@ -33,13 +33,14 @@ object CaskChez {
   /**
    * POST endpoint with complete route schema validation Usage: @CaskChez.post("/path", completeRouteSchema)
    */
-  class post(val path: String, routeSchema: RouteSchema)
+  class post(val path: String, routeSchema: RouteSchema, subpath0: Boolean = false)
       extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
 
     // Register this route immediately when the class is instantiated
     RouteSchemaRegistry.register(path, "POST", routeSchema)
 
     val methods = Seq("post")
+    override def subpath: Boolean = subpath0
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
 
@@ -111,13 +112,14 @@ object CaskChez {
   /**
    * GET endpoint with complete route schema validation Usage: @CaskChez.get("/path", completeRouteSchema)
    */
-  class get(val path: String, routeSchema: RouteSchema)
-      extends cask.HttpEndpoint[String, Seq[String]] {
+  class get(val path: String, routeSchema: RouteSchema, subpath0: Boolean = false)
+      extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
 
     // Register this route immediately when the class is instantiated
     RouteSchemaRegistry.register(path, "GET", routeSchema)
 
     val methods = Seq("get")
+    override def subpath: Boolean = subpath0
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
 
@@ -131,20 +133,8 @@ object CaskChez {
 
             // TODO: use Try, Success, Failure
             try {
-              // Call the route method with all validated data available
-              delegate(ctx, Map.empty).map { result =>
-                // Use the first successful response schema for status code, or default to 200
-                val statusCode = routeSchema.responses.keys.headOption match {
-                  case Some(code: Int) => code
-                  case Some(code: String) => code.toIntOption.getOrElse(200)
-                  case None => 200
-                }
-                Response(
-                  result,
-                  statusCode = statusCode,
-                  headers = Seq("Content-Type" -> "application/json")
-                )
-              }
+              // Call the route method with all validated data available and pass through the response
+              delegate(ctx, Map.empty)
             } finally {
               ValidatedRequestStore.clear()
             }
@@ -173,13 +163,14 @@ object CaskChez {
   /**
    * PUT endpoint with complete route schema validation Usage: @CaskChez.put("/path", completeRouteSchema)
    */
-  class put(val path: String, routeSchema: RouteSchema)
-      extends cask.HttpEndpoint[String, Seq[String]] {
+  class put(val path: String, routeSchema: RouteSchema, subpath0: Boolean = false)
+      extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
 
     // Register this route immediately when the class is instantiated
     RouteSchemaRegistry.register(path, "PUT", routeSchema)
 
     val methods = Seq("put")
+    override def subpath: Boolean = subpath0
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
 
@@ -193,20 +184,8 @@ object CaskChez {
 
             // TODO: use Try, Success, Failure
             try {
-              // Call the route method with all validated data available
-              delegate(ctx, Map.empty).map { result =>
-                // Use the first successful response schema for status code, or default to 200
-                val statusCode = routeSchema.responses.keys.headOption match {
-                  case Some(code: Int) => code
-                  case Some(code: String) => code.toIntOption.getOrElse(200)
-                  case None => 200
-                }
-                Response(
-                  result,
-                  statusCode = statusCode,
-                  headers = Seq("Content-Type" -> "application/json")
-                )
-              }
+              // Call the route method with all validated data available and pass through the response
+              delegate(ctx, Map.empty)
             } finally {
               ValidatedRequestStore.clear()
             }
@@ -235,13 +214,14 @@ object CaskChez {
   /**
    * PATCH endpoint with complete route schema validation Usage: @CaskChez.patch("/path", completeRouteSchema)
    */
-  class patch(val path: String, routeSchema: RouteSchema)
-      extends cask.HttpEndpoint[String, Seq[String]] {
+  class patch(val path: String, routeSchema: RouteSchema, subpath0: Boolean = false)
+      extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
 
     // Register this route immediately when the class is instantiated
     RouteSchemaRegistry.register(path, "PATCH", routeSchema)
 
     val methods = Seq("patch")
+    override def subpath: Boolean = subpath0
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
 
@@ -255,20 +235,8 @@ object CaskChez {
 
             // TODO: use Try, Success, Failure
             try {
-              // Call the route method with all validated data available
-              delegate(ctx, Map.empty).map { result =>
-                // Use the first successful response schema for status code, or default to 200
-                val statusCode = routeSchema.responses.keys.headOption match {
-                  case Some(code: Int) => code
-                  case Some(code: String) => code.toIntOption.getOrElse(200)
-                  case None => 200
-                }
-                Response(
-                  result,
-                  statusCode = statusCode,
-                  headers = Seq("Content-Type" -> "application/json")
-                )
-              }
+              // Call the route method with all validated data available and pass through the response
+              delegate(ctx, Map.empty)
             } finally {
               ValidatedRequestStore.clear()
             }
@@ -297,13 +265,14 @@ object CaskChez {
   /**
    * DELETE endpoint with complete route schema validation Usage: @CaskChez.delete("/path", completeRouteSchema)
    */
-  class delete(val path: String, routeSchema: RouteSchema)
-      extends cask.HttpEndpoint[String, Seq[String]] {
+  class delete(val path: String, routeSchema: RouteSchema, subpath0: Boolean = false)
+      extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
 
     // Register this route immediately when the class is instantiated
     RouteSchemaRegistry.register(path, "DELETE", routeSchema)
 
     val methods = Seq("delete")
+    override def subpath: Boolean = subpath0
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
 
@@ -317,20 +286,8 @@ object CaskChez {
 
             // TODO: use Try, Success, Failure
             try {
-              // Call the route method with all validated data available
-              delegate(ctx, Map.empty).map { result =>
-                // Use the first successful response schema for status code, or default to 204 for DELETE
-                val statusCode = routeSchema.responses.keys.headOption match {
-                  case Some(code: Int) => code
-                  case Some(code: String) => code.toIntOption.getOrElse(204)
-                  case None => 204 // No Content is typical for DELETE
-                }
-                Response(
-                  result,
-                  statusCode = statusCode,
-                  headers = Seq("Content-Type" -> "application/json")
-                )
-              }
+              // Call the route method with all validated data available and pass through the response
+              delegate(ctx, Map.empty)
             } finally {
               ValidatedRequestStore.clear()
             }
@@ -359,10 +316,11 @@ object CaskChez {
   /**
    * OpenAPI 3.1.1 Swagger endpoint for automatic API documentation Usage: @CaskChez.swagger("/openapi")
    */
-  class swagger(val path: String, config: OpenAPIConfig = OpenAPIConfig())
+  class swagger(val path: String, config: OpenAPIConfig = OpenAPIConfig(), subpath0: Boolean = false)
       extends cask.HttpEndpoint[String, Seq[String]] {
 
     val methods = Seq("get")
+    override def subpath: Boolean = subpath0
 
     def wrapFunction(ctx: Request, delegate: Delegate): Result[Response.Raw] = {
 

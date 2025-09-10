@@ -47,6 +47,7 @@ Run `make help` for the full list.
 
 - `make chez`: Run core Chez examples
 - `make caskchez`: Start the CaskChez API example on port 8082
+- `make caskchez-upload`: Start the Upload/Streaming demo (defaults to port 8080)
 - `make wiz`: Run ChezWiz examples (requires API keys or a local LLM)
 
 ChezWiz examples environment variables:

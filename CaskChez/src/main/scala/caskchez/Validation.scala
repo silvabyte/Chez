@@ -357,9 +357,13 @@ object SchemaValidator {
       pathParams: Map[String, String] = Map.empty
   ): Either[List[ValidationError], ValidatedRequest] = {
     // Collect all validation results
+    val contentType = request.httpContentType.map(_.toLowerCase)
+    val isJsonBody = contentType.forall(ct => ct.contains("application/json") || ct.contains("+json"))
+
     val bodyValidation = routeSchema.body.fold[Either[List[ValidationError], Option[ujson.Value]]](Right(None)) {
       schema =>
-        ValidationHelpers.validateRequestBody(request, schema).map(Some(_))
+        if (isJsonBody) ValidationHelpers.validateRequestBody(request, schema).map(Some(_))
+        else Right(None) // Do not consume body for non-JSON (multipart/streaming) requests
     }
 
     val queryValidation = {
