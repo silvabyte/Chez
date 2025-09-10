@@ -7,6 +7,7 @@ import caskchez._
 import caskchez.CaskChez.ValidatedRequestReader
 import caskchez.CaskChez
 import io.undertow.server.handlers.form.FormParserFactory
+import os.*
 
 class trace(header: String = "X-Trace") extends scala.annotation.Annotation with cask.router.RawDecorator {
   def wrapFunction(ctx: cask.Request, delegate: Delegate) = {
@@ -34,6 +35,8 @@ class UploadStreamingAPI extends cask.MainRoutes {
     val form = parser.parseBlocking()
     var fields = Map.empty[String, String]
     var files = List.empty[(String, Long)]
+    // Use os-lib to create a temp directory for this upload
+    val outDir = os.temp.dir(prefix = "caskchez-upload-")
     val it = form.iterator()
     while (it.hasNext) {
       val name = it.next()
@@ -46,7 +49,11 @@ class UploadStreamingAPI extends cask.MainRoutes {
         } else fields = fields.updated(name, v.getValue)
       }
     }
-    write(UploadResponse(fields, files))
+    // Persist a simple note.txt if provided to demonstrate os-lib
+    fields.get("note").foreach { txt =>
+      os.write.over(outDir / "note.txt", txt)
+    }
+    upickle.default.write(UploadResponse(fields, files))
   }
 
   @cask.decorators.compress()
