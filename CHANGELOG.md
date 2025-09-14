@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.2] - 2025-09-14
+
+* feat: pass-through decorators; multipart uploads and streaming (#19)
+
 ## [0.3.1] - 2025-09-09
 
 * refactor: remove LLMProvider abstraction (#18)
