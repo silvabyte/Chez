@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.4.0] - 2025-12-10
+
+### BREAKING CHANGES - Project Rebrand
+
+This release renames the entire project from **Chez** to **BoogieLoops** with no backwards compatibility.
+
+#### Module Renames
+
+- `Chez` → `schema` (core JSON Schema library)
+- `CaskChez` → `web` (HTTP API framework)
+- `ChezWiz` → `ai` (LLM agent framework)
+
+#### Package Renames
+
+- `chez.*` → `boogieloops.schema.*`
+- `caskchez.*` → `boogieloops.web.*`
+- `chezwiz.*` → `boogieloops.ai.*`
+
+#### Class Renames
+
+- `trait Chez` → `trait Schema`
+- `object Chez` → `object bl` (factory methods: `bl.String()`, `bl.Object()`, etc.)
+- `*Chez` classes → `*Schema` classes (e.g., `StringChez` → `StringSchema`)
+- `ChezType` → `SchemaType`
+- `object CaskChez` → `object Web`
+
+#### Maven Coordinates
+
+- Group ID: `com.silvabyte` → `dev.boogieloops`
+- Artifacts: `chez`, `caskchez`, `chezwiz` → `schema`, `web`, `ai`
+
+#### Migration Example
+
+```scala
+// Before (0.3.x)
+import chez.*
+import chez.derivation.Schema
+val schema = Chez.String()
+
+// After (0.4.0)
+import boogieloops.schema.*
+import boogieloops.schema.derivation.Schema
+val schema = bl.String()
+```
+
 ## [0.3.2] - 2025-09-14
 
 - feat: pass-through decorators; multipart uploads and streaming (#19)
@@ -107,7 +152,7 @@
 - feat: support default values in annotations and add tests
 - feat: enhance validation and schema gen with tests
 - chore: clean up
-- refactor: update boogieloops.web object references
+- refactor: update CaskChez object references
 - chore: clean up Any approach
 - feat: implement ArrayReadWriter for ArrayChez schemas
 - fix: schema generation

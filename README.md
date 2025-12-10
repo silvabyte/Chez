@@ -1,4 +1,4 @@
-# Chez: Type-Safe JSON Schema Ecosystem for Scala 3
+# BoogieLoops: Type-Safe JSON Schema Ecosystem for Scala 3
 
 <div align="center">
   <img src="assets/lechez.png" alt="Le Chez - The smoking cheese that judges your schemas" width="400">
@@ -6,7 +6,7 @@
   *Le Chez says: "Your schemas are probably wrong"*
 </div>
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/silvabyte/scalaschemaz)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/silvabyte/boogieloops)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 An ecosystem of libraries for JSON Schema generation, HTTP validation & Automatic OpenAPI Spec Generation, and LLM integration in Scala 3. Each module can be used independently or together for a complete solution.
@@ -19,51 +19,67 @@ Choose the modules you need for your project:
 
 ```scala
 // Just schema validation
-mvn"com.silvabyte::chez:0.3.0"
+mvn"dev.boogieloops::schema:0.4.0"
 
 // Add HTTP validation for Cask web framework
-mvn"com.silvabyte::chez:0.3.0"
-mvn"com.silvabyte::boogieloops-web:0.3.0"
+mvn"dev.boogieloops::schema:0.4.0"
+mvn"dev.boogieloops::web:0.4.0"
 
 // Full ecosystem with LLM agent support
-mvn"com.silvabyte::chez:0.3.0"
-mvn"com.silvabyte::boogieloops-web:0.3.0"
-mvn"com.silvabyte::chezwiz:0.3.0"
+mvn"dev.boogieloops::schema:0.4.0"
+mvn"dev.boogieloops::web:0.4.0"
+mvn"dev.boogieloops::ai:0.4.0"
 ```
 
 ### SBT
 
 ```scala
 // Just schema validation
-libraryDependencies += "com.silvabyte" %% "chez" % "0.3.0"
+libraryDependencies += "dev.boogieloops" %% "schema" % "0.4.0"
 
 // Add HTTP validation for Cask web framework
 libraryDependencies ++= Seq(
-  "com.silvabyte" %% "chez" % "0.3.0",
-  "com.silvabyte" %% "boogieloops-web" % "0.3.0"
+  "dev.boogieloops" %% "schema" % "0.4.0",
+  "dev.boogieloops" %% "web" % "0.4.0"
 )
 
 // Full ecosystem with LLM agent support
 libraryDependencies ++= Seq(
-  "com.silvabyte" %% "chez" % "0.3.0",
-  "com.silvabyte" %% "boogieloops-web" % "0.3.0",
-  "com.silvabyte" %% "chezwiz" % "0.3.0"
+  "dev.boogieloops" %% "schema" % "0.4.0",
+  "dev.boogieloops" %% "web" % "0.4.0",
+  "dev.boogieloops" %% "ai" % "0.4.0"
 )
 ```
 
 ## The Ecosystem
 
-- Chez (core): Type‑safe JSON Schema derivation and validation
-- boogieloops.web (web): Schema‑first HTTP validation + OpenAPI for Cask
-- ChezWiz (AI): Type‑safe LLM agents with structured output
+- **schema** (core): Type-safe JSON Schema derivation and validation
+- **web**: Schema-first HTTP validation + OpenAPI for Cask
+- **ai**: Type-safe LLM agents with structured output
+
+## Quick Example
+
+```scala
+import boogieloops.schema.bl
+import boogieloops.schema.derivation.Schema
+
+// Manual schema definition
+val userSchema = bl.Object(
+  "name" -> bl.String(),
+  "age" -> bl.Integer(minimum = Some(0))
+)
+
+// Or derive from case class
+case class User(name: String, age: Int) derives Schema
+```
 
 ## Documentation
 
 - Getting Started: [docs/README.md](./docs/README.md)
 - Zero to App: [docs/zero-to-app.md](./docs/zero-to-app.md)
-- Chez (core): [docs/chez.md](./docs/chez.md)
-- boogieloops.web (web): [docs/caskchez.md](./docs/caskchez.md)
-- ChezWiz (AI): [docs/chezwiz.md](./docs/chezwiz.md)
+- Schema (core): [docs/schema.md](./docs/schema.md)
+- Web: [docs/web.md](./docs/web.md)
+- AI: [docs/ai.md](./docs/ai.md)
 - Concepts: [docs/concepts.md](./docs/concepts.md)
 - Troubleshooting: [docs/troubleshooting.md](./docs/troubleshooting.md)
 - TypeScript SDK: [docs/typescript-sdk.md](./docs/typescript-sdk.md)
@@ -71,9 +87,9 @@ libraryDependencies ++= Seq(
 ## Running Examples & Commands
 
 - See all commands: `make help`
-- Run examples: `make chez`, `make caskchez`, `make wiz`
-- ChezWiz examples require `OPENAI_API_KEY` (or a local LLM endpoint)
-- Test everything: `make test` (override `MODULE=Chez|CaskChez|ChezWiz`)
+- Run examples: `make schema`, `make web`, `make ai`
+- AI examples require `OPENAI_API_KEY` (or a local LLM endpoint)
+- Test everything: `make test` (override `MODULE=schema|web|ai`)
 
 ## License
 
