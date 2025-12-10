@@ -1,0 +1,72 @@
+package boogieloops.schema.primitives
+
+import boogieloops.schema.Schema
+import boogieloops.schema.validation.{ValidationResult, ValidationContext}
+
+/**
+ * Boolean schema type with JSON Schema 2020-12 validation keywords
+ */
+case class BooleanSchema(
+    const: Option[Boolean] = None
+) extends Schema {
+
+  override def toJsonSchema: ujson.Value = {
+    val schema = ujson.Obj("type" -> ujson.Str("boolean"))
+
+    const.foreach(c => schema("const") = ujson.Bool(c))
+
+    title.foreach(t => schema("title") = ujson.Str(t))
+    description.foreach(d => schema("description") = ujson.Str(d))
+    default.foreach(d => schema("default") = d)
+    examples.foreach(e => schema("examples") = ujson.Arr(e*))
+
+    schema
+  }
+
+  /**
+   * Validate a ujson.Value against this boolean schema
+   */
+  def validate(value: ujson.Value): ValidationResult = {
+    validate(value, ValidationContext())
+  }
+
+  /**
+   * Validate a ujson.Value against this boolean schema with context
+   */
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    // Type check for ujson.Bool
+    value match {
+      case ujson.Bool(booleanValue) =>
+        // Inline validation logic
+        val constErrors = const.fold(List.empty[boogieloops.schema.ValidationError]) { c =>
+          if (booleanValue != c)
+            List(boogieloops.schema.ValidationError.TypeMismatch(c.toString, booleanValue.toString, context.path))
+          else Nil
+        }
+
+        if (constErrors.isEmpty) {
+          ValidationResult.valid()
+        } else {
+          ValidationResult.invalid(constErrors)
+        }
+      case _ =>
+        // Non-boolean ujson.Value type - return TypeMismatch error
+        val error = boogieloops.schema.ValidationError.TypeMismatch("boolean", getValueType(value), context.path)
+        ValidationResult.invalid(error)
+    }
+  }
+
+  /**
+   * Get string representation of ujson.Value type for error messages
+   */
+  private def getValueType(value: ujson.Value): String = {
+    value match {
+      case _: ujson.Str => "string"
+      case _: ujson.Num => "number"
+      case _: ujson.Bool => "boolean"
+      case ujson.Null => "null"
+      case _: ujson.Arr => "array"
+      case _: ujson.Obj => "object"
+    }
+  }
+}

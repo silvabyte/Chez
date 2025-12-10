@@ -1,0 +1,43 @@
+package boogieloops.schema.composition
+
+import boogieloops.schema.Schema
+import boogieloops.schema.validation.{ValidationResult, ValidationContext}
+
+/**
+ * AllOf composition schema - validates if the instance is valid against all of the schemas
+ */
+case class AllOfSchema(
+    schemas: List[Schema]
+) extends Schema {
+
+  override def toJsonSchema: ujson.Value = {
+    val schema = ujson.Obj()
+
+    schema("allOf") = ujson.Arr(schemas.map(_.toJsonSchema)*)
+
+    title.foreach(t => schema("title") = ujson.Str(t))
+    description.foreach(d => schema("description") = ujson.Str(d))
+    default.foreach(d => schema("default") = d)
+    examples.foreach(e => schema("examples") = ujson.Arr(e*))
+
+    schema
+  }
+
+  /**
+   * Validate a ujson.Value against this allOf schema
+   */
+  override def validate(value: ujson.Value, context: ValidationContext): ValidationResult = {
+    // For allOf, all schemas must validate successfully
+    val allErrors = schemas.flatMap { schema =>
+      val result = schema.validate(value, context)
+      if (!result.isValid) result.errors else Nil
+    }
+
+    if (allErrors.isEmpty) {
+      ValidationResult.valid()
+    } else {
+      ValidationResult.invalid(allErrors)
+    }
+  }
+
+}
