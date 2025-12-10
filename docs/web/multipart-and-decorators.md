@@ -16,28 +16,28 @@ All examples below are implemented in:
 Start the server (blocks):
 
 ```bash
-make example-caskchez-upload
+make example-web-upload
 # or customize
-PORT=9000 make example-caskchez-upload
+PORT=9000 make example-web-upload
 ```
 
 In another terminal, run the curl demos:
 
 ```bash
 # multipart upload
-make example-caskchez-upload-curl-upload
+make example-web-upload-curl-upload
 
 # streaming 1024 bytes
-make example-caskchez-upload-curl-stream
+make example-web-upload-curl-stream
 
 # decorated route (gzip + custom header)
-make example-caskchez-upload-curl-decorated
+make example-web-upload-curl-decorated
 ```
 
 You can override host/port for the curl targets:
 
 ```bash
-CASKCHEZ_HOST=127.0.0.1 CASKCHEZ_PORT=9000 make example-caskchez-upload-curl
+WEB_HOST=127.0.0.1 WEB_PORT=9000 make example-web-upload-curl
 ```
 
 ## Multipart Uploads (Pass‑Through Body)
@@ -51,7 +51,7 @@ When `Content-Type` is not JSON (e.g., `multipart/form-data`), boogieloops.web l
     summary = Some("Multipart upload"),
     description = Some("Accepts multipart/form-data without consuming body"),
     tags = List("demo"),
-    responses = Map(200 -> ApiResponse("OK", _root_.chez.Chez.String()))
+    responses = Map(200 -> ApiResponse("OK", _root_.boogieloops.schema.Schema.String()))
   )
 )
 def upload(r: ValidatedRequest): String = {
@@ -71,7 +71,7 @@ Return a `cask.Response[geny.Readable]` from your handler; boogieloops.web passe
   "/demo/stream/:size",
   RouteSchema(
     summary = Some("Streaming response"),
-    responses = Map(200 -> ApiResponse("OK", _root_.chez.Chez.String()))
+    responses = Map(200 -> ApiResponse("OK", _root_.boogieloops.schema.Schema.String()))
   )
 )
 def stream(size: String, r: ValidatedRequest): cask.Response[geny.Readable] = {
@@ -104,7 +104,7 @@ class trace(header: String = "X-Trace") extends scala.annotation.Annotation with
 @trace("X-Custom-Trace")
 @Web.get(
   "/demo/decorated",
-  RouteSchema(responses = Map(200 -> ApiResponse("OK", _root_.chez.Chez.String())))
+  RouteSchema(responses = Map(200 -> ApiResponse("OK", _root_.boogieloops.schema.Schema.String())))
 )
 def decorated(r: ValidatedRequest): String = "decorated-ok"
 ```

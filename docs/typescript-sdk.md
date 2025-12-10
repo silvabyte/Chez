@@ -1,16 +1,16 @@
 # TypeScript SDK Generation
 
-Generate a TypeScript client from the running boogieloops.web example API using @hey-api/openapi-ts, then run a quick demo.
+Generate a TypeScript client from the running BoogieLoops Web example API using @hey-api/openapi-ts, then run a quick demo.
 
 ## Prerequisites
 
 - Node.js and npm installed
-- The boogieloops.web example API running (see below)
+- The web example API running (see below)
 
 ## 1) Start the API (terminal A)
 
 ```bash
-make example-caskchez-api  # starts UserCrudAPI on http://localhost:8082
+make example-web-api  # starts UserCrudAPI on http://localhost:8082
 ```
 
 The OpenAPI spec is served at `http://localhost:8082/openapi`.

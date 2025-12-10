@@ -1,4 +1,4 @@
-# Chez (Core): Type‑Safe JSON Schema for Scala 3
+# BoogieLoops Schema (Core): Type‑Safe JSON Schema for Scala 3
 
 Define schemas next to your types with annotations, derive JSON Schema automatically, and validate JSON at runtime.
 
@@ -7,19 +7,19 @@ Define schemas next to your types with annotations, derive JSON Schema automatic
 Mill:
 
 ```scala
-mvn"com.silvabyte::chez:0.3.0"
+mvn"com.silvabyte::boogieloops-schema:0.3.0"
 ```
 
 SBT:
 
 ```scala
-libraryDependencies += "com.silvabyte" %% "chez" % "0.3.0"
+libraryDependencies += "com.silvabyte" %% "boogieloops-schema" % "0.3.0"
 ```
 
 ## Quickstart
 
 ```scala
-import chez.derivation.Schema
+import boogieloops.schema.derivation.Schema
 import ujson.*
 
 @Schema.title("User")
@@ -43,13 +43,13 @@ schema.validate(json) // Right(()) or Left(List(...))
 - Metadata: `title`, `description`, `examples`, `deprecated`, `readOnly`, `writeOnly`
 - Defaults: `default(value)` (type‑safe)
 
-→ [Annotations: Full Docs](./chez/annotations.md)
+→ [Annotations: Full Docs](./schema/annotations.md)
 
 ## Unions, Option, Nulls
 
 - `A | B` → JSON Schema `oneOf`
 - `Option[T]` → optional field (may be absent)
-- Nullable: use `.nullable` (e.g., `Chez.String().nullable`)
+- Nullable: use `.nullable` (e.g., `Schema.String().nullable`)
 
 ## Tips
 

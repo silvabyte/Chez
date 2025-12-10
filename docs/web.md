@@ -1,41 +1,41 @@
-# boogieloops.web: Schema‑First HTTP Validation for Cask
+# BoogieLoops Web: Schema-First HTTP Validation for Cask
 
-Type‑safe, annotation‑driven request validation and OpenAPI 3.1.1 for the Cask web framework. Define schemas once; get body, query, headers, and path validation with structured errors and auto‑generated docs.
+Type-safe, annotation-driven request validation and OpenAPI 3.1.1 for the Cask web framework. Define schemas once; get body, query, headers, and path validation with structured errors and auto-generated docs.
 
 ## Features
 
-- Annotation‑driven routes: `@Web.get|post|put|patch|delete`
+- Annotation-driven routes: `@Web.get|post|put|patch|delete`
 - Automatic request validation: body, query, headers, and path params
 - Typed access: `ValidatedRequest.getBody[T]`, `getQuery[T]`, `getQueryParam(name)`
 - Route registry: centralized `RouteSchemaRegistry` for introspection/OpenAPI
 - OpenAPI 3.1.1: serve specs with `@Web.swagger("/openapi", OpenAPIConfig(...))`
-- Decorators pass‑through: use built‑in Cask decorators and your own
-- Multipart uploads and streaming responses: body left untouched for non‑JSON
+- Decorators pass-through: use built-in Cask decorators and your own
+- Multipart uploads and streaming responses: body left untouched for non-JSON
 
 ## Install
 
-- Mill:
+Mill:
 
 ```scala
-mvn"com.silvabyte::chez:0.3.0"
-mvn"com.silvabyte::boogieloops-web:0.3.0"
+mvn"dev.boogieloops::schema:0.4.0"
+mvn"dev.boogieloops::web:0.4.0"
 ```
 
-- SBT:
+SBT:
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.silvabyte" %% "chez" % "0.3.0",
-  "com.silvabyte" %% "boogieloops-web" % "0.3.0"
+  "dev.boogieloops" %% "schema" % "0.4.0",
+  "dev.boogieloops" %% "web" % "0.4.0"
 )
 ```
 
 ## Quickstart (5 minutes)
 
-1. Define models with Chez annotations and upickle codecs
+1. Define models with schema annotations and upickle codecs
 
 ```scala
-import chez.derivation.Schema
+import boogieloops.schema.derivation.Schema
 import upickle.default.*
 
 @Schema.title("CreateUser")
@@ -79,7 +79,7 @@ object Api extends Main {
 3. Run and test
 
 ```bash
-./mill CaskChez.runMain caskchez.examples.UserCrudAPI   # full example server
+./mill web.runMain boogieloops.web.examples.UserCrudAPI   # full example server
 # or run your Api object with mill if you add one
 
 curl -s http://localhost:8082/health
@@ -93,32 +93,32 @@ curl -s -X POST http://localhost:8082/users \
 Start the demo server in one terminal:
 
 ```bash
-make example-caskchez-upload
+make example-web-upload
 # or customize host/port
-PORT=9000 make example-caskchez-upload
+PORT=9000 make example-web-upload
 ```
 
 In another terminal, try the curl demos:
 
 ```bash
 # multipart upload
-make example-caskchez-upload-curl-upload
+make example-web-upload-curl-upload
 
 # streaming 1024 bytes
-make example-caskchez-upload-curl-stream
+make example-web-upload-curl-stream
 
 # custom + built-in decorators (gzip + header)
-make example-caskchez-upload-curl-decorated
+make example-web-upload-curl-decorated
 ```
 
 ## How It Works
 
 - Define a `RouteSchema` alongside your handler; decorate with `@Web.<method>("/path", schema)`.
-- On request, boogieloops.web validates body/query/headers/path against the schema and constructs a `ValidatedRequest`.
+- On request, the web module validates body/query/headers/path against the schema and constructs a `ValidatedRequest`.
 - Handlers receive `ValidatedRequest` to access typed data using upickle:
   - `getBody[T: ReadWriter]`, `getQuery[T: ReadWriter]`
   - `getQueryParam(name)`, `getParam(name)`, `getHeader(name)`
-- Responses: first successful `responses` status in your `RouteSchema` is used as the status code wrapper for GET/PUT/PATCH/DELETE. Body content is whatever you return (commonly `write(model)`). For streaming or file responses, return a `cask.Response` and boogieloops.web passes it through unchanged.
+- Responses: first successful `responses` status in your `RouteSchema` is used as the status code wrapper for GET/PUT/PATCH/DELETE. Body content is whatever you return (commonly `write(model)`). For streaming or file responses, return a `cask.Response` and the web module passes it through unchanged.
 
 ## RouteSchema Essentials
 
@@ -144,7 +144,7 @@ def list(r: ValidatedRequest) = write(UserListResponse(Nil, 0, 1, 10, 0))
 
 ## OpenAPI 3.1.1
 
-- Serve a live OpenAPI document from registered routes:
+Serve a live OpenAPI document from registered routes:
 
 ```scala
 import boogieloops.web.openapi.config.OpenAPIConfig
@@ -154,22 +154,22 @@ import boogieloops.web.openapi.config.OpenAPIConfig
   OpenAPIConfig(
     title = "User API",
     summary = Some("User management with validation"),
-    description = "Auto‑generated from RouteSchema",
+    description = "Auto-generated from RouteSchema",
     version = "1.0.0"
   )
 )
-def openapi(): String = ""  // auto‑generated JSON
+def openapi(): String = ""  // auto-generated JSON
 ```
 
 ## Client SDK
 
-Generate a TypeScript client from your running boogieloops.web API using the OpenAPI endpoint. See the step‑by‑step guide:
+Generate a TypeScript client from your running web API using the OpenAPI endpoint. See the step-by-step guide:
 
-- TypeScript SDK: [../docs/typescript-sdk.md](./typescript-sdk.md)
+- TypeScript SDK: [typescript-sdk.md](./typescript-sdk.md)
 
 ## Error Shape
 
-- Invalid requests return a structured JSON error:
+Invalid requests return a structured JSON error:
 
 ```json
 {
@@ -198,19 +198,19 @@ Generate a TypeScript client from your running boogieloops.web API using the Ope
 
 See the focused guide:
 
-- Multipart + Streaming + Decorators: [./caskchez/multipart-and-decorators.md](./caskchez/multipart-and-decorators.md)
+- Multipart + Streaming + Decorators: [./web/multipart-and-decorators.md](./web/multipart-and-decorators.md)
 
 ## Testing
 
-- Run module tests: `./mill CaskChez.test` or `make test-caskchez`
+- Run module tests: `./mill web.test` or `make test-web`
 - Example servers:
-  - CRUD: `./mill CaskChez.runMain caskchez.examples.UserCrudAPI`
-  - Upload/Streaming: `make example-caskchez-upload`
-- Single suite: `./mill CaskChez.test caskchez.UserCrudAPITest`
+  - CRUD: `./mill web.runMain boogieloops.web.examples.UserCrudAPI`
+  - Upload/Streaming: `make example-web-upload`
+- Single suite: `./mill web.test boogieloops.web.UserCrudAPITest`
 
 ## Troubleshooting
 
-- Content‑Type: send `Content-Type: application/json` for JSON bodies. For multipart/streaming, body is not pre‑consumed.
+- Content-Type: send `Content-Type: application/json` for JSON bodies. For multipart/streaming, body is not pre-consumed.
 - Port in use: example server listens on `8082`; change `override def port` or stop the other process.
 - Body parse errors: ensure valid JSON; errors surface under `RequestBodyError` with a parse message.
 - Unexpected 200/204 status: GET/PUT/PATCH/DELETE use the first success response status in `responses`.

@@ -1,13 +1,13 @@
-# Zero to App (10–15 minutes)
+# Zero to App (10-15 minutes)
 
-Build a tiny, validated HTTP app using the Chez ecosystem.
+Build a tiny, validated HTTP app using the BoogieLoops ecosystem.
 
-What you’ll build:
+What you'll build:
 
-- Define a `User` model with Chez (schema + validation)
-- Create a minimal API with boogieloops.web (POST/GET)
+- Define a `User` model with schema (schema + validation)
+- Create a minimal API with web (POST/GET)
 - Test with curl
-- Optional: add a tiny ChezWiz endpoint for structured AI output
+- Optional: add a tiny ai endpoint for structured AI output
 
 Prereqs
 
@@ -15,15 +15,15 @@ Prereqs
 - Mill launcher in repo (`./mill`)
 - Run `make help` to see commands
 
-1. Create a User model (Chez)
+1. Create a User model (schema)
 
 Open `web/src/main/scala/boogieloops/examples/zerotoapp/Models.scala` and add/update:
 
 ```scala
-// File: Chez/src/main/scala/quickstart/Models.scala
+// File: schema/src/main/scala/quickstart/Models.scala
 package quickstart
 
-import chez.derivation.Schema
+import boogieloops.schema.derivation.Schema
 
 @Schema.title("CreateUser")
 case class CreateUser(
@@ -41,20 +41,20 @@ case class User(
 ) derives Schema
 ```
 
-2. Add a minimal API (boogieloops.web)
+2. Add a minimal API (web)
 
 Open `web/src/main/scala/boogieloops/examples/zerotoapp/Api.scala`. The basic POST/GET endpoints are scaffolded; proceed to run it.
 
 3. Run it
 
 ```bash
-make example-caskchez-zeroapp
+make example-web-zeroapp
 ```
 
 4. Test with curl
 
 ```bash
-# Create a user (validated by Chez schema)
+# Create a user (validated by schema)
 curl -s -X POST localhost:8082/users \
   -H 'Content-Type: application/json' \
   -d '{"name":"Ada","email":"ada@lovelace.org","age":28}' | jq
@@ -74,7 +74,7 @@ Open `web/src/main/scala/boogieloops/examples/zerotoapp/Api.scala` and add this 
 
 ```scala
 // Add this endpoint to quickstart.Api
-import caskchez.openapi.config.OpenAPIConfig
+import boogieloops.web.openapi.config.OpenAPIConfig
 
 @Web.swagger(
   "/openapi",
@@ -94,15 +94,15 @@ Example:
 curl -s http://localhost:8082/openapi | jq '.info.title, .openapi'
 ```
 
-6. Optional: Add a tiny ChezWiz endpoint
+6. Optional: Add a tiny ai endpoint
 
 ```scala
-// File: ChezWiz/src/main/scala/quickstart/Wiz.scala
+// File: ai/src/main/scala/quickstart/Wiz.scala
 package quickstart
 
-import chezwiz.agent.*
-import chezwiz.agent.providers.OpenAIProvider
-import chez.derivation.Schema
+import boogieloops.ai.*
+import boogieloops.ai.providers.OpenAIProvider
+import boogieloops.schema.derivation.Schema
 import upickle.default.*
 
 case class Summary(@Schema.minLength(1) text: String) derives Schema, ReadWriter
@@ -141,14 +141,14 @@ def summarize(req: ValidatedRequest) = {
 }
 ```
 
-Run again and POST to `/summaries` (requires `OPENAI_API_KEY`), or point Wiz at a local OpenAI‑compatible server.
+Run again and POST to `/summaries` (requires `OPENAI_API_KEY`), or point Wiz at a local OpenAI-compatible server.
 
 7. Infer Interests (no AI required)
 
-The Zero‑to‑App server includes an endpoint that normalizes interests from a free‑text profile summary. This version is AI‑free by default and can later be swapped to a ChezWiz Agent.
+The Zero-to-App server includes an endpoint that normalizes interests from a free-text profile summary. This version is AI-free by default and can later be swapped to an ai Agent.
 
 ```bash
-# Create a user first (if you haven’t already)
+# Create a user first (if you haven't already)
 curl -s -X POST localhost:8082/users \
   -H 'Content-Type: application/json' \
   -d '{"name":"Ada","email":"ada@lovelace.org","age":28}' | jq
@@ -171,9 +171,9 @@ Troubleshooting
 
 - 400s: ensure `Content-Type: application/json` and valid JSON
 - Port in use: change `override def port` or free 8082
-- ChezWiz: set `OPENAI_API_KEY` or use an OpenAI‑compatible local endpoint (LM Studio/Ollama)
+- ai: set `OPENAI_API_KEY` or use an OpenAI-compatible local endpoint (LM Studio/Ollama)
 
 Next
 
-- Explore module guides: Chez (docs/chez.md), boogieloops.web (docs/caskchez.md), ChezWiz (docs/chezwiz.md)
+- Explore module guides: schema (docs/schema.md), web (docs/web.md), ai (docs/ai.md)
 - See `make help` for useful dev commands

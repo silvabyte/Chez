@@ -1,6 +1,6 @@
 # Metadata & Scoping
 
-ChezWiz uses `RequestMetadata` to scope conversations and enable stateful interactions across requests.
+BoogieLoops AI uses `RequestMetadata` to scope conversations and enable stateful interactions across requests.
 
 ## RequestMetadata
 
@@ -68,4 +68,3 @@ val metadata = RequestMetadata(
 ```
 
 This ensures conversation history is isolated both by tenant and user.
-

@@ -1,6 +1,6 @@
 # Hooks & Metrics
 
-ChezWiz provides a comprehensive hook system for observability and metrics collection, enabling you to monitor agent performance, log interactions, and implement custom behavior.
+BoogieLoops AI provides a comprehensive hook system for observability and metrics collection, enabling you to monitor agent performance, log interactions, and implement custom behavior.
 
 ## Hook System
 
@@ -21,7 +21,7 @@ Hooks are lifecycle events that fire during agent operations. Each hook type rec
 ### Creating Custom Hooks
 
 ```scala
-import chezwiz.agent.*
+import boogieloops.ai.agent.*
 
 class LoggingHook extends PreRequestHook with PostResponseHook {
   def onPreRequest(ctx: PreRequestContext): Unit =
@@ -57,7 +57,7 @@ val agent = Agent("MyAgent", "You are helpful", provider, "gpt-4o", hooks = hook
 
 ## Built‑in Metrics
 
-ChezWiz includes a metrics implementation that tracks performance, usage, and errors via hooks. There is no factory; wire metrics explicitly as above.
+BoogieLoops AI includes a metrics implementation that tracks performance, usage, and errors via hooks. There is no factory; wire metrics explicitly as above.
 
 ### What’s Collected
 
@@ -125,7 +125,7 @@ case class PostResponseContext(
   agentName: String,
   model: String,
   request: ChatRequest,
-  response: Either[ChezError, ChatResponse],
+  response: Either[AIError, ChatResponse],
   metadata: RequestMetadata,
   requestTimestamp: Long,
   responseTimestamp: Long
@@ -136,7 +136,7 @@ case class PostResponseContext(
 case class ErrorContext(
   agentName: String,
   model: String,
-  error: ChezError,
+  error: AIError,
   metadata: RequestMetadata,
   operation: String,
   request: Option[Either[ChatRequest, ObjectRequest]],

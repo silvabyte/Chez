@@ -1,13 +1,13 @@
 # Annotations Guide
 
-Chez provides rich annotation support for JSON Schema validation. Annotations define constraints and metadata directly in your types, enabling precise validation at boundaries.
+BoogieLoops Schema provides rich annotation support for JSON Schema validation. Annotations define constraints and metadata directly in your types, enabling precise validation at boundaries.
 
 ## Basic Usage
 
 Apply annotations to case class fields using `@Schema.*`:
 
 ```scala
-import chez.derivation.Schema
+import boogieloops.schema.derivation.Schema
 
 @Schema.title("User Profile")
 @Schema.description("System user")
@@ -422,4 +422,3 @@ case class BetterThanStrings(
 ```
 
 Annotations provide precise, self‑documenting validation that ensures data quality at your API boundaries.
-

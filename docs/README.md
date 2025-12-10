@@ -1,10 +1,10 @@
 # Getting Started
 
-Welcome to the Chez ecosystem — three Scala 3 libraries that work great together or stand alone:
+Welcome to the BoogieLoops ecosystem — three Scala 3 libraries that work great together or stand alone:
 
-- Chez: Type‑safe JSON Schema (derive, build, validate)
-- boogieloops.web: Schema‑first HTTP validation + OpenAPI for Cask
-- ChezWiz: Type‑safe LLM agents with structured output
+- **schema**: Type-safe JSON Schema (derive, build, validate)
+- **web**: Schema-first HTTP validation + OpenAPI for Cask
+- **ai**: Type-safe LLM agents with structured output
 
 ## Prerequisites
 
@@ -17,53 +17,53 @@ Welcome to the Chez ecosystem — three Scala 3 libraries that work great togeth
 Mill:
 
 ```scala
-mvn"com.silvabyte::chez:0.3.0"        // Core schemas
-mvn"com.silvabyte::boogieloops-web:0.3.0"    // HTTP validation + OpenAPI
-mvn"com.silvabyte::chezwiz:0.3.0"     // LLM agents
+mvn"dev.boogieloops::schema:0.4.0"  // Core schemas
+mvn"dev.boogieloops::web:0.4.0"     // HTTP validation + OpenAPI
+mvn"dev.boogieloops::ai:0.4.0"      // LLM agents
 ```
 
 SBT:
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.silvabyte" %% "chez" % "0.3.0",
-  "com.silvabyte" %% "boogieloops-web" % "0.3.0",
-  "com.silvabyte" %% "chezwiz" % "0.3.0"
+  "dev.boogieloops" %% "schema" % "0.4.0",
+  "dev.boogieloops" %% "web" % "0.4.0",
+  "dev.boogieloops" %% "ai" % "0.4.0"
 )
 ```
 
 ## Common Commands
 
 - Build: `make build` (or `./mill __.compile`)
-- Test: `make test` (override `MODULE=Chez|CaskChez|ChezWiz`)
+- Test: `make test` (override `MODULE=schema|web|ai`)
 - Lint: `make lint` (scalafix)
 - Format: `make format` (scalafmt)
-- Watch: `make watch MODULE=Chez` or `make watch-test MODULE=CaskChez`
-- Examples: `make chez`, `make caskchez`, `make wiz`
+- Watch: `make watch MODULE=schema` or `make watch-test MODULE=web`
+- Examples: `make schema`, `make web`, `make ai`
 
 Run `make help` for the full list.
 
 ## Examples Overview
 
-- `make chez`: Run core Chez examples
-- `make caskchez`: Start the boogieloops.web API example on port 8082
-- `make caskchez-upload`: Start the Upload/Streaming demo (defaults to port 8080)
-- `make wiz`: Run ChezWiz examples (requires API keys or a local LLM)
+- `make schema`: Run core schema examples
+- `make web`: Start the web API example on port 8082
+- `make web-upload`: Start the Upload/Streaming demo (defaults to port 8080)
+- `make ai`: Run ai examples (requires API keys or a local LLM)
 
-ChezWiz examples environment variables:
+AI examples environment variables:
 
 ```bash
 export OPENAI_API_KEY="your-openai-key"           # OpenAI provider
 export ANTHROPIC_API_KEY="your-anthropic-key"     # Anthropic provider (optional)
 ```
 
-Local LLMs via OpenAI‑compatible endpoints (no key by default) are supported (LM Studio, Ollama, llama.cpp).
+Local LLMs via OpenAI-compatible endpoints (no key by default) are supported (LM Studio, Ollama, llama.cpp).
 
 ## Next Steps
 
-- Chez (core): [chez.md](./chez.md)
-- boogieloops.web (web): [caskchez.md](./caskchez.md)
-- ChezWiz (AI): [chezwiz.md](./chezwiz.md)
+- schema (core): [schema.md](./schema.md)
+- web: [web.md](./web.md)
+- ai: [ai.md](./ai.md)
 
 ## More Docs
 
