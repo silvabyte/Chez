@@ -3,7 +3,7 @@ package boogieloops.web.examples.zerotoapp
 import cask._
 import scala.annotation.unused
 import boogieloops.web.*
-import boogieloops.web.CaskChez.ValidatedRequestReader
+import boogieloops.web.Web.ValidatedRequestReader
 import boogieloops.schema.derivation.Schema
 import upickle.default.*
 
@@ -11,7 +11,7 @@ import upickle.default.*
  * Zero-to-App: API stub
  *
  * Start the server:
- *   ./mill CaskChez.runMain boogieloops.web.examples.zerotoapp.ZeroToAppApi
+ *   ./mill Web.runMain boogieloops.web.examples.zerotoapp.ZeroToAppApi
  *
  * Follow docs/zero-to-app.md Steps 2–5 to flesh out endpoints and OpenAPI.
  */
@@ -22,7 +22,7 @@ object ZeroToAppApi extends cask.MainRoutes {
 
   // POST /users — create a user
   // Docs: Zero to App, Step 2 (Add a minimal API)
-  @CaskChez.post(
+  @Web.post(
     "/users",
     RouteSchema(
       summary = Some("Create user"),
@@ -44,7 +44,7 @@ object ZeroToAppApi extends cask.MainRoutes {
   }
 
   // GET /users — list users
-  @CaskChez.get(
+  @Web.get(
     "/users",
     RouteSchema(
       summary = Some("List users"),
@@ -58,8 +58,8 @@ object ZeroToAppApi extends cask.MainRoutes {
 
   // POST /users/:id/interests/infer — derive interests from a profile summary
   // This endpoint demonstrates how to normalize inferred interests into a
-  // typed model. For a production-quality version, wire to ChezWiz Agent.
-  @CaskChez.post(
+  // typed model. For a production-quality version, wire to boogieloops.ai Agent.
+  @Web.post(
     "/users/:id/interests/infer",
     RouteSchema(
       summary = Some("Infer user interests from free text"),
@@ -73,8 +73,8 @@ object ZeroToAppApi extends cask.MainRoutes {
     val _ = id
     req.getBody[ProfileSummary] match {
       case Right(in) =>
-        // TODO: Replace the current naive normalization with ChezWiz Agent integration.
-        // Pseudocode example (uncomment if you add ChezWiz dependency):
+        // TODO: Replace the current naive normalization with boogieloops.ai Agent integration.
+        // Pseudocode example (uncomment if you add boogieloops.ai dependency):
         //
         // import chezwiz.agent.*
         // import chezwiz.agent.providers.OpenAIProvider
@@ -107,7 +107,7 @@ object ZeroToAppApi extends cask.MainRoutes {
   }
 
   // Optional: Add swagger endpoint per docs (Step 5)
-  // @CaskChez.swagger("/openapi", OpenAPIConfig(title = "Quickstart API", summary = Some("Zero to App demo")))
+  // @Web.swagger("/openapi", OpenAPIConfig(title = "Quickstart API", summary = Some("Zero to App demo")))
   // def openapi(): String = ""
 
   // Default port to avoid clashing with other examples

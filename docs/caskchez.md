@@ -1,14 +1,14 @@
-# CaskChez: Schema‑First HTTP Validation for Cask
+# boogieloops.web: Schema‑First HTTP Validation for Cask
 
 Type‑safe, annotation‑driven request validation and OpenAPI 3.1.1 for the Cask web framework. Define schemas once; get body, query, headers, and path validation with structured errors and auto‑generated docs.
 
 ## Features
 
-- Annotation‑driven routes: `@CaskChez.get|post|put|patch|delete`
+- Annotation‑driven routes: `@Web.get|post|put|patch|delete`
 - Automatic request validation: body, query, headers, and path params
 - Typed access: `ValidatedRequest.getBody[T]`, `getQuery[T]`, `getQueryParam(name)`
 - Route registry: centralized `RouteSchemaRegistry` for introspection/OpenAPI
-- OpenAPI 3.1.1: serve specs with `@CaskChez.swagger("/openapi", OpenAPIConfig(...))`
+- OpenAPI 3.1.1: serve specs with `@Web.swagger("/openapi", OpenAPIConfig(...))`
 - Decorators pass‑through: use built‑in Cask decorators and your own
 - Multipart uploads and streaming responses: body left untouched for non‑JSON
 
@@ -18,7 +18,7 @@ Type‑safe, annotation‑driven request validation and OpenAPI 3.1.1 for the Ca
 
 ```scala
 mvn"com.silvabyte::chez:0.3.0"
-mvn"com.silvabyte::caskchez:0.3.0"
+mvn"com.silvabyte::boogieloops-web:0.3.0"
 ```
 
 - SBT:
@@ -26,7 +26,7 @@ mvn"com.silvabyte::caskchez:0.3.0"
 ```scala
 libraryDependencies ++= Seq(
   "com.silvabyte" %% "chez" % "0.3.0",
-  "com.silvabyte" %% "caskchez" % "0.3.0"
+  "com.silvabyte" %% "boogieloops-web" % "0.3.0"
 )
 ```
 
@@ -53,10 +53,10 @@ case class User(id: String, name: String, email: String, age: Int) derives Schem
 
 ```scala
 import cask.main.Main
-import caskchez.*
+import boogieloops.web.*
 
 object Api extends Main {
-  @CaskChez.post(
+  @Web.post(
     "/users",
     RouteSchema(
       summary = Some("Create user"),
@@ -113,12 +113,12 @@ make example-caskchez-upload-curl-decorated
 
 ## How It Works
 
-- Define a `RouteSchema` alongside your handler; decorate with `@CaskChez.<method>("/path", schema)`.
-- On request, CaskChez validates body/query/headers/path against the schema and constructs a `ValidatedRequest`.
+- Define a `RouteSchema` alongside your handler; decorate with `@Web.<method>("/path", schema)`.
+- On request, boogieloops.web validates body/query/headers/path against the schema and constructs a `ValidatedRequest`.
 - Handlers receive `ValidatedRequest` to access typed data using upickle:
   - `getBody[T: ReadWriter]`, `getQuery[T: ReadWriter]`
   - `getQueryParam(name)`, `getParam(name)`, `getHeader(name)`
-- Responses: first successful `responses` status in your `RouteSchema` is used as the status code wrapper for GET/PUT/PATCH/DELETE. Body content is whatever you return (commonly `write(model)`). For streaming or file responses, return a `cask.Response` and CaskChez passes it through unchanged.
+- Responses: first successful `responses` status in your `RouteSchema` is used as the status code wrapper for GET/PUT/PATCH/DELETE. Body content is whatever you return (commonly `write(model)`). For streaming or file responses, return a `cask.Response` and boogieloops.web passes it through unchanged.
 
 ## RouteSchema Essentials
 
@@ -131,7 +131,7 @@ make example-caskchez-upload-curl-decorated
 Minimal example:
 
 ```scala
-@CaskChez.get(
+@Web.get(
   "/users",
   RouteSchema(
     summary = Some("List users"),
@@ -147,9 +147,9 @@ def list(r: ValidatedRequest) = write(UserListResponse(Nil, 0, 1, 10, 0))
 - Serve a live OpenAPI document from registered routes:
 
 ```scala
-import caskchez.openapi.config.OpenAPIConfig
+import boogieloops.web.openapi.config.OpenAPIConfig
 
-@CaskChez.swagger(
+@Web.swagger(
   "/openapi",
   OpenAPIConfig(
     title = "User API",
@@ -163,7 +163,7 @@ def openapi(): String = ""  // auto‑generated JSON
 
 ## Client SDK
 
-Generate a TypeScript client from your running CaskChez API using the OpenAPI endpoint. See the step‑by‑step guide:
+Generate a TypeScript client from your running boogieloops.web API using the OpenAPI endpoint. See the step‑by‑step guide:
 
 - TypeScript SDK: [../docs/typescript-sdk.md](./typescript-sdk.md)
 
@@ -217,6 +217,6 @@ See the focused guide:
 
 ## Examples
 
-- Full CRUD with OpenAPI: [CaskChez/src/main/scala/caskchez/examples/UserCrudAPI.scala](../CaskChez/src/main/scala/caskchez/examples/UserCrudAPI.scala)
-- OpenAPI generation sample: [CaskChez/src/main/scala/caskchez/examples/OpenAPITest.scala](../CaskChez/src/main/scala/caskchez/examples/OpenAPITest.scala)
- - Upload/Streaming + Decorators: [CaskChez/src/main/scala/caskchez/examples/UploadStreamingAPI.scala](../CaskChez/src/main/scala/caskchez/examples/UploadStreamingAPI.scala)
+- Full CRUD with OpenAPI: [web/src/main/scala/boogieloops/examples/UserCrudAPI.scala](../web/src/main/scala/boogieloops/examples/UserCrudAPI.scala)
+- OpenAPI generation sample: [web/src/main/scala/boogieloops/examples/OpenAPITest.scala](../web/src/main/scala/boogieloops/examples/OpenAPITest.scala)
+- Upload/Streaming + Decorators: [web/src/main/scala/boogieloops/examples/UploadStreamingAPI.scala](../web/src/main/scala/boogieloops/examples/UploadStreamingAPI.scala)

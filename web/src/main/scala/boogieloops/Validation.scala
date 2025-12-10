@@ -5,7 +5,7 @@ import upickle.default.*
 import scala.util.{Try, Success, Failure}
 
 /**
- * Validation logic for CaskChez module
+ * Validation logic for boogieloops.web module
  *
  * This file contains the core validation functionality that integrates Chez schemas with Cask request processing for automatic
  * request validation.

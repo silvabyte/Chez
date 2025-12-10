@@ -7,7 +7,7 @@ info: ## Show project info
 	@echo "Scala:     3.6.2+"
 	@echo "Build:     Mill"
 	@echo "Test:      utest"
-	@echo "Modules:   Chez (core), CaskChez (web), ChezWiz (AI)"
+	@echo "Modules:   Chez (core), Web (web), ChezWiz (AI)"
 	@echo ""
 	@echo "Run 'make help' for available commands"
 

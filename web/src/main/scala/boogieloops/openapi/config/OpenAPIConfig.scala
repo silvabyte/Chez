@@ -8,8 +8,8 @@ import upickle.default.*
 case class OpenAPIConfig(
     // Info Object (OpenAPI 3.1.1)
     title: String = "API Documentation",
-    description: String = "Generated from CaskChez route schemas",
-    summary: Option[String] = Some("CaskChez Auto-Generated API"),
+    description: String = "Generated from boogieloops.web route schemas",
+    summary: Option[String] = Some("boogieloops.web Auto-Generated API"),
     version: String = "1.0.0",
     termsOfService: Option[String] = None,
     contact: Option[ContactObject] = None,

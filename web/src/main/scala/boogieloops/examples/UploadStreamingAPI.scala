@@ -4,8 +4,8 @@ import cask._
 import scala.annotation.unused
 import upickle.default._
 import boogieloops.web._
-import boogieloops.web.CaskChez.ValidatedRequestReader
-import boogieloops.web.CaskChez
+import boogieloops.web.Web.ValidatedRequestReader
+import boogieloops.web.Web
 import io.undertow.server.handlers.form.FormParserFactory
 import os.*
 import os.Source.*
@@ -23,7 +23,7 @@ class UploadStreamingAPI extends cask.MainRoutes {
 
   @cask.decorators.compress()
   @trace()
-  @CaskChez.post(
+  @Web.post(
     "/demo/upload",
     RouteSchema(
       summary = Some("Multipart upload"),
@@ -60,7 +60,7 @@ class UploadStreamingAPI extends cask.MainRoutes {
 
   @cask.decorators.compress()
   @trace()
-  @CaskChez.post(
+  @Web.post(
     "/demo/upload-stream",
     RouteSchema(
       summary = Some("Streaming upload"),
@@ -86,7 +86,7 @@ class UploadStreamingAPI extends cask.MainRoutes {
 
   @cask.decorators.compress()
   @trace()
-  @CaskChez.get(
+  @Web.get(
     "/demo/stream/:size",
     RouteSchema(
       summary = Some("Streaming response"),
@@ -107,11 +107,11 @@ class UploadStreamingAPI extends cask.MainRoutes {
 
   @cask.decorators.compress()
   @trace("X-Custom-Trace")
-  @CaskChez.get(
+  @Web.get(
     "/demo/decorated",
     RouteSchema(
       summary = Some("Decorated route"),
-      description = Some("Shows custom and built-in decorators with CaskChez"),
+      description = Some("Shows custom and built-in decorators with boogieloops.web"),
       tags = List("demo"),
       responses = Map(200 -> ApiResponse("OK", bl.String()))
     )

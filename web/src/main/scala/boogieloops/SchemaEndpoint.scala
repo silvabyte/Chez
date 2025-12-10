@@ -28,10 +28,10 @@ object ValidatedRequestStore {
  *   - Response validation (in development mode)
  *   - Automatic route registration for OpenAPI generation
  */
-object CaskChez {
+object Web {
 
   /**
-   * POST endpoint with complete route schema validation Usage: @CaskChez.post("/path", completeRouteSchema)
+   * POST endpoint with complete route schema validation Usage: @Web.post("/path", completeRouteSchema)
    */
   class post(val path: String, routeSchema: RouteSchema, subpath0: Boolean = false)
       extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
@@ -110,7 +110,7 @@ object CaskChez {
   }
 
   /**
-   * GET endpoint with complete route schema validation Usage: @CaskChez.get("/path", completeRouteSchema)
+   * GET endpoint with complete route schema validation Usage: @Web.get("/path", completeRouteSchema)
    */
   class get(val path: String, routeSchema: RouteSchema, subpath0: Boolean = false)
       extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
@@ -161,7 +161,7 @@ object CaskChez {
   }
 
   /**
-   * PUT endpoint with complete route schema validation Usage: @CaskChez.put("/path", completeRouteSchema)
+   * PUT endpoint with complete route schema validation Usage: @Web.put("/path", completeRouteSchema)
    */
   class put(val path: String, routeSchema: RouteSchema, subpath0: Boolean = false)
       extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
@@ -212,7 +212,7 @@ object CaskChez {
   }
 
   /**
-   * PATCH endpoint with complete route schema validation Usage: @CaskChez.patch("/path", completeRouteSchema)
+   * PATCH endpoint with complete route schema validation Usage: @Web.patch("/path", completeRouteSchema)
    */
   class patch(val path: String, routeSchema: RouteSchema, subpath0: Boolean = false)
       extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
@@ -263,7 +263,7 @@ object CaskChez {
   }
 
   /**
-   * DELETE endpoint with complete route schema validation Usage: @CaskChez.delete("/path", completeRouteSchema)
+   * DELETE endpoint with complete route schema validation Usage: @Web.delete("/path", completeRouteSchema)
    */
   class delete(val path: String, routeSchema: RouteSchema, subpath0: Boolean = false)
       extends cask.HttpEndpoint[Response.Raw, Seq[String]] {
@@ -314,7 +314,7 @@ object CaskChez {
   }
 
   /**
-   * OpenAPI 3.1.1 Swagger endpoint for automatic API documentation Usage: @CaskChez.swagger("/openapi")
+   * OpenAPI 3.1.1 Swagger endpoint for automatic API documentation Usage: @Web.swagger("/openapi")
    */
   class swagger(val path: String, config: OpenAPIConfig = OpenAPIConfig(), subpath0: Boolean = false)
       extends cask.HttpEndpoint[String, Seq[String]] {

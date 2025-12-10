@@ -5,7 +5,7 @@ Build a tiny, validated HTTP app using the Chez ecosystem.
 What you’ll build:
 
 - Define a `User` model with Chez (schema + validation)
-- Create a minimal API with CaskChez (POST/GET)
+- Create a minimal API with boogieloops.web (POST/GET)
 - Test with curl
 - Optional: add a tiny ChezWiz endpoint for structured AI output
 
@@ -17,7 +17,7 @@ Prereqs
 
 1. Create a User model (Chez)
 
-Open `CaskChez/src/main/scala/caskchez/examples/zerotoapp/Models.scala` and add/update:
+Open `web/src/main/scala/boogieloops/examples/zerotoapp/Models.scala` and add/update:
 
 ```scala
 // File: Chez/src/main/scala/quickstart/Models.scala
@@ -41,9 +41,9 @@ case class User(
 ) derives Schema
 ```
 
-2. Add a minimal API (CaskChez)
+2. Add a minimal API (boogieloops.web)
 
-Open `CaskChez/src/main/scala/caskchez/examples/zerotoapp/Api.scala`. The basic POST/GET endpoints are scaffolded; proceed to run it.
+Open `web/src/main/scala/boogieloops/examples/zerotoapp/Api.scala`. The basic POST/GET endpoints are scaffolded; proceed to run it.
 
 3. Run it
 
@@ -70,13 +70,13 @@ curl -s -X POST localhost:8082/users \
 
 5. Serve OpenAPI (optional)
 
-Open `CaskChez/src/main/scala/caskchez/examples/zerotoapp/Api.scala` and add this endpoint method:
+Open `web/src/main/scala/boogieloops/examples/zerotoapp/Api.scala` and add this endpoint method:
 
 ```scala
 // Add this endpoint to quickstart.Api
 import caskchez.openapi.config.OpenAPIConfig
 
-@CaskChez.swagger(
+@Web.swagger(
   "/openapi",
   OpenAPIConfig(
     title = "Quickstart API",
@@ -121,7 +121,7 @@ Wire it into the API:
 
 ```scala
 // In quickstart.Api
-@CaskChez.post(
+@Web.post(
   "/summaries",
   RouteSchema(
     summary = Some("Summarize text"),
@@ -175,5 +175,5 @@ Troubleshooting
 
 Next
 
-- Explore module guides: Chez (docs/chez.md), CaskChez (docs/caskchez.md), ChezWiz (docs/chezwiz.md)
+- Explore module guides: Chez (docs/chez.md), boogieloops.web (docs/caskchez.md), ChezWiz (docs/chezwiz.md)
 - See `make help` for useful dev commands

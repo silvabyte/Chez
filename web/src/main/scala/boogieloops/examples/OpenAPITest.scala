@@ -62,7 +62,7 @@ object OpenAPITest {
     val config = OpenAPIConfig(
       title = "Test API",
       summary = Some("OpenAPI 3.1.1 Generation Test"),
-      description = "Testing CaskChez OpenAPI generation with JSON Schema 2020-12",
+      description = "Testing boogieloops.web OpenAPI generation with JSON Schema 2020-12",
       version = "1.0.0"
     )
 

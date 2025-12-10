@@ -1,11 +1,11 @@
 # TypeScript SDK Generation
 
-Generate a TypeScript client from the running CaskChez example API using @hey-api/openapi-ts, then run a quick demo.
+Generate a TypeScript client from the running boogieloops.web example API using @hey-api/openapi-ts, then run a quick demo.
 
 ## Prerequisites
 
 - Node.js and npm installed
-- The CaskChez example API running (see below)
+- The boogieloops.web example API running (see below)
 
 ## 1) Start the API (terminal A)
 
@@ -44,4 +44,3 @@ The demo creates a user, lists users, fetches one by id, updates it, then delete
 - 404 on generation: ensure the server is running and OpenAPI is available at `/openapi`.
 - Port mismatch: if you changed ports, update `typescript-sdk/openapi-ts.config.ts` or set `BASE_URL` for `sdk-demo`.
 - Node/npm issues: run `make sdk-install` to ensure dependencies are present.
-

@@ -6,7 +6,7 @@ import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
 /**
- * Comprehensive observability and metrics system for ChezWiz agents.
+ * Comprehensive observability and metrics system for boogieloops.ai agents.
  * Provides out-of-the-box metrics collection with thread-safe operations
  * and multiple export formats.
  */

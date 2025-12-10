@@ -3,7 +3,7 @@ package boogieloops.web
 import _root_.boogieloops.schema.Schema
 
 /**
- * Core schema definition classes for CaskChez module
+ * Core schema definition classes for boogieloops.web module
  *
  * This file contains the fundamental data structures for defining API route schemas for use with custom Cask endpoints that
  * provide automatic validation.

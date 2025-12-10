@@ -23,11 +23,11 @@ mvn"com.silvabyte::chez:0.3.0"
 
 // Add HTTP validation for Cask web framework
 mvn"com.silvabyte::chez:0.3.0"
-mvn"com.silvabyte::caskchez:0.3.0"
+mvn"com.silvabyte::boogieloops-web:0.3.0"
 
 // Full ecosystem with LLM agent support
 mvn"com.silvabyte::chez:0.3.0"
-mvn"com.silvabyte::caskchez:0.3.0"
+mvn"com.silvabyte::boogieloops-web:0.3.0"
 mvn"com.silvabyte::chezwiz:0.3.0"
 ```
 
@@ -40,13 +40,13 @@ libraryDependencies += "com.silvabyte" %% "chez" % "0.3.0"
 // Add HTTP validation for Cask web framework
 libraryDependencies ++= Seq(
   "com.silvabyte" %% "chez" % "0.3.0",
-  "com.silvabyte" %% "caskchez" % "0.3.0"
+  "com.silvabyte" %% "boogieloops-web" % "0.3.0"
 )
 
 // Full ecosystem with LLM agent support
 libraryDependencies ++= Seq(
   "com.silvabyte" %% "chez" % "0.3.0",
-  "com.silvabyte" %% "caskchez" % "0.3.0",
+  "com.silvabyte" %% "boogieloops-web" % "0.3.0",
   "com.silvabyte" %% "chezwiz" % "0.3.0"
 )
 ```
@@ -54,7 +54,7 @@ libraryDependencies ++= Seq(
 ## The Ecosystem
 
 - Chez (core): Type‑safe JSON Schema derivation and validation
-- CaskChez (web): Schema‑first HTTP validation + OpenAPI for Cask
+- boogieloops.web (web): Schema‑first HTTP validation + OpenAPI for Cask
 - ChezWiz (AI): Type‑safe LLM agents with structured output
 
 ## Documentation
@@ -62,7 +62,7 @@ libraryDependencies ++= Seq(
 - Getting Started: [docs/README.md](./docs/README.md)
 - Zero to App: [docs/zero-to-app.md](./docs/zero-to-app.md)
 - Chez (core): [docs/chez.md](./docs/chez.md)
-- CaskChez (web): [docs/caskchez.md](./docs/caskchez.md)
+- boogieloops.web (web): [docs/caskchez.md](./docs/caskchez.md)
 - ChezWiz (AI): [docs/chezwiz.md](./docs/chezwiz.md)
 - Concepts: [docs/concepts.md](./docs/concepts.md)
 - Troubleshooting: [docs/troubleshooting.md](./docs/troubleshooting.md)

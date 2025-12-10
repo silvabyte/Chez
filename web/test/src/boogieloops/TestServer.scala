@@ -4,7 +4,7 @@ import io.undertow.Undertow
 import scala.util.Random
 
 /**
- * Test server for running CaskChez API tests
+ * Test server for running boogieloops.web API tests
  *
  * Provides a simple server setup for integration testing with automatic port selection
  * and proper lifecycle management.

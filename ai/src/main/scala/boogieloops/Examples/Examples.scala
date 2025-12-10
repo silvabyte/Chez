@@ -250,6 +250,6 @@ object Examples extends App {
   builtInMetrics()
 
   println("\n=== Examples Complete ===")
-  println("💡 Each example builds on the previous, showing progressive ChezWiz capabilities")
+   println("💡 Each example builds on the previous, showing progressive boogieloops.ai capabilities")
   println("🔧 Set OPENAI_API_KEY and/or ANTHROPIC_API_KEY to see real results")
 }

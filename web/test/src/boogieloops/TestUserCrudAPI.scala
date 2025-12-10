@@ -4,8 +4,8 @@ import cask._
 import scala.annotation.unused
 import _root_.boogieloops.schema._
 import boogieloops.web._
-import boogieloops.web.CaskChez
-import boogieloops.web.CaskChez.ValidatedRequestReader
+import boogieloops.web.Web
+import boogieloops.web.Web.ValidatedRequestReader
 import upickle.default._
 import boogieloops.schema.derivation.Schema
 
@@ -86,7 +86,7 @@ class TestUserCrudAPI extends cask.MainRoutes {
 
   // === CRUD ENDPOINTS ===
 
-  @CaskChez.post(
+  @Web.post(
     "/users",
     RouteSchema(
       summary = Some("Create a new user"),
@@ -131,7 +131,7 @@ class TestUserCrudAPI extends cask.MainRoutes {
     }
   }
 
-  @CaskChez.get(
+  @Web.get(
     "/users",
     RouteSchema(
       summary = Some("List users"),
@@ -147,7 +147,7 @@ class TestUserCrudAPI extends cask.MainRoutes {
     write(userList)
   }
 
-  @CaskChez.get(
+  @Web.get(
     "/users/:id",
     RouteSchema(
       summary = Some("Get user by ID"),
@@ -172,7 +172,7 @@ class TestUserCrudAPI extends cask.MainRoutes {
     }
   }
 
-  @CaskChez.delete(
+  @Web.delete(
     "/users/:id",
     RouteSchema(
       summary = Some("Delete user"),

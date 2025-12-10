@@ -1,6 +1,6 @@
 # Multipart, Streaming, and Decorators
 
-This guide covers three production essentials now supported by CaskChez:
+This guide covers three production essentials now supported by boogieloops.web:
 
 - Multipart uploads (body isn’t pre‑consumed by validation)
 - Streaming responses (pass through to Cask)
@@ -8,8 +8,8 @@ This guide covers three production essentials now supported by CaskChez:
 
 All examples below are implemented in:
 
-- `CaskChez/src/main/scala/caskchez/examples/UploadStreamingAPI.scala`
-- `CaskChez/src/main/scala/caskchez/examples/UploadStreamingServer.scala`
+- `web/src/main/scala/boogieloops/examples/UploadStreamingAPI.scala`
+- `web/src/main/scala/boogieloops/examples/UploadStreamingServer.scala`
 
 ## Run the Demo Server
 
@@ -42,10 +42,10 @@ CASKCHEZ_HOST=127.0.0.1 CASKCHEZ_PORT=9000 make example-caskchez-upload-curl
 
 ## Multipart Uploads (Pass‑Through Body)
 
-When `Content-Type` is not JSON (e.g., `multipart/form-data`), CaskChez leaves the request body untouched. You can parse the body downstream using Undertow’s `FormParserFactory`:
+When `Content-Type` is not JSON (e.g., `multipart/form-data`), boogieloops.web leaves the request body untouched. You can parse the body downstream using Undertow’s `FormParserFactory`:
 
 ```scala
-@CaskChez.post(
+@Web.post(
   "/demo/upload",
   RouteSchema(
     summary = Some("Multipart upload"),
@@ -64,10 +64,10 @@ def upload(r: ValidatedRequest): String = {
 
 ## Streaming Responses
 
-Return a `cask.Response[geny.Readable]` from your handler; CaskChez passes it through unmodified. Example streams `size` bytes:
+Return a `cask.Response[geny.Readable]` from your handler; boogieloops.web passes it through unmodified. Example streams `size` bytes:
 
 ```scala
-@CaskChez.get(
+@Web.get(
   "/demo/stream/:size",
   RouteSchema(
     summary = Some("Streaming response"),
@@ -91,7 +91,7 @@ def stream(size: String, r: ValidatedRequest): cask.Response[geny.Readable] = {
 
 ## Decorators (Built‑in + Custom)
 
-CaskChez routes are standard Cask endpoints, so decorators work the same. You can stack built‑ins like `@cask.decorators.compress()` and custom decorators. Example custom header decorator:
+boogieloops.web routes are standard Cask endpoints, so decorators work the same. You can stack built‑ins like `@cask.decorators.compress()` and custom decorators. Example custom header decorator:
 
 ```scala
 class trace(header: String = "X-Trace") extends scala.annotation.Annotation with cask.router.RawDecorator {
@@ -102,7 +102,7 @@ class trace(header: String = "X-Trace") extends scala.annotation.Annotation with
 
 @cask.decorators.compress()
 @trace("X-Custom-Trace")
-@CaskChez.get(
+@Web.get(
   "/demo/decorated",
   RouteSchema(responses = Map(200 -> ApiResponse("OK", _root_.chez.Chez.String())))
 )
@@ -110,4 +110,3 @@ def decorated(r: ValidatedRequest): String = "decorated-ok"
 ```
 
 The curl demo adds `Accept-Encoding: gzip` so you can see compression and the custom header in the response.
-

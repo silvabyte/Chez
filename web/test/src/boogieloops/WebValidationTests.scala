@@ -21,13 +21,13 @@ object WebValidationTests extends TestSuite {
 
   val tests = Tests {
     test("ValidationError conversion") {
-      test("convert Chez ValidationError to CaskChez ValidationError") {
+      test("convert Chez ValidationError to Web ValidationError") {
         val chezError = boogieloops.schema.ValidationError.TypeMismatch("string", "number", "/test")
-        val caskChezError = boogieloops.web.ValidationError.fromSchemaError(chezError, "body")
+        val webError = boogieloops.web.ValidationError.fromSchemaError(chezError, "body")
 
-        assert(caskChezError.isInstanceOf[boogieloops.web.ValidationError.RequestBodyError])
-        assert(caskChezError.message.contains("Type mismatch"))
-        assert(caskChezError.path == "/test")
+        assert(webError.isInstanceOf[boogieloops.web.ValidationError.RequestBodyError])
+        assert(webError.message.contains("Type mismatch"))
+        assert(webError.path == "/test")
       }
 
       test("convert different error types with different contexts") {

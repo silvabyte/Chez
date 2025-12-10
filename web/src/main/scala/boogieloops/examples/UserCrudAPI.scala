@@ -3,15 +3,15 @@ package boogieloops.web.examples
 import cask._
 import _root_.boogieloops.schema._
 import boogieloops.web._
-import boogieloops.web.CaskChez
-import boogieloops.web.CaskChez.ValidatedRequestReader
+import boogieloops.web.Web
+import boogieloops.web.Web.ValidatedRequestReader
 import boogieloops.web.openapi.config.OpenAPIConfig
 import upickle.default._
 import boogieloops.schema.derivation.Schema
 import scala.jdk.CollectionConverters._
 
 /**
- * User CRUD API - Complete example showcasing CaskChez best practices
+ * User CRUD API - Complete example showcasing boogieloops.web best practices
  *
  * This example demonstrates:
  *   - Clean annotation-based schema derivation with @Schema.*
@@ -166,7 +166,7 @@ object UserCrudAPI extends cask.MainRoutes {
 
   // === CRUD ENDPOINTS ===
 
-  @CaskChez.post(
+  @Web.post(
     "/users",
     RouteSchema(
       summary = Some("Create a new user"),
@@ -237,7 +237,7 @@ object UserCrudAPI extends cask.MainRoutes {
     }
   }
 
-  @CaskChez.get(
+  @Web.get(
     "/users",
     RouteSchema(
       summary = Some("List users"),
@@ -293,7 +293,7 @@ object UserCrudAPI extends cask.MainRoutes {
     }
   }
 
-  @CaskChez.get(
+  @Web.get(
     "/users/:id",
     RouteSchema(
       summary = Some("Get user by ID"),
@@ -326,7 +326,7 @@ object UserCrudAPI extends cask.MainRoutes {
     }
   }
 
-  @CaskChez.put(
+  @Web.put(
     "/users/:id",
     RouteSchema(
       summary = Some("Update user"),
@@ -399,7 +399,7 @@ object UserCrudAPI extends cask.MainRoutes {
     }
   }
 
-  @CaskChez.delete(
+  @Web.delete(
     "/users/:id",
     RouteSchema(
       summary = Some("Delete user"),
@@ -436,7 +436,7 @@ object UserCrudAPI extends cask.MainRoutes {
 
   // === UTILITY ENDPOINTS ===
 
-  @CaskChez.get(
+  @Web.get(
     "/health",
     RouteSchema(
       summary = Some("Health check"),
@@ -452,13 +452,13 @@ object UserCrudAPI extends cask.MainRoutes {
     write(response)
   }
 
-  @CaskChez.swagger(
+  @Web.swagger(
     "/openapi",
     OpenAPIConfig(
       title = "User CRUD API",
       summary = Some("Complete user management API with validation"),
       description =
-        "RESTful API for user management built with CaskChez, featuring automatic validation, comprehensive error handling, and OpenAPI documentation",
+        "RESTful API for user management built with boogieloops.web, featuring automatic validation, comprehensive error handling, and OpenAPI documentation",
       version = "1.0.0"
     )
   )
@@ -508,7 +508,7 @@ object UserCrudAPI extends cask.MainRoutes {
   println("""    -d '{"age": 31}'""")
   println(s"  curl -X DELETE http://${host}:${port}/users/1")
   println()
-  println("✨ CaskChez features demonstrated:")
+  println("✨ boogieloops.web features demonstrated:")
   println("  • Annotation-based schema derivation (@Schema.*)")
   println("  • Automatic request/response validation")
   println("  • Type-safe query parameters and path variables")

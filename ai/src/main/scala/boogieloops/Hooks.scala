@@ -1,7 +1,7 @@
 package boogieloops.ai
 
 /**
- * Hook system for ChezWiz agents providing lifecycle events for observability,
+ * Hook system for boogieloops.ai agents providing lifecycle events for observability,
  * logging, and custom business logic.
  */
 

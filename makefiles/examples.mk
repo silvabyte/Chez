@@ -30,11 +30,11 @@ example-chez-enum: ## Run Chez EnumExample
 example-chez-sealed: ## Run Chez SealedTraitExample
 	@$(MILL) Chez.runMain chez.examples.SealedTraitExample
 
-# CaskChez (web/API) examples
+# Web (web/API) examples
 .PHONY: example-caskchez-api example-caskchez-upload example-caskchez-openapi
-example-caskchez-api: ## Start CaskChez User CRUD API server (blocks)
+example-caskchez-api: ## Start Web User CRUD API server (blocks)
 	@$(MILL) CaskChez.runMain caskchez.examples.UserCrudAPI
-example-caskchez-upload: ## Start CaskChez Upload/Streaming demo server (blocks)
+example-caskchez-upload: ## Start Web Upload/Streaming demo server (blocks)
 	@$(MILL) CaskChez.runMain caskchez.examples.UploadStreamingServer
 .PHONY: example-caskchez-upload-curl example-caskchez-upload-curl-upload example-caskchez-upload-curl-stream example-caskchez-upload-curl-decorated
 example-caskchez-upload-curl: ## Run demo curl requests against the Upload/Streaming server
@@ -72,8 +72,8 @@ example-chezwiz-local: ## Run ChezWiz OpenAI-compatible local provider examples
 # Back-compat convenience aliases (from README / previous Makefile)
 .PHONY: chez caskchez caskchez-upload caskchez-curl wiz wiz-demo wiz-openai wiz-anthropic wiz-local
 chez: examples-chez ## Alias: Run Chez examples
-caskchez: example-caskchez-api ## Alias: Run CaskChez API server example
-caskchez-upload: example-caskchez-upload ## Alias: Run CaskChez Upload/Streaming demo server
+caskchez: example-caskchez-api ## Alias: Run Web API server example
+caskchez-upload: example-caskchez-upload ## Alias: Run Web Upload/Streaming demo server
  caskchez-curl: example-caskchez-upload-curl ## Alias: Run curl demos against Upload/Streaming server
 wiz: examples-chezwiz ## Alias: Run ChezWiz examples bundle
 wiz-demo: examples-chezwiz ## Alias: Run ChezWiz examples bundle
@@ -81,7 +81,7 @@ wiz-openai: example-chezwiz-openai ## Alias: Run ChezWiz OpenAI examples
 wiz-anthropic: example-chezwiz-anthropic ## Alias: Run ChezWiz Anthropic examples
 wiz-local: example-chezwiz-local ## Alias: Run ChezWiz local examples
 
-# Zero to App quickstart (CaskChez)
+# Zero to App quickstart (Web)
 .PHONY: example-caskchez-zeroapp
 example-caskchez-zeroapp: ## Start Zero to App quickstart server (blocks)
 	@$(MILL) CaskChez.runMain caskchez.examples.zerotoapp.ZeroToAppApi

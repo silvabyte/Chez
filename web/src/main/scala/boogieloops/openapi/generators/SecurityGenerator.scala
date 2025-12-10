@@ -4,7 +4,7 @@ import boogieloops.web.*
 import boogieloops.web.openapi.models.*
 
 /**
- * Generates OpenAPI security schemes and requirements from CaskChez SecurityRequirement
+ * Generates OpenAPI security schemes and requirements from boogieloops.web SecurityRequirement
  */
 object SecurityGenerator {
 
@@ -17,7 +17,7 @@ object SecurityGenerator {
   }
 
   /**
-   * Convert CaskChez SecurityRequirement to OpenAPI SecurityRequirementObject
+   * Convert boogieloops.web SecurityRequirement to OpenAPI SecurityRequirementObject
    */
   def convertSecurityRequirement(requirement: SecurityRequirement): SecurityRequirementObject = {
     requirement match {
@@ -33,7 +33,7 @@ object SecurityGenerator {
   }
 
   /**
-   * Convert CaskChez SecurityRequirement to OpenAPI SecuritySchemeObject
+   * Convert boogieloops.web SecurityRequirement to OpenAPI SecuritySchemeObject
    */
   private def convertToSecurityScheme(requirement: SecurityRequirement)
       : Option[(String, SecuritySchemeObject)] = {
@@ -80,7 +80,7 @@ object SecurityGenerator {
   }
 
   /**
-   * Convert OAuth2 flows from CaskChez to OpenAPI format
+   * Convert OAuth2 flows from boogieloops.web to OpenAPI format
    */
   private def convertOAuthFlows(flows: Map[String, String]): OAuthFlowsObject = {
     // Basic OAuth flows conversion - could be enhanced based on actual flow definitions

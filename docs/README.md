@@ -3,7 +3,7 @@
 Welcome to the Chez ecosystem — three Scala 3 libraries that work great together or stand alone:
 
 - Chez: Type‑safe JSON Schema (derive, build, validate)
-- CaskChez: Schema‑first HTTP validation + OpenAPI for Cask
+- boogieloops.web: Schema‑first HTTP validation + OpenAPI for Cask
 - ChezWiz: Type‑safe LLM agents with structured output
 
 ## Prerequisites
@@ -18,7 +18,7 @@ Mill:
 
 ```scala
 mvn"com.silvabyte::chez:0.3.0"        // Core schemas
-mvn"com.silvabyte::caskchez:0.3.0"    // HTTP validation + OpenAPI
+mvn"com.silvabyte::boogieloops-web:0.3.0"    // HTTP validation + OpenAPI
 mvn"com.silvabyte::chezwiz:0.3.0"     // LLM agents
 ```
 
@@ -27,7 +27,7 @@ SBT:
 ```scala
 libraryDependencies ++= Seq(
   "com.silvabyte" %% "chez" % "0.3.0",
-  "com.silvabyte" %% "caskchez" % "0.3.0",
+  "com.silvabyte" %% "boogieloops-web" % "0.3.0",
   "com.silvabyte" %% "chezwiz" % "0.3.0"
 )
 ```
@@ -46,7 +46,7 @@ Run `make help` for the full list.
 ## Examples Overview
 
 - `make chez`: Run core Chez examples
-- `make caskchez`: Start the CaskChez API example on port 8082
+- `make caskchez`: Start the boogieloops.web API example on port 8082
 - `make caskchez-upload`: Start the Upload/Streaming demo (defaults to port 8080)
 - `make wiz`: Run ChezWiz examples (requires API keys or a local LLM)
 
@@ -62,7 +62,7 @@ Local LLMs via OpenAI‑compatible endpoints (no key by default) are supported (
 ## Next Steps
 
 - Chez (core): [chez.md](./chez.md)
-- CaskChez (web): [caskchez.md](./caskchez.md)
+- boogieloops.web (web): [caskchez.md](./caskchez.md)
 - ChezWiz (AI): [chezwiz.md](./chezwiz.md)
 
 ## More Docs
