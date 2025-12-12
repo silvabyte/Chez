@@ -76,8 +76,8 @@ object ZeroToAppApi extends cask.MainRoutes {
         // TODO: Replace the current naive normalization with boogieloops.ai Agent integration.
         // Pseudocode example (uncomment if you add boogieloops.ai dependency):
         //
-        // import chezwiz.agent.*
-        // import chezwiz.agent.providers.OpenAIProvider
+        // import boogieloops.ai.*
+        // import boogieloops.ai.Providers.OpenAIProvider
         // val agent = Agent(
         //   name = "InterestsNormalizer",
         //   instructions = "Extract and normalize user interests. Use concise, lowercase tags",

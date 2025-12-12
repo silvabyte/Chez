@@ -7,7 +7,7 @@ import scala.util.{Try, Success, Failure}
 /**
  * Validation logic for boogieloops.web module
  *
- * This file contains the core validation functionality that integrates Chez schemas with Cask request processing for automatic
+ * This file contains the core validation functionality that integrates BoogieLoops schemas with Cask request processing for automatic
  * request validation.
  */
 
@@ -52,7 +52,7 @@ object ValidationError {
   case class SchemaError(message: String, path: String, field: Option[String] = None)
       extends ValidationError
 
-  def fromSchemaError(chezError: boogieloops.schema.ValidationError, context: String): ValidationError = {
+  def fromSchemaError(schemaError: boogieloops.schema.ValidationError, context: String): ValidationError = {
     val errorType = context match {
       case "body" =>
         (msg: String, path: String, field: Option[String]) => RequestBodyError(msg, path, field)
@@ -65,7 +65,7 @@ object ValidationError {
       case _ => (msg: String, path: String, field: Option[String]) => SchemaError(msg, path, field)
     }
 
-    chezError match {
+    schemaError match {
       case boogieloops.schema.ValidationError.TypeMismatch(expected, actual, path) =>
         errorType(s"Type mismatch: expected $expected, got $actual", path, None)
       case boogieloops.schema.ValidationError.MissingField(field, path) =>

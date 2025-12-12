@@ -43,7 +43,7 @@ object EnumExample {
   case class Theme(name: String, primaryColor: Color, secondaryColor: Color) derives Schema
 
   def main(args: Array[String]): Unit = {
-    println("🔍 Chez Enum Schema Derivation - Current Behavior Analysis")
+    println("🔍 BoogieLoops Enum Schema Derivation - Current Behavior Analysis")
     println("=" * 65)
 
     // Test 1: Simple enum schema derivation

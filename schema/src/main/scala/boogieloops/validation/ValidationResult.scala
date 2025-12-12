@@ -6,7 +6,7 @@ import boogieloops.schema.ValidationError
  * Result of a validation operation
  *
  * Represents either a successful validation (valid) or a failed validation with errors (invalid).
- * This provides a unified result type for all validation operations in the Chez library.
+ * This provides a unified result type for all validation operations in the BoogieLoops library.
  */
 sealed trait ValidationResult {
   def isValid: Boolean

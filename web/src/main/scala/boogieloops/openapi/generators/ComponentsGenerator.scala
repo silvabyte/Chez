@@ -34,7 +34,7 @@ object ComponentsGenerator {
    */
   private def extractSchemas(allRoutes: Map[String, RouteSchema])
       : Option[Map[String, ujson.Value]] = {
-    val allSchemas = collectAllChezSchemas(allRoutes)
+    val allSchemas = collectAllSchemas(allRoutes)
     val deduplicatedSchemas = deduplicateSchemas(allSchemas)
     val namedSchemas = generateSchemaNames(deduplicatedSchemas)
 
@@ -46,9 +46,9 @@ object ComponentsGenerator {
   }
 
   /**
-   * Collect all Chez schemas from routes
+   * Collect all schemas from routes
    */
-  private def collectAllChezSchemas(allRoutes: Map[String, RouteSchema]): List[Schema] = {
+  private def collectAllSchemas(allRoutes: Map[String, RouteSchema]): List[Schema] = {
     allRoutes.values.flatMap { schema =>
       List(
         schema.body,

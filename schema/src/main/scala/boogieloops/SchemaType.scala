@@ -4,7 +4,7 @@ import boogieloops.schema.primitives.*
 import boogieloops.schema.complex.*
 
 /**
- * Type-level computation for mapping Chez schemas to Scala types
+ * Type-level computation for mapping BoogieLoops schemas to Scala types
  *
  * This uses Scala 3's match types to provide compile-time type safety. For complex types, use Mirror-based Schema derivation with
  * case classes, see ./derivation/SchemaDerivation.scala

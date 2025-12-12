@@ -4,12 +4,12 @@ import boogieloops.schema.*
 import boogieloops.schema.{Schema as bl}
 
 /**
- * Basic usage examples of the Chez library
+ * Basic usage examples of the BoogieLoops library
  */
 object BasicUsage {
 
   def main(args: Array[String]): Unit = {
-    println("🎉 Chez Library - JSON Schema generation using upickle for Scala 3!")
+    println("🎉 BoogieLoops Library - JSON Schema generation using upickle for Scala 3!")
     println("=" * 50)
 
     // Basic primitive schemas
@@ -129,7 +129,7 @@ object BasicUsage {
     // Demonstrate JSON Schema 2020-12 compliance
     println("\n8. JSON Schema 2020-12 Compliance:")
 
-    val compliantSchema = Chez
+    val compliantSchema = bl
       .Object(
         "version" -> bl.String()
       )
@@ -141,6 +141,6 @@ object BasicUsage {
     println(s"Compliant Schema: ${compliantSchema.toJsonSchema}")
 
     println("\n🎯 All examples completed successfully!")
-    println("Chez provides full JSON Schema 2020-12 compliance with TypeBox-like ergonomics!")
+    println("BoogieLoops provides full JSON Schema 2020-12 compliance with TypeBox-like ergonomics!")
   }
 }

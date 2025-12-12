@@ -8,12 +8,12 @@ import boogieloops.schema.validation.*
 import boogieloops.schema.{Schema as bl}
 
 /**
- * Schema validation examples demonstrating the validation capabilities of Chez
+ * Schema validation examples demonstrating the validation capabilities of BoogieLoops
  */
 object Validation {
 
   def main(args: Array[String]): Unit = {
-    println("🔍 Chez Validation - Schema Validation Examples!")
+    println("🔍 BoogieLoops Validation - Schema Validation Examples!")
     println("=" * 55)
 
     // 1. Basic primitive validation

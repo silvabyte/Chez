@@ -73,7 +73,7 @@ case class ComplexVariant(metadata: Map[String, String], tags: List[String], act
 
 object SealedTraitExample {
   def main(args: Array[String]): Unit = {
-    println("🔍 Chez Sealed Trait Schema Derivation - Discriminated Union Examples")
+    println("🔍 BoogieLoops Sealed Trait Schema Derivation - Discriminated Union Examples")
     println("=" * 75)
     println("Demonstrates automatic oneOf schema generation with type discriminators")
     println("for Scala sealed traits using JSON Schema 2020-12 specification.")

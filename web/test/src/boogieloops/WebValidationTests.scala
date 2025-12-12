@@ -21,9 +21,9 @@ object WebValidationTests extends TestSuite {
 
   val tests = Tests {
     test("ValidationError conversion") {
-      test("convert Chez ValidationError to Web ValidationError") {
-        val chezError = boogieloops.schema.ValidationError.TypeMismatch("string", "number", "/test")
-        val webError = boogieloops.web.ValidationError.fromSchemaError(chezError, "body")
+      test("convert Schema ValidationError to Web ValidationError") {
+        val schemaError = boogieloops.schema.ValidationError.TypeMismatch("string", "number", "/test")
+        val webError = boogieloops.web.ValidationError.fromSchemaError(schemaError, "body")
 
         assert(webError.isInstanceOf[boogieloops.web.ValidationError.RequestBodyError])
         assert(webError.message.contains("Type mismatch"))
@@ -31,18 +31,18 @@ object WebValidationTests extends TestSuite {
       }
 
       test("convert different error types with different contexts") {
-        val chezError = boogieloops.schema.ValidationError.MissingField("name", "/user")
+        val schemaError = boogieloops.schema.ValidationError.MissingField("name", "/user")
 
-        val bodyError = boogieloops.web.ValidationError.fromSchemaError(chezError, "body")
+        val bodyError = boogieloops.web.ValidationError.fromSchemaError(schemaError, "body")
         assert(bodyError.isInstanceOf[boogieloops.web.ValidationError.RequestBodyError])
 
-        val queryError = boogieloops.web.ValidationError.fromSchemaError(chezError, "query")
+        val queryError = boogieloops.web.ValidationError.fromSchemaError(schemaError, "query")
         assert(queryError.isInstanceOf[boogieloops.web.ValidationError.QueryParamError])
 
-        val paramError = boogieloops.web.ValidationError.fromSchemaError(chezError, "params")
+        val paramError = boogieloops.web.ValidationError.fromSchemaError(schemaError, "params")
         assert(paramError.isInstanceOf[boogieloops.web.ValidationError.PathParamError])
 
-        val headerError = boogieloops.web.ValidationError.fromSchemaError(chezError, "headers")
+        val headerError = boogieloops.web.ValidationError.fromSchemaError(schemaError, "headers")
         assert(headerError.isInstanceOf[boogieloops.web.ValidationError.HeaderError])
       }
     }

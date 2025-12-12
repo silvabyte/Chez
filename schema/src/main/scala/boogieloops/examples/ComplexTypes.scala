@@ -9,7 +9,7 @@ import boogieloops.schema.{Schema as bl}
 object ComplexTypes {
 
   def main(args: Array[String]): Unit = {
-    println("🎨 Chez Complex Types - Advanced Schema Composition!")
+    println("🎨 BoogieLoops Complex Types - Advanced Schema Composition!")
     println("=" * 60)
 
     // 1. Recursive schemas with references
@@ -21,7 +21,7 @@ object ComplexTypes {
       "children" -> bl.Array(bl.Ref("#/$defs/Person")).optional
     )
 
-    val familyTreeSchema = Chez
+    val familyTreeSchema = bl
       .Object(
         "root" -> bl.Ref("#/$defs/Person")
       )
@@ -80,7 +80,7 @@ object ComplexTypes {
             "moderatedChannels" -> bl.Array(bl.String())
           ),
           elseSchema = bl.Object(
-            "preferences" -> Chez
+            "preferences" -> bl
               .Object(
                 "theme" -> bl.StringEnum("light", "dark").optional,
                 "notifications" -> bl.Boolean().optional
@@ -147,7 +147,7 @@ object ComplexTypes {
           "metadata" -> bl.Object().optional
         )
       ),
-      "transformations" -> Chez
+      "transformations" -> bl
         .Array(
           bl.OneOf(
             bl.Object(
@@ -261,7 +261,7 @@ object ComplexTypes {
       "mimeType" -> bl.String(const = Some("application/octet-stream")),
       "size" -> bl.Integer(minimum = Some(0)),
       "content" -> bl.String(),
-      "checksum" -> Chez
+      "checksum" -> bl
         .Object(
           "algorithm" -> bl.StringEnum("md5", "sha1", "sha256"),
           "value" -> bl.String()
@@ -274,22 +274,22 @@ object ComplexTypes {
     // 10. Meta-schema with extensive annotations
     println("\n10. Meta-Schema with Extensive Annotations:")
 
-    val annotatedSchema = Chez
+    val annotatedSchema = bl
       .Object(
         "product" -> bl.Object(
-          "id" -> Chez
+          "id" -> bl
             .String()
             .withTitle("Product ID")
             .withDescription("Unique identifier for the product"),
-          "name" -> Chez
+          "name" -> bl
             .String(minLength = Some(1))
             .withTitle("Product Name")
             .withDescription("Display name of the product"),
-          "price" -> Chez
+          "price" -> bl
             .Number(minimum = Some(0))
             .withTitle("Price")
             .withDescription("Price in USD"),
-          "category" -> Chez
+          "category" -> bl
             .StringEnum("electronics", "clothing", "books")
             .withTitle("Category")
             .withDescription("Product category")

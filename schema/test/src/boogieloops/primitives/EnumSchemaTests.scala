@@ -333,8 +333,8 @@ object EnumSchemaTests extends TestSuite {
       }
     }
 
-    test("Integration with Chez factory methods") {
-      test("Chez.StringEnum factory method") {
+    test("Integration with bl factory methods") {
+      test("bl.StringEnum factory method") {
         val enumSchema = bl.StringEnum("red", "green", "blue")
 
         assert(enumSchema.isInstanceOf[EnumSchema])
@@ -345,7 +345,7 @@ object EnumSchemaTests extends TestSuite {
         assert(!result2.isValid)
       }
 
-      test("Chez.StringEnum with List") {
+      test("bl.StringEnum with List") {
         val colors = List("red", "green", "blue")
         val enumSchema = bl.StringEnum(colors)
 
@@ -353,7 +353,7 @@ object EnumSchemaTests extends TestSuite {
         assert(enumSchema.getStringValues.contains(colors))
       }
 
-      test("Chez.MixedEnum factory method") {
+      test("bl.MixedEnum factory method") {
         val enumSchema = bl.MixedEnum(
           ujson.Str("active"),
           ujson.Num(1),

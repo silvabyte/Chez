@@ -639,10 +639,10 @@ object AnnotationProcessor {
   }
 
   /**
-   * Apply metadata to enhance a Chez schema
+   * Apply metadata to enhance a schema
    */
-  def applyMetadata(chez: Schema, metadata: AnnotationMetadata): Schema = {
-    if (metadata.isEmpty) return chez
+  def applyMetadata(baseSchema: Schema, metadata: AnnotationMetadata): Schema = {
+    if (metadata.isEmpty) return baseSchema
 
     // If enumValues is specified, create an EnumSchema instead
     metadata.enumValues match {
@@ -682,7 +682,7 @@ object AnnotationProcessor {
     // Apply format-specific metadata FIRST, before wrapping with general metadata
     // scalafix:off DisableSyntax.var
     // Disabling because we need to mutate the result as we apply various metadata enhancements
-    var result = chez match {
+    var result = baseSchema match {
       case sc: StringSchema =>
         var enhanced = sc
         // scalafix:on DisableSyntax.var

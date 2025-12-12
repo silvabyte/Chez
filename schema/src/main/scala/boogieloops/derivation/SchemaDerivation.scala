@@ -28,8 +28,8 @@ object Schema {
   /**
    * Create a Schema instance from a Schema schema
    */
-  def instance[T](chez: Schema): Schema[T] = new Schema[T]:
-    def schema: Schema = chez
+  def instance[T](s: Schema): Schema[T] = new Schema[T]:
+    def schema: Schema = s
 
   // ========================================
   // Annotation Type Aliases to be able to do @Schema.title("...") etc.
@@ -64,10 +64,10 @@ object Schema {
    * corresponding Schema schema automatically with rich metadata.
    */
   inline def derived[T](using m: Mirror.Of[T]): Schema[T] = {
-    val chez = inline m match
+    val derivedSchema = inline m match
       case p: Mirror.ProductOf[T] => deriveProductWithAnnotations[T](p)
       case s: Mirror.SumOf[T] => deriveSumWithAnnotations[T](s)
-    instance[T](chez)
+    instance[T](derivedSchema)
   }
 
   /**

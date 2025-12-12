@@ -23,7 +23,7 @@ case class ComponentsObject(
  * Schema Object - OpenAPI 3.1.1 uses JSON Schema 2020-12 directly
  */
 case class SchemaObject(
-    // JSON Schema 2020-12 content (from Chez)
+    // JSON Schema 2020-12 content (from BoogieLoops)
     schema: ujson.Value,
 
     // OpenAPI 3.1.1 specific annotations
