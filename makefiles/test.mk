@@ -1,7 +1,7 @@
 ##@ Test
 
 .PHONY: test t
-test: ## Run tests (override MODULE=Chez|CaskChez|ChezWiz, SUITE=<Class/regex>)
+test: ## Run tests (override MODULE=Schema|Web|AI, SUITE=<Class/regex>)
 	@if [ -n "$(strip $(SUITE))" ]; then \
 	  echo "Running $(MODULE).test $(SUITE)"; \
 	  $(MILL) $(MODULE).test $(SUITE); \
@@ -10,36 +10,36 @@ test: ## Run tests (override MODULE=Chez|CaskChez|ChezWiz, SUITE=<Class/regex>)
 	fi
 t: test ## Alias for test
 
-# Pattern: make test-Chez or test-CaskChez or test-ChezWiz
+# Pattern: make test-Schema or test-Web or test-AI
 .PHONY: test-%
-test-%: ## Run tests for a specific module (e.g., test-Chez)
+test-%: ## Run tests for a specific module (e.g., test-Schema)
 	@$(MILL) $*.test
 
-# Back-compat convenience aliases
-.PHONY: tc tca tw
-tc: ## Run Chez tests
-	@$(MILL) Chez.test
-tca: ## Run CaskChez tests
-	@$(MILL) CaskChez.test
-tw: ## Run ChezWiz tests
-	@$(MILL) ChezWiz.test
+# Convenience aliases
+.PHONY: ts tw ta
+ts: ## Run Schema tests
+	@$(MILL) Schema.test
+tw: ## Run Web tests
+	@$(MILL) Web.test
+ta: ## Run AI tests
+	@$(MILL) AI.test
 
 # README-friendly aliases
-.PHONY: test-chez test-caskchez test-chezwiz
-test-chez: ## Alias: Run Chez tests
-	@$(MILL) Chez.test
-test-caskchez: ## Alias: Run CaskChez tests
-	@$(MILL) CaskChez.test
-test-chezwiz: ## Alias: Run ChezWiz tests
-	@$(MILL) ChezWiz.test
+.PHONY: test-schema test-web test-ai
+test-schema: ## Alias: Run Schema tests
+	@$(MILL) Schema.test
+test-web: ## Alias: Run Web tests
+	@$(MILL) Web.test
+test-ai: ## Alias: Run AI tests
+	@$(MILL) AI.test
 
-# Specific test suite groups (compat with previous targets)
+# Specific test suite groups
 .PHONY: tp td tv ti
-tp: ## Run Chez primitives tests
-	@$(MILL) Chez.test chez.primitives
-td: ## Run Chez derivation tests
-	@$(MILL) Chez.test chez.derivation
-tv: ## Run Chez validation tests
-	@$(MILL) Chez.test chez.validation
-ti: ## Run CaskChez integration tests
-	@$(MILL) CaskChez.test caskchez.UserCrudAPITest
+tp: ## Run Schema primitives tests
+	@$(MILL) Schema.test boogieloops.schema.primitives
+td: ## Run Schema derivation tests
+	@$(MILL) Schema.test boogieloops.schema.derivation
+tv: ## Run Schema validation tests
+	@$(MILL) Schema.test boogieloops.schema.validation
+ti: ## Run Web integration tests
+	@$(MILL) Web.test boogieloops.web.UserCrudAPITest

@@ -1,5 +1,5 @@
 ################################################################################
-# Chez Project Makefile (modular)
+# BoogieLoops Project Makefile (modular)
 #
 # This top-level Makefile delegates real logic to files in makefiles/.
 # It provides a clean help output and variables you can override.
@@ -12,9 +12,9 @@ SHELL := /bin/bash
 # Core variables (override via `make VAR=...`)
 # Path to mill launcher
 MILL ?= ./mill
-# Target module: one of `__`, `Chez`, `CaskChez`, `ChezWiz`
+# Target module: one of `__`, `Schema`, `Web`, `AI`
 MODULE ?= __
-# Optional test suite/class to run (e.g., chez.primitives.StringChezTests)
+# Optional test suite/class to run (e.g., boogieloops.schema.primitives.StringSchemaTests)
 SUITE ?=
 # Set to 1 to run in watch mode where supported
 WATCH ?= 0

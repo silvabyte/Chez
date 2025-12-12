@@ -1,7 +1,7 @@
 ##@ Build
 
 .PHONY: build b
-build: ## Compile modules (override MODULE=Chez|CaskChez|ChezWiz)
+build: ## Compile modules (override MODULE=Schema|Web|AI)
 	@$(MILL) $(MODULE).compile
 b: build ## Alias for build
 

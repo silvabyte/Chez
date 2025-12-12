@@ -196,16 +196,16 @@ trait Shared extends GitHubDepsModule with PublishSettings {
   }
 }
 
-object Chez extends Shared {
-  override def artifactName = "chez"
+object Schema extends Shared {
+  override def artifactName = "schema"
 
   override def mvnDeps = Task {
     super.mvnDeps() ++ Seq()
   }
 
   override def pomSettings = PomSettings(
-    description = "Chez - Type-safe JSON Schema library for Scala 3",
-    organization = "com.silvabyte",
+    description = "BoogieLoops Schema - Type-safe JSON Schema library for Scala 3",
+    organization = "dev.boogieloops",
     url = "https://github.com/silvabyte/Chez",
     licenses = Seq(License.MIT),
     versionControl = VersionControl.github("silvabyte", "Chez"),
@@ -215,9 +215,9 @@ object Chez extends Shared {
   )
 }
 
-object CaskChez extends Shared {
-  override def artifactName = "caskchez"
-  override def moduleDeps: Seq[Shared] = Seq(Chez)
+object Web extends Shared {
+  override def artifactName = "web"
+  override def moduleDeps: Seq[Shared] = Seq(Schema)
   override def mvnDeps = Task {
     super.mvnDeps() ++ Seq(
       mvn"com.lihaoyi::cask:0.9.7",
@@ -227,8 +227,8 @@ object CaskChez extends Shared {
   }
 
   override def pomSettings = PomSettings(
-    description = "CaskChez - HTTP API framework with automatic validation using Chez schemas",
-    organization = "com.silvabyte",
+    description = "BoogieLoops Web - HTTP API framework with automatic validation using BoogieLoops schemas",
+    organization = "dev.boogieloops",
     url = "https://github.com/silvabyte/Chez",
     licenses = Seq(License.MIT),
     versionControl = VersionControl.github("silvabyte", "Chez"),
@@ -238,9 +238,9 @@ object CaskChez extends Shared {
   )
 }
 
-object ChezWiz extends Shared {
-  override def artifactName = "chezwiz"
-  override def moduleDeps: Seq[Shared] = Seq(Chez)
+object AI extends Shared {
+  override def artifactName = "ai"
+  override def moduleDeps: Seq[Shared] = Seq(Schema)
   override def mvnDeps = Task {
     super.mvnDeps() ++ Seq(
       mvn"com.outr::scribe:3.6.6",
@@ -249,8 +249,8 @@ object ChezWiz extends Shared {
   }
 
   override def pomSettings = PomSettings(
-    description = "ChezWiz - AI/LLM agent framework using Chez schemas",
-    organization = "com.silvabyte",
+    description = "BoogieLoops AI - LLM agent framework using BoogieLoops schemas",
+    organization = "dev.boogieloops",
     url = "https://github.com/silvabyte/Chez",
     licenses = Seq(License.MIT),
     versionControl = VersionControl.github("silvabyte", "Chez"),

@@ -9,7 +9,7 @@ sdk-clean: ## Remove generated SDK client
 	@rm -rf typescript-sdk/src/client
 
 .PHONY: sdk-generate
-sdk-generate: ## Generate TS client from running API (requires example-caskchez-api)
+sdk-generate: ## Generate TS client from running API (requires example-web-api)
 	@cd typescript-sdk && npm run openapi-ts
 
 .PHONY: sdk-refresh
