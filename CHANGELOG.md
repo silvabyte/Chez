@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0] - 2025-12-17
+
+* chore: update GitHub URLs from Chez to BoogieLoops
+* chore: remove le chez
+* fix: correct ObjectSchemaTests assertions to match actual validation behavior
+* refactor: rename Schema type class to Schematic and fix directory casing
+* chore: refactor continued...
+* feat: complete BoogieLoops rebrand
+* chore: sync beads issue tracking
+* docs: rename and rebrand to BoogieLoops ecosystem
+* refactor: rename CaskChez to Web in web module
+* chore: close Chez→Schema rename tracking bead
+* chore: sync beads after schema rename migration
+* feat: comprehensive Chez → Schema class rename migration
+* feat: add beads for memory layer
+
 ## [0.4.0] - 2025-12-10
 
 ### BREAKING CHANGES - Project Rebrand
