@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.1] - 2025-12-17
+
+* chore: rename organization from dev.boogieloops to dev.boogieloop
+* fix: remove redundant imports and suppress unused parameter warning
+
 ## [0.5.0] - 2025-12-17
 
 - chore: update GitHub URLs from Chez to BoogieLoops
