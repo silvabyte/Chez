@@ -53,3 +53,25 @@ jobs:
         run: npx xrelease create --bump ${{ inputs.version_bump }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Sync version in documentation files
+      - name: Sync Doc Versions
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Syncing docs to version $VERSION"
+
+          # Update Mill format: mvn"dev.boogieloop::module:X.Y.Z"
+          find . -name "*.md" -type f -exec sed -i "s|dev\.boogieloop::\([^:]*\):[0-9]\+\.[0-9]\+\.[0-9]\+|dev.boogieloop::\1:$VERSION|g" {} +
+
+          # Update SBT format: "dev.boogieloop" %% "module" % "X.Y.Z"
+          find . -name "*.md" -type f -exec sed -i "s|\"dev\.boogieloop\" %% \"\([^\"]*\)\" % \"[0-9]\+\.[0-9]\+\.[0-9]\+\"|\"dev.boogieloop\" %% \"\1\" % \"$VERSION\"|g" {} +
+
+      - name: Commit Doc Version Updates
+        run: |
+          if git diff --quiet; then
+            echo "No doc version changes to commit"
+          else
+            git add -A
+            git commit -m "docs: sync installation versions to $(node -p "require('./package.json').version")"
+            git push
+          fi

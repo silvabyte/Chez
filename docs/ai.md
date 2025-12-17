@@ -7,16 +7,16 @@ LLM agents with multi‑provider support (OpenAI, Anthropic, OpenAI‑compatible
 Mill:
 
 ```scala
-mvn"com.silvabyte::boogieloops-schema:0.3.0"
-mvn"com.silvabyte::boogieloops-ai:0.3.0"
+mvn"dev.boogieloop::schema:0.5.0"
+mvn"dev.boogieloop::ai:0.5.0"
 ```
 
 SBT:
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.silvabyte" %% "boogieloops-schema" % "0.3.0",
-  "com.silvabyte" %% "boogieloops-ai" % "0.3.0"
+  "dev.boogieloop" %% "schema" % "0.5.0",
+  "dev.boogieloop" %% "ai" % "0.5.0"
 )
 ```
 
