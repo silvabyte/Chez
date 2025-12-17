@@ -5,7 +5,6 @@ import boogieloops.schema.primitives.*
 import boogieloops.schema.complex.*
 import boogieloops.schema.composition.*
 import boogieloops.schema.validation.*
-import boogieloops.schema.{Schema as bl}
 
 /**
  * Schema validation examples demonstrating the validation capabilities of BoogieLoops

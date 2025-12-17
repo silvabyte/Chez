@@ -5,7 +5,6 @@ import utest.*
 import boogieloops.schema.primitives.EnumSchema
 import boogieloops.schema.validation.ValidationContext
 import boogieloops.schema.*
-import boogieloops.schema.{Schema as bl}
 
 object EnumSchemaTests extends TestSuite {
 

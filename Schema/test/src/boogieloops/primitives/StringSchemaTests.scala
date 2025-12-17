@@ -4,7 +4,6 @@ import utest.*
 import boogieloops.schema.primitives.*
 import boogieloops.schema.*
 import boogieloops.schema.validation.*
-import boogieloops.schema.{Schema as bl}
 
 object StringSchemaTests extends TestSuite {
 

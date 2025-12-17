@@ -1,7 +1,6 @@
 package boogieloops.schema.examples
 
 import boogieloops.schema.*
-import boogieloops.schema.{Schema as bl}
 
 /**
  * Advanced schema composition examples demonstrating complex JSON Schema 2020-12 features

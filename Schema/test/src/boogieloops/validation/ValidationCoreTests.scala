@@ -3,7 +3,6 @@ package boogieloops.schema.validation
 import boogieloops.schema.*
 import boogieloops.schema.primitives.*
 import boogieloops.schema.validation.*
-import boogieloops.schema.{Schema as bl}
 import utest.*
 
 object ValidationCoreTests extends TestSuite {

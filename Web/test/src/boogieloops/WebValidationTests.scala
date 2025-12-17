@@ -2,7 +2,6 @@ package boogieloops.web
 
 import utest.*
 import _root_.boogieloops.schema.*
-import _root_.boogieloops.schema.{Schema as bl}
 import upickle.default.*
 import java.io.ByteArrayInputStream
 

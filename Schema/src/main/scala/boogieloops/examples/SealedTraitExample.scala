@@ -2,8 +2,8 @@ package boogieloops.schema.examples
 
 import boogieloops.schema.*
 import boogieloops.schema.derivation.Schematic
-import scala.util.{Try, Success, Failure}
 import boogieloops.schema.derivation.CollectionSchemas.given
+import scala.util.{Try, Success, Failure}
 
 /**
  * Comprehensive examples demonstrating sealed trait schema derivation

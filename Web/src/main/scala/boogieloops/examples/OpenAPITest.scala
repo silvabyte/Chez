@@ -4,7 +4,6 @@ import boogieloops.web.*
 import boogieloops.web.openapi.config.OpenAPIConfig
 import boogieloops.web.openapi.generators.OpenAPIGenerator
 import _root_.boogieloops.schema.*
-import _root_.boogieloops.schema.{Schema as bl}
 import upickle.default.*
 
 /**

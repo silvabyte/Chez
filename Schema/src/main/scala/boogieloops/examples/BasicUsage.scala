@@ -1,7 +1,6 @@
 package boogieloops.schema.examples
 
 import boogieloops.schema.*
-import boogieloops.schema.{Schema as bl}
 
 /**
  * Basic usage examples of the BoogieLoops library

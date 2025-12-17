@@ -39,7 +39,7 @@ trait LLMProvider:
   // Embedding support
   def supportsEmbeddings: Boolean = false
   def supportedEmbeddingModels: List[String] = List.empty
-  def embed(request: EmbeddingRequest): Either[SchemaError, EmbeddingResponse] =
+  def embed(@scala.annotation.unused request: EmbeddingRequest): Either[SchemaError, EmbeddingResponse] =
     Left(SchemaError.ConfigurationError(s"Provider $name does not support embeddings"))
 
   def embedBatch(texts: List[String], model: String): Either[SchemaError, EmbeddingResponse] =

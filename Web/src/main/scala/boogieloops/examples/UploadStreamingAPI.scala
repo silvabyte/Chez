@@ -10,7 +10,6 @@ import io.undertow.server.handlers.form.FormParserFactory
 import os.*
 import os.Source.*
 import _root_.boogieloops.schema.*
-import _root_.boogieloops.schema.{Schema as bl}
 
 class trace(header: String = "X-Trace") extends scala.annotation.Annotation with cask.router.RawDecorator {
   def wrapFunction(ctx: cask.Request, delegate: Delegate) = {
