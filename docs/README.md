@@ -17,18 +17,18 @@ Welcome to the BoogieLoops ecosystem — three Scala 3 libraries that work great
 Mill:
 
 ```scala
-mvn"dev.boogieloop::schema:0.5.0"  // Core schemas
-mvn"dev.boogieloop::web:0.5.0"     // HTTP validation + OpenAPI
-mvn"dev.boogieloop::ai:0.5.0"      // LLM agents
+mvn"dev.boogieloop::schema:0.5.1"  // Core schemas
+mvn"dev.boogieloop::web:0.5.1"     // HTTP validation + OpenAPI
+mvn"dev.boogieloop::ai:0.5.1"      // LLM agents
 ```
 
 SBT:
 
 ```scala
 libraryDependencies ++= Seq(
-  "dev.boogieloop" %% "schema" % "0.5.0",
-  "dev.boogieloop" %% "web" % "0.5.0",
-  "dev.boogieloop" %% "ai" % "0.5.0"
+  "dev.boogieloop" %% "schema" % "0.5.1",
+  "dev.boogieloop" %% "web" % "0.5.1",
+  "dev.boogieloop" %% "ai" % "0.5.1"
 )
 ```
 
