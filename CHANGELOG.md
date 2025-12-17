@@ -2,19 +2,19 @@
 
 ## [0.5.0] - 2025-12-17
 
-* chore: update GitHub URLs from Chez to BoogieLoops
-* chore: remove le chez
-* fix: correct ObjectSchemaTests assertions to match actual validation behavior
-* refactor: rename Schema type class to Schematic and fix directory casing
-* chore: refactor continued...
-* feat: complete BoogieLoops rebrand
-* chore: sync beads issue tracking
-* docs: rename and rebrand to BoogieLoops ecosystem
-* refactor: rename CaskChez to Web in web module
-* chore: close Chez→Schema rename tracking bead
-* chore: sync beads after schema rename migration
-* feat: comprehensive Chez → Schema class rename migration
-* feat: add beads for memory layer
+- chore: update GitHub URLs from Chez to BoogieLoops
+- chore: remove le chez
+- fix: correct ObjectSchemaTests assertions to match actual validation behavior
+- refactor: rename Schema type class to Schematic and fix directory casing
+- chore: refactor continued...
+- feat: complete BoogieLoops rebrand
+- chore: sync beads issue tracking
+- docs: rename and rebrand to BoogieLoops ecosystem
+- refactor: rename CaskChez to Web in web module
+- chore: close Chez→Schema rename tracking bead
+- chore: sync beads after schema rename migration
+- feat: comprehensive Chez → Schema class rename migration
+- feat: add beads for memory layer
 
 ## [0.4.0] - 2025-12-10
 
@@ -44,7 +44,7 @@ This release renames the entire project from **Chez** to **BoogieLoops** with no
 
 #### Maven Coordinates
 
-- Group ID: `com.silvabyte` → `dev.boogieloops`
+- Group ID: `com.silvabyte` → `dev.boogieloop`
 - Artifacts: `chez`, `caskchez`, `chezwiz` → `schema`, `web`, `ai`
 
 #### Migration Example
