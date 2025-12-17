@@ -206,9 +206,9 @@ object Schema extends Shared {
   override def pomSettings = PomSettings(
     description = "BoogieLoops Schema - Type-safe JSON Schema library for Scala 3",
     organization = "dev.boogieloops",
-    url = "https://github.com/silvabyte/Chez",
+    url = "https://github.com/silvabyte/BoogieLoops",
     licenses = Seq(License.MIT),
-    versionControl = VersionControl.github("silvabyte", "Chez"),
+    versionControl = VersionControl.github("silvabyte", "BoogieLoops"),
     developers = Seq(
       Developer("matsilva", "Mat Silva", "https://github.com/matsilva")
     )
@@ -229,9 +229,9 @@ object Web extends Shared {
   override def pomSettings = PomSettings(
     description = "BoogieLoops Web - HTTP API framework with automatic validation using BoogieLoops schemas",
     organization = "dev.boogieloops",
-    url = "https://github.com/silvabyte/Chez",
+    url = "https://github.com/silvabyte/BoogieLoops",
     licenses = Seq(License.MIT),
-    versionControl = VersionControl.github("silvabyte", "Chez"),
+    versionControl = VersionControl.github("silvabyte", "BoogieLoops"),
     developers = Seq(
       Developer("matsilva", "Mat Silva", "https://github.com/matsilva")
     )
@@ -251,9 +251,9 @@ object AI extends Shared {
   override def pomSettings = PomSettings(
     description = "BoogieLoops AI - LLM agent framework using BoogieLoops schemas",
     organization = "dev.boogieloops",
-    url = "https://github.com/silvabyte/Chez",
+    url = "https://github.com/silvabyte/BoogieLoops",
     licenses = Seq(License.MIT),
-    versionControl = VersionControl.github("silvabyte", "Chez"),
+    versionControl = VersionControl.github("silvabyte", "BoogieLoops"),
     developers = Seq(
       Developer("matsilva", "Mat Silva", "https://github.com/matsilva")
     )
