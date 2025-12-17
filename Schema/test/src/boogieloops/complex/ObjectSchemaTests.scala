@@ -158,12 +158,13 @@ object ObjectSchemaTests extends TestSuite {
       test("missing required field validation") {
         val schema = ObjectSchema(
           properties = Map("name" -> StringSchema()),
+          required = Set("name"),
           additionalProperties = Some(false)
         )
         val obj = ujson.Obj("age" -> 25)
         val result = schema.validate(obj, ValidationContext())
-        assert(result.errors.length == 1)
-        assert(result.errors.head.isInstanceOf[boogieloops.schema.ValidationError.MissingField])
+        assert(result.errors.length == 2) // MissingField + AdditionalProperty
+        assert(result.errors.exists(_.isInstanceOf[boogieloops.schema.ValidationError.MissingField]))
       }
 
       test("min properties validation") {
@@ -196,11 +197,12 @@ object ObjectSchemaTests extends TestSuite {
       test("multiple validation errors") {
         val schema = ObjectSchema(
           properties = Map("name" -> StringSchema()),
-          required = Set("name")
+          required = Set("name"),
+          additionalProperties = Some(false)
         )
         val obj = ujson.Obj("unknown" -> "value")
         val result = schema.validate(obj, ValidationContext())
-        assert(result.errors.length >= 3) // missing fields + min properties + additional property
+        assert(result.errors.length == 2) // MissingField + AdditionalProperty
       }
     }
 
@@ -290,6 +292,7 @@ object ObjectSchemaTests extends TestSuite {
       test("required field not in properties") {
         val schema = ObjectSchema(
           properties = Map("name" -> StringSchema()),
+          required = Set("name", "missing"),
           additionalProperties = Some(false)
         )
         val json = schema.toJsonSchema
