@@ -17,16 +17,16 @@ Type-safe, annotation-driven request validation and OpenAPI 3.1.1 for the Cask w
 Mill:
 
 ```scala
-mvn"dev.boogieloop::schema:0.5.1"
-mvn"dev.boogieloop::web:0.5.1"
+mvn"dev.boogieloop::schema:0.5.2"
+mvn"dev.boogieloop::web:0.5.2"
 ```
 
 SBT:
 
 ```scala
 libraryDependencies ++= Seq(
-  "dev.boogieloop" %% "schema" % "0.5.1",
-  "dev.boogieloop" %% "web" % "0.5.1"
+  "dev.boogieloop" %% "schema" % "0.5.2",
+  "dev.boogieloop" %% "web" % "0.5.2"
 )
 ```
 
