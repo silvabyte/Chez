@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.2] - 2025-12-18
+
+* fix: return raw string values from ValidatedRequest accessors (#20)
+* docs: sync installation versions to 0.5.1
+* docs: sync installation versions to 0.5.0 and add auto-sync to release workflow
+
 ## [0.5.1] - 2025-12-17
 
 * chore: rename organization from dev.boogieloops to dev.boogieloop
