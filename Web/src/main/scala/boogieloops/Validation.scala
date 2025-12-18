@@ -320,6 +320,19 @@ object ValidationHelpers {
   }
 
   /**
+   * Extract raw string value from ujson.Value without JSON encoding.
+   * For ujson.Str, returns the raw string (not quoted).
+   * For other types, returns the JSON representation.
+   */
+  private[web] def extractStringValue(value: ujson.Value): String = value match {
+    case s: ujson.Str => s.str
+    case ujson.Num(n) => if (n.isWhole) n.toLong.toString else n.toString
+    case ujson.Bool(b) => b.toString
+    case ujson.Null => "null"
+    case other => other.toString
+  }
+
+  /**
    * Convert string values to appropriate JSON types based on content
    */
   private def convertStringToJson(value: String): ujson.Value = {
@@ -392,9 +405,10 @@ object SchemaValidator {
     (bodyValidation, queryValidation, paramsValidation, headersValidation) match {
       case (Right(body), Right(query), Right(params), Right(headers)) =>
         // Convert back to proper types for ValidatedRequest
-        val queryMap = query.map(_.map { case (k, v) => k -> v.toString })
-        val paramsMap = params.map(_.map { case (k, v) => k -> v.toString })
-        val headersMap = headers.map(_.map { case (k, v) => k -> v.toString })
+        // Use extractStringValue to get raw string values, not JSON-encoded representations
+        val queryMap = query.map(_.map { case (k, v) => k -> ValidationHelpers.extractStringValue(v) })
+        val paramsMap = params.map(_.map { case (k, v) => k -> ValidationHelpers.extractStringValue(v) })
+        val headersMap = headers.map(_.map { case (k, v) => k -> ValidationHelpers.extractStringValue(v) })
         Right(ValidatedRequest(
           original = request,
           validatedBody = body,
