@@ -71,11 +71,34 @@ case class RequestBodyObject(
 
 /**
  * Responses Object - container for the expected responses of an operation
+ * OpenAPI spec requires responses to serialize as a flat map with status codes as keys,
+ * with optional "default" key, not wrapped in a "responses" field
  */
 case class ResponsesObject(
     default: Option[ResponseObject] = None,
     responses: Map[String, ResponseObject] = Map.empty // HTTP status codes as keys
-) derives ReadWriter
+)
+
+object ResponsesObject {
+  given ReadWriter[ResponsesObject] = readwriter[ujson.Value].bimap(
+    obj => {
+      val map = ujson.Obj()
+      obj.default.foreach(d => map("default") = writeJs(d))
+      obj.responses.foreach { case (code, response) =>
+        map(code) = writeJs(response)
+      }
+      map
+    },
+    json => {
+      val obj = json.obj
+      val default = obj.get("default").map(read[ResponseObject](_))
+      val responses = obj.filterNot(_._1 == "default").map { case (k, v) =>
+        k -> read[ResponseObject](v)
+      }.toMap
+      ResponsesObject(default, responses)
+    }
+  )
+}
 
 /**
  * Response Object - describes a single response from an API Operation
@@ -89,7 +112,15 @@ case class ResponseObject(
 
 /**
  * Callback Object - A map of possible out-of band callbacks
+ * OpenAPI spec requires callbacks to serialize as a flat map, not wrapped in a "callbacks" field
  */
 case class CallbackObject(
     callbacks: Map[String, PathItemObject] = Map.empty
-) derives ReadWriter
+)
+
+object CallbackObject {
+  given ReadWriter[CallbackObject] = readwriter[Map[String, PathItemObject]].bimap(
+    obj => obj.callbacks,
+    map => CallbackObject(map)
+  )
+}

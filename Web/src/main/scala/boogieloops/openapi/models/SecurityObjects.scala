@@ -44,7 +44,16 @@ case class OAuthFlowObject(
 
 /**
  * Security Requirement Object - lists required security schemes for operation
+ * OpenAPI spec requires this to serialize as a flat map, not wrapped in a "requirements" field
  */
 case class SecurityRequirementObject(
     requirements: Map[String, List[String]] = Map.empty
-) derives ReadWriter
+)
+
+object SecurityRequirementObject {
+  given ReadWriter[SecurityRequirementObject] =
+    readwriter[Map[String, List[String]]].bimap(
+      _.requirements,
+      SecurityRequirementObject(_)
+    )
+}
