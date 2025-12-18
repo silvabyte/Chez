@@ -390,6 +390,90 @@ object WebValidationTests extends TestSuite {
         assert(validatedRequest.getHeader("Content-Type").contains("application/json"))
         assert(validatedRequest.getHeader("nonexistent").isEmpty)
       }
+
+      test("getHeader returns raw string values not JSON-encoded (Chez-vwq fix)") {
+        val routeSchema = RouteSchema(
+          headers = Some(bl.Object(
+            properties = Map(
+              "x-file-name" -> bl.String(),
+              "x-custom-header" -> bl.String()
+            )
+          ))
+        )
+
+        val request = new MockRequest(
+          headersMap = Map(
+            "x-file-name" -> Seq("myfile.txt"),
+            "x-custom-header" -> Seq("some value with spaces")
+          )
+        )
+
+        val result = SchemaValidator.validateRequest(request, routeSchema)
+        assert(result.isRight)
+
+        val validatedRequest = result.getOrElse(throw new Exception("Expected Right"))
+        val fileName = validatedRequest.getHeader("x-file-name")
+        val customHeader = validatedRequest.getHeader("x-custom-header")
+
+        assert(fileName.contains("myfile.txt"))
+        assert(!fileName.exists(_.contains("\"")))
+        assert(customHeader.contains("some value with spaces"))
+        assert(!customHeader.exists(_.contains("\"")))
+      }
+
+      test("getQueryParam returns raw string values not JSON-encoded") {
+        val routeSchema = RouteSchema(
+          query = Some(bl.Object(
+            properties = Map(
+              "name" -> bl.String(),
+              "filter" -> bl.String()
+            )
+          ))
+        )
+
+        val request = new MockRequest(
+          queryParamsMap = Map(
+            "name" -> Seq("test-value"),
+            "filter" -> Seq("active")
+          )
+        )
+
+        val result = SchemaValidator.validateRequest(request, routeSchema)
+        assert(result.isRight)
+
+        val validatedRequest = result.getOrElse(throw new Exception("Expected Right"))
+        val name = validatedRequest.getQueryParam("name")
+        val filter = validatedRequest.getQueryParam("filter")
+
+        assert(name.contains("test-value"))
+        assert(!name.exists(_.contains("\"")))
+        assert(filter.contains("active"))
+      }
+
+      test("getParam returns raw string values not JSON-encoded") {
+        val routeSchema = RouteSchema(
+          params = Some(bl.Object(
+            properties = Map(
+              "id" -> bl.String(),
+              "slug" -> bl.String()
+            )
+          ))
+        )
+
+        val request = new MockRequest()
+        val pathParams = Map("id" -> "abc-123", "slug" -> "my-post")
+
+        val result = SchemaValidator.validateRequest(request, routeSchema, pathParams)
+        assert(result.isRight)
+
+        val validatedRequest = result.getOrElse(throw new Exception("Expected Right"))
+        val id = validatedRequest.getParam("id")
+        val slug = validatedRequest.getParam("slug")
+
+        assert(id.contains("abc-123"))
+        assert(!id.exists(_.contains("\"")))
+        assert(slug.contains("my-post"))
+      }
     }
 
     test("Error response generation") {
@@ -412,6 +496,30 @@ object WebValidationTests extends TestSuite {
         assert(firstDetail("message").str == "Invalid name")
         assert(firstDetail("path").str == "/name")
         assert(firstDetail("field").str == "name")
+      }
+    }
+
+    test("extractStringValue helper") {
+      test("extracts raw string from ujson.Str without quotes") {
+        val strValue = ujson.Str("myfile.txt")
+        val result = ValidationHelpers.extractStringValue(strValue)
+        assert(result == "myfile.txt")
+        assert(!result.contains("\""))
+      }
+
+      test("converts ujson.Num to string representation") {
+        assert(ValidationHelpers.extractStringValue(ujson.Num(42)) == "42")
+        assert(ValidationHelpers.extractStringValue(ujson.Num(3.14)) == "3.14")
+        assert(ValidationHelpers.extractStringValue(ujson.Num(100.0)) == "100")
+      }
+
+      test("converts ujson.Bool to string representation") {
+        assert(ValidationHelpers.extractStringValue(ujson.Bool(true)) == "true")
+        assert(ValidationHelpers.extractStringValue(ujson.Bool(false)) == "false")
+      }
+
+      test("converts ujson.Null to 'null' string") {
+        assert(ValidationHelpers.extractStringValue(ujson.Null) == "null")
       }
     }
 
