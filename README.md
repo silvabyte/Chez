@@ -13,35 +13,35 @@ Choose the modules you need for your project:
 
 ```scala
 // Just schema validation
-mvn"dev.boogieloop::schema:0.5.2"
+mvn"dev.boogieloop::schema:0.5.3"
 
 // Add HTTP validation for Cask web framework
-mvn"dev.boogieloop::schema:0.5.2"
-mvn"dev.boogieloop::web:0.5.2"
+mvn"dev.boogieloop::schema:0.5.3"
+mvn"dev.boogieloop::web:0.5.3"
 
 // Full ecosystem with LLM agent support
-mvn"dev.boogieloop::schema:0.5.2"
-mvn"dev.boogieloop::web:0.5.2"
-mvn"dev.boogieloop::ai:0.5.2"
+mvn"dev.boogieloop::schema:0.5.3"
+mvn"dev.boogieloop::web:0.5.3"
+mvn"dev.boogieloop::ai:0.5.3"
 ```
 
 ### SBT
 
 ```scala
 // Just schema validation
-libraryDependencies += "dev.boogieloop" %% "schema" % "0.5.2"
+libraryDependencies += "dev.boogieloop" %% "schema" % "0.5.3"
 
 // Add HTTP validation for Cask web framework
 libraryDependencies ++= Seq(
-  "dev.boogieloop" %% "schema" % "0.5.2",
-  "dev.boogieloop" %% "web" % "0.5.2"
+  "dev.boogieloop" %% "schema" % "0.5.3",
+  "dev.boogieloop" %% "web" % "0.5.3"
 )
 
 // Full ecosystem with LLM agent support
 libraryDependencies ++= Seq(
-  "dev.boogieloop" %% "schema" % "0.5.2",
-  "dev.boogieloop" %% "web" % "0.5.2",
-  "dev.boogieloop" %% "ai" % "0.5.2"
+  "dev.boogieloop" %% "schema" % "0.5.3",
+  "dev.boogieloop" %% "web" % "0.5.3",
+  "dev.boogieloop" %% "ai" % "0.5.3"
 )
 ```
 
