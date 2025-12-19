@@ -85,6 +85,8 @@ case class User(name: String, age: Int) derives Schema
 - AI examples require `OPENAI_API_KEY` (or a local LLM endpoint)
 - Test everything: `make test` (override `MODULE=schema|web|ai`)
 
+AI Disclaimer: This project uses AI assistance for documentation creation as well as code generation for monotonous tasks. All architecture, design and more interesting code creation is done by a [human](https://x.com/MatSilva)
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
