@@ -34,10 +34,18 @@ case class InfoObject(
 
 /**
  * Paths Object - container for all path items
+ * OpenAPI spec requires paths to serialize as a flat map, not wrapped in a "paths" field
  */
 case class PathsObject(
     paths: Map[String, PathItemObject]
-) derives ReadWriter
+)
+
+object PathsObject {
+  given ReadWriter[PathsObject] = readwriter[Map[String, PathItemObject]].bimap(
+    obj => obj.paths,
+    map => PathsObject(map)
+  )
+}
 
 /**
  * Tag Object for categorizing operations
