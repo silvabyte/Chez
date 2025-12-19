@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.3] - 2025-12-19
+
+* fix: OpenAPI models serialize as flat maps per spec (#21)
+* bd sync: 2025-12-18 18:18:37
+* docs: sync installation versions to 0.5.2
+
 ## [0.5.2] - 2025-12-18
 
 * fix: return raw string values from ValidatedRequest accessors (#20)
