@@ -247,7 +247,7 @@ object OpenAPISerializationTests extends TestSuite {
             description = "Test",
             version = "1.0.0"
           ),
-          jsonSchemaDialect = "https://json-schema.org/draft/2020-12/schema",
+          jsonSchemaDialect = "https://spec.openapis.org/oas/3.1/dialect/base",
           paths = Some(PathsObject(
             Map("/users" -> PathItemObject(summary = Some("Users")))
           ))
@@ -267,7 +267,7 @@ object OpenAPISerializationTests extends TestSuite {
             description = "Test",
             version = "1.0.0"
           ),
-          jsonSchemaDialect = "https://json-schema.org/draft/2020-12/schema",
+          jsonSchemaDialect = "https://spec.openapis.org/oas/3.1/dialect/base",
           security = Some(List(
             SecurityRequirementObject(Map("oauth2" -> List("read"))),
             SecurityRequirementObject(Map("apiKey" -> List.empty))
@@ -290,7 +290,7 @@ object OpenAPISerializationTests extends TestSuite {
             description = "Test",
             version = "1.0.0"
           ),
-          jsonSchemaDialect = "https://json-schema.org/draft/2020-12/schema",
+          jsonSchemaDialect = "https://spec.openapis.org/oas/3.1/dialect/base",
           paths = Some(PathsObject(
             Map("/users" -> PathItemObject(
               get = Some(OperationObject(
