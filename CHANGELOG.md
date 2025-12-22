@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.4] - 2025-12-22
+
+* Fix OpenAPI jsonSchemaDialect warning (#22)
+* chore: add ai disclaimer
+* docs: sync installation versions to 0.5.3
+
 ## [0.5.3] - 2025-12-19
 
 * fix: OpenAPI models serialize as flat maps per spec (#21)
