@@ -7,13 +7,13 @@ Define schemas next to your types with annotations, derive JSON Schema automatic
 Mill:
 
 ```scala
-mvn"dev.boogieloop::schema:0.5.3"
+mvn"dev.boogieloop::schema:0.5.4"
 ```
 
 SBT:
 
 ```scala
-libraryDependencies += "dev.boogieloop" %% "schema" % "0.5.3"
+libraryDependencies += "dev.boogieloop" %% "schema" % "0.5.4"
 ```
 
 ## Quickstart
