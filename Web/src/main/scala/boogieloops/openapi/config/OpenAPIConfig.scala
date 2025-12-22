@@ -16,7 +16,7 @@ case class OpenAPIConfig(
     license: Option[LicenseObject] = None,
 
     // Root level fields
-    jsonSchemaDialect: String = "https://json-schema.org/draft/2020-12/schema",
+    jsonSchemaDialect: String = "https://spec.openapis.org/oas/3.1/dialect/base",
     servers: List[ServerObject] = List.empty,
     externalDocs: Option[ExternalDocumentationObject] = None,
 
