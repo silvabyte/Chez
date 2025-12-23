@@ -270,7 +270,7 @@ class OpenAICompatibleProvider(
       "type" -> "json_schema",
       "json_schema" -> ujson.Obj(
         "name" -> "structured_output",
-        "strict" -> "true",
+        "strict" -> true,
         "schema" -> request.schema.toJsonSchema
       )
     )
