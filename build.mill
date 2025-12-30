@@ -259,3 +259,18 @@ object AI extends Shared {
     )
   )
 }
+
+object Kit extends Shared {
+  override def artifactName = "kit"
+
+  override def pomSettings = PomSettings(
+    description = "BoogieLoops Kit - General purpose utilities",
+    organization = "dev.boogieloop",
+    url = "https://github.com/silvabyte/BoogieLoops",
+    licenses = Seq(License.MIT),
+    versionControl = VersionControl.github("silvabyte", "BoogieLoops"),
+    developers = Seq(
+      Developer("matsilva", "Mat Silva", "https://github.com/matsilva")
+    )
+  )
+}
