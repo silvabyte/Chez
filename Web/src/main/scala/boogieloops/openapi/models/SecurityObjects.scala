@@ -51,9 +51,10 @@ case class SecurityRequirementObject(
 )
 
 object SecurityRequirementObject {
-  given ReadWriter[SecurityRequirementObject] =
+  given ReadWriter[SecurityRequirementObject] = {
     readwriter[Map[String, List[String]]].bimap(
       _.requirements,
       SecurityRequirementObject(_)
     )
+  }
 }
