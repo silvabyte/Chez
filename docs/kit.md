@@ -7,13 +7,13 @@ Lightweight utilities for Scala 3 applications. Currently includes `DotEnv` for 
 Mill:
 
 ```scala
-mvn"dev.boogieloop::kit:0.5.5"
+mvn"dev.boogieloop::kit:0.5.6"
 ```
 
 SBT:
 
 ```scala
-libraryDependencies += "dev.boogieloop" %% "kit" % "0.5.5"
+libraryDependencies += "dev.boogieloop" %% "kit" % "0.5.6"
 ```
 
 ## DotEnv
