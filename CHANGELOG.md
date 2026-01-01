@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.6] - 2026-01-01
+
+* feat: Add Kit module with DotEnv utility (#24)
+* docs: sync installation versions to 0.5.5
+
 ## [0.5.5] - 2025-12-23
 
 * fix: use boolean for strict in json_schema response_format (#23)
