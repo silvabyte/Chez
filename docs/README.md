@@ -1,10 +1,11 @@
 # Getting Started
 
-Welcome to the BoogieLoops ecosystem — three Scala 3 libraries that work great together or stand alone:
+Welcome to the BoogieLoops ecosystem — Scala 3 libraries that work great together or stand alone:
 
 - **schema**: Type-safe JSON Schema (derive, build, validate)
 - **web**: Schema-first HTTP validation + OpenAPI for Cask
 - **ai**: Type-safe LLM agents with structured output
+- **kit**: General purpose utilities (DotEnv, etc.)
 
 ## Prerequisites
 
@@ -20,6 +21,7 @@ Mill:
 mvn"dev.boogieloop::schema:0.5.5"  // Core schemas
 mvn"dev.boogieloop::web:0.5.5"     // HTTP validation + OpenAPI
 mvn"dev.boogieloop::ai:0.5.5"      // LLM agents
+mvn"dev.boogieloop::kit:0.5.5"     // General utilities
 ```
 
 SBT:
@@ -28,14 +30,15 @@ SBT:
 libraryDependencies ++= Seq(
   "dev.boogieloop" %% "schema" % "0.5.5",
   "dev.boogieloop" %% "web" % "0.5.5",
-  "dev.boogieloop" %% "ai" % "0.5.5"
+  "dev.boogieloop" %% "ai" % "0.5.5",
+  "dev.boogieloop" %% "kit" % "0.5.5"
 )
 ```
 
 ## Common Commands
 
 - Build: `make build` (or `./mill __.compile`)
-- Test: `make test` (override `MODULE=schema|web|ai`)
+- Test: `make test` (override `MODULE=schema|web|ai|kit`)
 - Lint: `make lint` (scalafix)
 - Format: `make format` (scalafmt)
 - Watch: `make watch MODULE=schema` or `make watch-test MODULE=web`
@@ -64,6 +67,7 @@ Local LLMs via OpenAI-compatible endpoints (no key by default) are supported (LM
 - schema (core): [schema.md](./schema.md)
 - web: [web.md](./web.md)
 - ai: [ai.md](./ai.md)
+- kit: [kit.md](./kit.md)
 
 ## More Docs
 
